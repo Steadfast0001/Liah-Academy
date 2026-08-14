@@ -205,73 +205,77 @@ get_header();
 <!-- 6. GOOGLE & WEBSITE REVIEWS SECTION -->
 <section class="section-padding bg-dark-section" style="border-top: 1px solid rgba(245, 166, 35, 0.1);">
     <div class="container">
+        <?php
+        $google_data = liah_fetch_google_reviews();
+        $rating = isset( $google_data['rating'] ) ? floatval( $google_data['rating'] ) : 4.9;
+        $total_ratings = isset( $google_data['user_ratings_total'] ) ? intval( $google_data['user_ratings_total'] ) : 85;
+        ?>
         <div class="section-header">
             <span class="course-badge" style="background: rgba(245, 166, 35, 0.15); color: #F5A623;"><i class="fa-brands fa-google" style="margin-right:6px;"></i> Google Reviews</span>
             <h2 style="color: #F8FAFC;">What our community says</h2>
-            <p class="sub-header" style="color: #64748B;">Liah Academy maintains a 4.9 ★ rating on Google. Check out verified reviews from our tech students and software partners.</p>
+            <p class="sub-header" style="color: #64748B;">Liah Academy maintains a <?php echo esc_html( number_format( $rating, 1 ) ); ?> ★ rating on Google. Check out verified reviews from our tech students and software partners.</p>
         </div>
 
         <div class="grid-3" style="margin-bottom: 50px; align-items: stretch;">
             <!-- Google Rating Summary Card -->
             <div class="premium-card" style="background: rgba(8, 31, 62, 0.5); border-color: rgba(245, 166, 35, 0.15); color: #F8FAFC; text-align: center; padding: 40px 30px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png" style="width: 48px; height: 48px; margin-bottom: 16px;" alt="Google Logo">
-                <h3 style="font-size: 56px; font-weight: 800; color: #F5A623; line-height: 1;">4.9</h3>
+                <h3 style="font-size: 56px; font-weight: 800; color: #F5A623; line-height: 1;"><?php echo esc_html( number_format( $rating, 1 ) ); ?></h3>
                 <div style="color: #F5A623; margin: 12px 0; font-size: 18px;">
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
+                    <?php
+                    $full_stars = floor( $rating );
+                    for ( $i = 0; $i < 5; $i++ ) {
+                        if ( $i < $full_stars ) {
+                            echo '<i class="fa-solid fa-star"></i>';
+                        } else {
+                            echo '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
+                        }
+                    }
+                    ?>
                 </div>
-                <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">Based on 85 verified Google reviews</p>
+                <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">Based on <?php echo esc_html( $total_ratings ); ?> verified Google reviews</p>
                 <a href="https://share.google/2pqoSX2O6DET6vL5q" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 13px;"><i class="fa-brands fa-google" style="margin-right: 8px;"></i> Verify on Google</a>
             </div>
 
-            <!-- Testimonial 1 -->
+            <?php
+            $reviews_list = isset( $google_data['reviews'] ) ? $google_data['reviews'] : array();
+            $display_reviews = array_slice( $reviews_list, 0, 2 );
+            foreach ( $display_reviews as $rev ) :
+                $initials = '';
+                if ( ! empty( $rev['author_name'] ) ) {
+                    $parts = explode( ' ', $rev['author_name'] );
+                    $initials = strtoupper( substr( $parts[0], 0, 1 ) . ( isset( $parts[1] ) ? substr( $parts[1], 0, 1 ) : '' ) );
+                }
+                $initials = $initials ? $initials : 'GA';
+            ?>
             <div class="premium-card" style="background: rgba(8, 31, 62, 0.3); border-color: rgba(245, 166, 35, 0.08); color: #F8FAFC; padding: 30px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <div style="color: #F5A623; margin-bottom: 16px; font-size: 14px;">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
+                        <?php for ( $i = 0; $i < 5; $i++ ) : ?>
+                            <?php if ( $i < $rev['rating'] ) : ?>
+                                <i class="fa-solid fa-star"></i>
+                            <?php else : ?>
+                                <i class="fa-regular fa-star" style="color: #64748B;"></i>
+                            <?php endif; ?>
+                        <?php endfor; ?>
                     </div>
-                    <p class="body-normal" style="color: #94A3B8; font-style: italic; line-height: 1.6;">"Liah Academy is Buea's leading tech hub. Their combined curriculum and company projects gave me hands-on database experience that got me hired as a web engineer."</p>
+                    <p class="body-normal" style="color: #94A3B8; font-style: italic; line-height: 1.6;">"<?php echo esc_html( $rev['text'] ); ?>"</p>
                 </div>
                 <div style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #F5A623; color: #081F3E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
-                        SL
-                    </div>
+                    <?php if ( ! empty( $rev['profile_photo_url'] ) ) : ?>
+                        <img src="<?php echo esc_url( $rev['profile_photo_url'] ); ?>" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" alt="<?php echo esc_attr( $rev['author_name'] ); ?>">
+                    <?php else : ?>
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: #F5A623; color: #081F3E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
+                            <?php echo esc_html( $initials ); ?>
+                        </div>
+                    <?php endif; ?>
                     <div>
-                        <h4 style="font-size: 15px; color: #F8FAFC;">Steddy Lyonga</h4>
-                        <span style="font-size: 12px; color: #64748B;">Software Student</span>
+                        <h4 style="font-size: 15px; color: #F8FAFC;"><?php echo esc_html( $rev['author_name'] ); ?></h4>
+                        <span style="font-size: 12px; color: #64748B;"><?php echo esc_html( isset( $rev['relative_time_description'] ) ? $rev['relative_time_description'] : 'Verified Reviewer' ); ?></span>
                     </div>
                 </div>
             </div>
-
-            <!-- Testimonial 2 -->
-            <div class="premium-card" style="background: rgba(8, 31, 62, 0.3); border-color: rgba(245, 166, 35, 0.08); color: #F8FAFC; padding: 30px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="color: #F5A623; margin-bottom: 16px; font-size: 14px;">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                    </div>
-                    <p class="body-normal" style="color: #94A3B8; font-style: italic; line-height: 1.6;">"The cybersecurity labs at Liah are state-of-the-art. Instructors are developers themselves, so you learn real deployment workflows instead of just theory."</p>
-                </div>
-                <div style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #E28704; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
-                        MB
-                    </div>
-                    <div>
-                        <h4 style="font-size: 15px; color: #F8FAFC;">Mirabelle B.</h4>
-                        <span style="font-size: 12px; color: #64748B;">HND Graduate</span>
-                    </div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
 
         <!-- On-Site Website Review Form / Interactive Submission -->
