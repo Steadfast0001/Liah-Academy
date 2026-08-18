@@ -216,9 +216,9 @@ if ( $show_fapshi_checkout ) {
                         <div class="calc-group">
                             <label for="calcDegree">Select degree level</label>
                             <select class="calc-select" id="calcDegree">
-                                <option value="hnd" data-basefee="350000">Higher National Diploma (HND)</option>
-                                <option value="bsc" data-basefee="500000" selected>Bachelor of Science (B.Sc)</option>
-                                <option value="btech" data-basefee="450000">Bachelor of Technology (B.Tech)</option>
+                                <option value="hnd" data-basefee="250000" selected>Higher National Diploma (HND) - 250,000 XAF/yr</option>
+                                <option value="nd" data-basefee="150000">National Diploma (ND) - 150,000 XAF</option>
+                                <option value="cert" data-basefee="350000">Professional Certification - 350,000 XAF</option>
                             </select>
                         </div>
 
@@ -448,18 +448,43 @@ if ( $show_fapshi_checkout ) {
                                     <div class="form-group">
                                         <label for="regDegreeType">Degree Level</label>
                                         <select class="form-input-light" id="regDegreeType" name="degree_type">
-                                            <option value="hnd">HND (2 Years)</option>
-                                            <option value="bsc">Bachelor of Science - B.Sc (3 Years)</option>
-                                            <option value="btech">Bachelor of Technology - B.Tech (3 Years)</option>
+                                            <option value="HND">HND (2 Years)</option>
+                                            <option value="ND">ND (1 Year)</option>
+                                            <option value="Certification">Professional Certification</option>
                                         </select>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="regProgramType">Program / Track Selection</label>
                                         <select class="form-input-light" id="regProgramType" name="program_type">
-                                            <option value="Software Engineering">Software Engineering Accelerator</option>
-                                            <option value="Cybersecurity">Cybersecurity & Defense Track</option>
-                                            <option value="Cloud Engineering & DevOps">Cloud Engineering & DevOps Pipelines</option>
+                                            <optgroup label="HND - School of Engineering & Technology">
+                                                <option value="Software Engineering HND">Software Engineering HND</option>
+                                                <option value="Web and Graphics Design HND">Web and Graphics Design HND</option>
+                                                <option value="Digital Marketing and E-Commerce HND">Digital Marketing and E-Commerce HND</option>
+                                                <option value="Network and Maintenance HND">Network and Maintenance HND</option>
+                                            </optgroup>
+                                            <optgroup label="ND - School of Engineering & Technology">
+                                                <option value="Computer Engineering ND">Computer Engineering ND</option>
+                                                <option value="ICT ND">ICT ND</option>
+                                                <option value="Web Design ND">Web Design ND</option>
+                                                <option value="Graphics Design and Printing ND">Graphics Design and Printing ND</option>
+                                                <option value="Basic Computer ND">Basic Computer ND</option>
+                                                <option value="Office Automation Secretaryship ND">Office Automation Secretaryship ND</option>
+                                                <option value="Computerized Accounting ND">Computerized Accounting ND</option>
+                                            </optgroup>
+                                            <optgroup label="HND - School of Business & Management">
+                                                <option value="Accounting HND">Accounting HND</option>
+                                                <option value="Management HND">Management HND</option>
+                                                <option value="Marketing HND">Marketing HND</option>
+                                                <option value="Digital Marketing HND">Digital Marketing HND</option>
+                                                <option value="Human Resource Management HND">Human Resource Management HND</option>
+                                            </optgroup>
+                                            <optgroup label="Professional Certifications">
+                                                <option value="Data Science Certification">Data Science Certification</option>
+                                                <option value="DevOps Certification">DevOps Certification</option>
+                                                <option value="Industrial Web Design">Industrial Web Design</option>
+                                                <option value="Digital Marketing and SEO">Digital Marketing and SEO</option>
+                                            </optgroup>
                                         </select>
                                     </div>
 
