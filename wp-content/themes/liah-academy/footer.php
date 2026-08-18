@@ -17,9 +17,9 @@
                 </a>
                 <p>Buea's premier tech academy and software engineering company, training industry-ready tech specialists and building corporate-level solutions.</p>
                 <div class="social-links-grid" style="margin-top: 16px;">
-                    <a href="https://facebook.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="https://instagram.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://linkedin.com" target="_blank" class="social-circle-link" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://www.facebook.com/photo/?fbid=747845957358700&set=a.467739685369330" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/p/DZ7omcLtYKT/" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@liahacademy0/video/7656312713143979284" target="_blank" class="social-circle-link" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
                 </div>
             </div>
 
