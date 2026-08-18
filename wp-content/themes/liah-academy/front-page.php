@@ -345,7 +345,7 @@ get_header();
                     global $wpdb;
                     $db_reviews = array();
                     if ( isset( $wpdb ) && get_class( $wpdb ) !== 'MockWPDB' ) {
-                        $db_reviews = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}liah_reviews ORDER BY id DESC LIMIT 10" );
+                        $db_reviews = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}reviews ORDER BY id DESC LIMIT 10" );
                     }
                     if ( ! empty( $db_reviews ) ) :
                         foreach ( $db_reviews as $dbrev ) :

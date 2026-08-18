@@ -112,22 +112,23 @@ add_action( 'init', 'liah_register_custom_posts' );
    ========================================================================== */
 function liah_initialize_database() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $students_table = $wpdb->prefix . 'students';
+    $reviews_table = $wpdb->prefix . 'reviews';
+    $old_apps_table = $wpdb->prefix . 'liah_applications';
+    $old_revs_table = $wpdb->prefix . 'liah_reviews';
     
-    // Check if table exists
-    // Using standard SQL query that works in both MySQL and PostgreSQL systems
+    $is_pgsql = ( strpos( get_class( $wpdb ), 'pgsql' ) !== false || defined( 'PG4WP_ROOT' ) );
+
+    // 1. Create students table
     $query = $wpdb->prepare(
         "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = %s",
-        $table_name
+        $students_table
     );
-    $table_exists = $wpdb->get_var( $query );
-
-    if ( ! $table_exists ) {
-        $is_pgsql = ( strpos( get_class( $wpdb ), 'pgsql' ) !== false || defined( 'PG4WP_ROOT' ) );
+    if ( ! $wpdb->get_var( $query ) ) {
         if ( $is_pgsql ) {
-            $sql = "CREATE SEQUENCE IF NOT EXISTS {$table_name}_seq;
-            CREATE TABLE $table_name (
-                id bigint NOT NULL DEFAULT nextval('{$table_name}_seq'::text) PRIMARY KEY,
+            $wpdb->query( "CREATE SEQUENCE IF NOT EXISTS {$students_table}_seq;" );
+            $sql = "CREATE TABLE $students_table (
+                id bigint NOT NULL DEFAULT nextval('{$students_table}_seq'::text) PRIMARY KEY,
                 full_name varchar(100) NOT NULL,
                 email varchar(100) NOT NULL UNIQUE,
                 password varchar(255) NOT NULL,
@@ -141,7 +142,7 @@ function liah_initialize_database() {
                 submission_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
             );";
         } else {
-            $sql = "CREATE TABLE $table_name (
+            $sql = "CREATE TABLE $students_table (
                 id bigint(20) NOT NULL AUTO_INCREMENT,
                 full_name varchar(100) NOT NULL,
                 email varchar(100) NOT NULL UNIQUE,
@@ -158,20 +159,30 @@ function liah_initialize_database() {
             ) ENGINE=InnoDB;";
         }
         $wpdb->query( $sql );
+
+        // Migration check: Copy data from old applications table if it exists
+        $old_exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = %s",
+            $old_apps_table
+        ) );
+        if ( $old_exists ) {
+            $wpdb->query( "INSERT INTO $students_table SELECT * FROM $old_apps_table" );
+            $wpdb->query( "DROP TABLE $old_apps_table" );
+            if ( $is_pgsql ) {
+                $wpdb->query( "DROP SEQUENCE IF EXISTS {$old_apps_table}_seq" );
+            }
+        }
     }
 
-    $reviews_table = $wpdb->prefix . 'liah_reviews';
+    // 2. Create reviews table
     $reviews_query = $wpdb->prepare(
         "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = %s",
         $reviews_table
     );
-    $reviews_table_exists = $wpdb->get_var( $reviews_query );
-    
-    if ( ! $reviews_table_exists ) {
-        $is_pgsql = ( strpos( get_class( $wpdb ), 'pgsql' ) !== false || defined( 'PG4WP_ROOT' ) );
+    if ( ! $wpdb->get_var( $reviews_query ) ) {
         if ( $is_pgsql ) {
-            $sql_reviews = "CREATE SEQUENCE IF NOT EXISTS {$reviews_table}_seq;
-            CREATE TABLE $reviews_table (
+            $wpdb->query( "CREATE SEQUENCE IF NOT EXISTS {$reviews_table}_seq;" );
+            $sql_reviews = "CREATE TABLE $reviews_table (
                 id bigint NOT NULL DEFAULT nextval('{$reviews_table}_seq'::text) PRIMARY KEY,
                 reviewer_name varchar(100) NOT NULL,
                 reviewer_role varchar(100) NOT NULL,
@@ -191,6 +202,19 @@ function liah_initialize_database() {
             ) ENGINE=InnoDB;";
         }
         $wpdb->query( $sql_reviews );
+
+        // Migration check: Copy data from old reviews table if it exists
+        $old_exists = $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = %s",
+            $old_revs_table
+        ) );
+        if ( $old_exists ) {
+            $wpdb->query( "INSERT INTO $reviews_table SELECT * FROM $old_revs_table" );
+            $wpdb->query( "DROP TABLE $old_revs_table" );
+            if ( $is_pgsql ) {
+                $wpdb->query( "DROP SEQUENCE IF EXISTS {$old_revs_table}_seq" );
+            }
+        }
     }
 }
 add_action( 'init', 'liah_initialize_database' );
@@ -346,7 +370,7 @@ function liah_handle_student_registration() {
     check_ajax_referer( 'liah-portal-nonce', 'nonce' );
 
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $table_name = $wpdb->prefix . 'students';
 
     // Retrieve and sanitize fields
     $full_name     = sanitize_text_field( $_POST['fullname'] );
@@ -537,7 +561,7 @@ function liah_handle_student_login() {
     check_ajax_referer( 'liah-portal-nonce', 'nonce' );
 
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $table_name = $wpdb->prefix . 'students';
 
     $email    = sanitize_email( $_POST['email'] );
     $password = $_POST['password'];
@@ -726,7 +750,7 @@ function liah_handle_submit_review() {
     check_ajax_referer( 'liah-portal-nonce', 'nonce' );
 
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_reviews';
+    $table_name = $wpdb->prefix . 'reviews';
 
     $name    = sanitize_text_field( $_POST['name'] );
     $role    = sanitize_text_field( $_POST['role'] );
@@ -800,7 +824,7 @@ add_action( 'admin_menu', 'liah_admissions_admin_menu' );
 
 function liah_render_admissions_admin_page() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $table_name = $wpdb->prefix . 'students';
 
     // Handle Actions (Status Updates)
     if ( isset( $_POST['liah_action'] ) && check_admin_referer( 'liah_admin_action', 'liah_nonce' ) ) {

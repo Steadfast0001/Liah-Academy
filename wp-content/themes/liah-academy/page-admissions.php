@@ -18,7 +18,7 @@ $student = null;
 
 if ( $is_logged_in ) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $table_name = $wpdb->prefix . 'students';
     $student = $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM $table_name WHERE id = %d",
         $_SESSION['liah_student_id']
@@ -36,7 +36,7 @@ if ( $is_logged_in ) {
 // Check for Fapshi payment returns
 if ( isset( $_GET['payment'] ) && $_GET['payment'] === 'success' && isset( $_GET['id'] ) ) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'liah_applications';
+    $table_name = $wpdb->prefix . 'students';
     if ( $wpdb ) {
         $wpdb->update(
             $table_name,
@@ -57,7 +57,7 @@ if ( $show_fapshi_checkout ) {
         $checkout_student_name = $_SESSION['liah_student_name'];
     } else {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'liah_applications';
+        $table_name = $wpdb->prefix . 'students';
         if ( $wpdb && get_class($wpdb) !== 'MockWPDB' ) {
             $checkout_student_name = $wpdb->get_var( $wpdb->prepare( "SELECT full_name FROM $table_name WHERE id = %d", $checkout_id ) );
         }
