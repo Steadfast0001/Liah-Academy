@@ -49,7 +49,34 @@ if ( ! function_exists( 'liah_nav_active_class' ) ) {
 <head>
     <meta charset="<?php bloginfo( 'charset' ); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Liah Academy - Buea's Premier Tech Academy and Software Company. Empowering next-generation tech leaders and constructing enterprise solutions.">
+    
+    <!-- SEO Meta Tags -->
+    <title><?php wp_title( '|', true, 'right' ); ?><?php bloginfo( 'name' ); ?> - Forge Your Future in Technology</title>
+    <meta name="description" content="Liah Academy in Buea, Cameroon is a premier practical tech academy and software engineering company offering HND, National Diploma (ND), and professional certifications in Software Engineering, DevOps, Data Science, and Cybersecurity.">
+    <meta name="keywords" content="Liah Academy, Buea tech academy, software engineering Cameroon, HND software engineering Buea, DevOps training Buea, cybersecurity training Cameroon, IT certifications Buea, learn programming Cameroon, hire developers Buea, Backweri Town Buea">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="<?php echo esc_url( home_url( $_SERVER['REQUEST_URI'] ) ); ?>">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Liah Academy | Forge Your Future in Technology">
+    <meta property="og:description" content="Buea's premier tech academy & software development company. Study practical HND, ND, and Certification tracks in Software Engineering, DevOps, and Cybersecurity.">
+    <meta property="og:image" content="<?php echo esc_url( get_template_directory_uri() . '/logo.png' ); ?>">
+    <meta property="og:url" content="<?php echo esc_url( home_url( $_SERVER['REQUEST_URI'] ) ); ?>">
+    <meta property="og:site_name" content="Liah Academy">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Liah Academy | Forge Your Future in Technology">
+    <meta name="twitter:description" content="Study practical, lab-based engineering tracks and professional IT certifications at Liah Academy, Buea.">
+    <meta name="twitter:image" content="<?php echo esc_url( get_template_directory_uri() . '/logo.png' ); ?>">
+
+    <!-- Local SEO (Buea, Cameroon) -->
+    <meta name="geo.region" content="CM-SW">
+    <meta name="geo.placename" content="Buea">
+    <meta name="geo.position" content="4.1560;9.2631">
+    <meta name="ICBM" content="4.1560, 9.2631">
+
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
