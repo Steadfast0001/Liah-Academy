@@ -31,21 +31,21 @@ get_header();
                             <div class="icon-wrap"><i class="fa-solid fa-location-dot"></i></div>
                             <div>
                                 <h4 style="font-size:15px; margin-bottom: 4px;">Main Campus Address</h4>
-                                <p style="font-size:14px; color:#64748B;">Bakweri Town Road, Buea, Southwest Region, Cameroon</p>
+                                <p style="font-size:14px; color:#64748B;">Backweri Town, Buea, Cameroon</p>
                             </div>
                         </li>
                         <li>
                             <div class="icon-wrap"><i class="fa-solid fa-phone"></i></div>
                             <div>
                                 <h4 style="font-size:15px; margin-bottom: 4px;">Telephone Lines</h4>
-                                <p style="font-size:14px; color:#64748B;">+237 677 889 900 / +237 699 112 233</p>
+                                <p style="font-size:14px; color:#64748B;">+237 652 154 095 / +237 699 526 607</p>
                             </div>
                         </li>
                         <li>
                             <div class="icon-wrap"><i class="fa-solid fa-envelope"></i></div>
                             <div>
-                                <h4 style="font-size:15px; margin-bottom: 4px;">Official Email Addresses</h4>
-                                <p style="font-size:14px; color:#64748B;">admissions@liahacademy.org (Admissions)<br>info@liahacademy.org (General & Services)</p>
+                                <h4 style="font-size:15px; margin-bottom: 4px;">Official Email Address</h4>
+                                <p style="font-size:14px; color:#64748B;">info@liahacademy.com</p>
                             </div>
                         </li>
                     </ul>
@@ -53,8 +53,8 @@ get_header();
                     <div style="margin-top: 32px; padding-top: 24px; border-top:1px solid rgba(15,23,42,0.08);">
                         <h4 style="font-size: 14px; margin-bottom: 12px; color:#0F172A; text-transform: uppercase; letter-spacing: 0.05em;">Social Channels</h4>
                         <div class="social-links-grid" style="margin-top:0;">
-                            <a href="https://facebook.com" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                            <a href="https://instagram.com" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="https://facebook.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                            <a href="https://instagram.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                             <a href="https://linkedin.com" target="_blank" class="social-circle-link" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
                         </div>
                     </div>

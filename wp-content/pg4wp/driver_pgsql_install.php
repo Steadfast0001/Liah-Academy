@@ -21,16 +21,24 @@ $GLOBALS['pg4wp_ttr'] = array(
 	'gmt datetime NOT NULL default \'0000-00-00 00:00:00\''	=> 'gmt timestamp with time zone NOT NULL DEFAULT timezone(\'gmt\'::text, now())',
 	'default \'0000-00-00 00:00:00\''	=> 'DEFAULT now()',
 	'datetime'		=> 'timestamp',
+	'DEFAULT CHARACTER SET utf8mb4'	=> '',
 	'DEFAULT CHARACTER SET utf8'	=> '',
-
-		// WP 2.7.1 compatibility
+	'COLLATE utf8mb4_unicode_520_ci'=> '',
+	'COLLATE utf8mb4_unicode_700_ci'=> '',
+	'COLLATE utf8mb4_unicode_900_ai_ci'=> '',
+	'COLLATE utf8mb4_unicode_900_bin'=> '',
+	'COLLATE utf8mb4_0900_ai_ci'	=> '',
+	'COLLATE utf8mb4_0900_bin'	=> '',
+	'COLLATE utf8mb4_unicode_ci'	=> '',
+	'COLLATE utf8mb4_general_ci'	=> '',
+	'COLLATE utf8mb4_bin'		=> '',
+	'COLLATE utf8_general_ci'	=> '',
+	'COLLATE utf8_unicode_ci'	=> '',
+	'COLLATE utf8_bin'		=> '',
 	'int(4)'		=> 'smallint',
-
-		// For WPMU (starting with WP 3.2)
 	'tinyint(2)'	=> 'smallint',
 	'tinyint(1)'	=> 'smallint',
 	"enum('0','1')"	=> 'smallint',
-	'COLLATE utf8_general_ci'	=> '',
 	);
 
 function pg4wp_installing( $sql, &$logto)
@@ -159,9 +167,9 @@ function pg4wp_installing( $sql, &$logto)
 		ELSE 'YES'
 		END AS \"Null\",
 		CASE pg_type.typname
-		WHEN 'varchar' THEN substring(pg_attrdef.adsrc FROM '^''(.*)''.*$')
-		WHEN 'timestamp' THEN CASE WHEN pg_attrdef.adsrc LIKE '%now()%' THEN '0000-00-00 00:00:00' ELSE pg_attrdef.adsrc END
-		ELSE pg_attrdef.adsrc
+		WHEN 'varchar' THEN substring(pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) FROM '^''(.*)''.*$')
+		WHEN 'timestamp' THEN CASE WHEN pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) LIKE '%now()%' THEN '0000-00-00 00:00:00' ELSE pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) END
+		ELSE pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
 		END AS \"Default\"
 		FROM pg_class
 		INNER JOIN pg_attribute

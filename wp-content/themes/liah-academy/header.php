@@ -60,7 +60,7 @@ if ( ! function_exists( 'liah_nav_active_class' ) ) {
     <div class="header-container">
         <!-- Top Left Brand logo -->
         <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="logo-link">
-            <img class="logo-img" src="<?php echo esc_url( get_template_directory_uri() . '/logo.svg' ); ?>" alt="Liah Academy Logo">
+            <img class="logo-img" src="<?php echo esc_url( get_template_directory_uri() . '/logo.png' ); ?>" alt="Liah Academy Logo">
             <span class="logo-text">Liah <span>Academy</span></span>
         </a>
 

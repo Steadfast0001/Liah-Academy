@@ -618,57 +618,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rating = parseInt(hiddenRatingInput.value);
                 const comment = document.getElementById('revComment').value.trim();
                 
-                // Build stars html
-                let starsHtml = '';
-                for (let i = 0; i < 5; i++) {
-                    if (i < rating) {
-                        starsHtml += '<i class="fa-solid fa-star"></i>';
+                const submitBtn = reviewForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Submitting... <i class="fa-solid fa-spinner fa-spin" style="margin-left: 6px;"></i>';
+
+                const formData = new FormData();
+                formData.append('action', 'liah_submit_review');
+                formData.append('nonce', liahSettings.nonce);
+                formData.append('name', name);
+                formData.append('role', role);
+                formData.append('rating', rating);
+                formData.append('comment', comment);
+
+                fetch(liahSettings.ajaxUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Review';
+                    
+                    if (data.success) {
+                        // Build stars html
+                        let starsHtml = '';
+                        for (let i = 0; i < 5; i++) {
+                            if (i < rating) {
+                                starsHtml += '<i class="fa-solid fa-star"></i>';
+                            } else {
+                                starsHtml += '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
+                            }
+                        }
+                        
+                        // Append new review card to stream
+                        const newRev = document.createElement('div');
+                        newRev.style.background = 'rgba(8, 31, 62, 0.15)';
+                        newRev.style.borderLeft = '3px solid var(--color-primary-accent)';
+                        newRev.style.padding = '16px';
+                        newRev.style.borderRadius = '4px';
+                        newRev.style.opacity = '0';
+                        newRev.style.transform = 'translateY(10px)';
+                        newRev.style.transition = 'all 0.4s ease-out';
+                        
+                        newRev.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">${name} (${role})</span>
+                                <div style="color: #F5A623; font-size: 11px;">
+                                    ${starsHtml}
+                                </div>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"${comment}"</p>
+                        `;
+                        
+                        reviewsStream.insertBefore(newRev, reviewsStream.firstChild);
+                        
+                        // Trigger animation
+                        setTimeout(() => {
+                            newRev.style.opacity = '1';
+                            newRev.style.transform = 'translateY(0)';
+                        }, 50);
+                        
+                        // Success alert & clear fields
+                        reviewForm.reset();
+                        reviewSuccessMsg.style.display = 'block';
+                        
+                        // Reset rating stars to 5
+                        hiddenRatingInput.value = 5;
+                        ratingStars.forEach(s => {
+                            s.style.color = '#F5A623';
+                        });
+                        
+                        setTimeout(() => {
+                            reviewSuccessMsg.style.display = 'none';
+                        }, 3000);
                     } else {
-                        starsHtml += '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
+                        alert(data.data.message || 'Could not submit review.');
                     }
-                }
-                
-                // Append new review card to stream
-                const newRev = document.createElement('div');
-                newRev.style.background = 'rgba(8, 31, 62, 0.15)';
-                newRev.style.borderLeft = '3px solid var(--color-primary-accent)';
-                newRev.style.padding = '16px';
-                newRev.style.borderRadius = '4px';
-                newRev.style.opacity = '0';
-                newRev.style.transform = 'translateY(10px)';
-                newRev.style.transition = 'all 0.4s ease-out';
-                
-                newRev.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">${name} (${role})</span>
-                        <div style="color: #F5A623; font-size: 11px;">
-                            ${starsHtml}
-                        </div>
-                    </div>
-                    <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"${comment}"</p>
-                `;
-                
-                reviewsStream.insertBefore(newRev, reviewsStream.firstChild);
-                
-                // Trigger animation
-                setTimeout(() => {
-                    newRev.style.opacity = '1';
-                    newRev.style.transform = 'translateY(0)';
-                }, 50);
-                
-                // Success alert & clear fields
-                reviewForm.reset();
-                reviewSuccessMsg.style.display = 'block';
-                
-                // Reset rating stars to 5
-                hiddenRatingInput.value = 5;
-                ratingStars.forEach(s => {
-                    s.style.color = '#F5A623';
+                })
+                .catch(err => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Review';
+                    alert('A connection error occurred.');
                 });
-                
-                setTimeout(() => {
-                    reviewSuccessMsg.style.display = 'none';
-                }, 3000);
             });
         }
     }

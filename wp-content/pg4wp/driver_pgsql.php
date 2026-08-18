@@ -463,6 +463,43 @@
 			$logto = 'SHOWTABLES';
 			$sql = 'SELECT tablename FROM pg_tables WHERE schemaname = \''.PG4WP_SCHEMA.'\';';
 		}
+		// Fix columns listing (SHOW FULL COLUMNS / SHOW COLUMNS)
+		elseif( 0 === strpos($sql, 'SHOW FULL COLUMNS') || 0 === strpos($sql, 'SHOW COLUMNS'))
+		{
+			$logto = 'SHOWCOLUMNS';
+			preg_match('/SHOW (?:FULL )?COLUMNS FROM [`]?(\w+)[`]?/', $sql, $matches);
+			$table = PG4WP_SCHEMA.'.'.$matches[1];
+			$_table = $matches[1];
+			
+			$sql = "SELECT 
+				column_name AS \"Field\",
+				CASE 
+					WHEN character_maximum_length IS NOT NULL THEN data_type || '(' || character_maximum_length || ')'
+					ELSE data_type
+				END AS \"Type\",
+				collation_name AS \"Collation\",
+				is_nullable AS \"Null\",
+				CASE 
+					WHEN column_name IN (
+						SELECT a.attname
+						FROM pg_index i
+						JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+						WHERE i.indrelid = '$table'::regclass AND i.indisprimary
+					) THEN 'PRI'
+					ELSE ''
+				END AS \"Key\",
+				column_default AS \"Default\",
+				CASE 
+					WHEN column_default LIKE 'nextval%' THEN 'auto_increment'
+					ELSE ''
+				END AS \"Extra\",
+				'select,insert,update,references' AS \"Privileges\",
+				'' AS \"Comment\"
+			FROM information_schema.columns 
+			WHERE table_schema = '".PG4WP_SCHEMA."' 
+			  AND table_name = '$_table'
+			ORDER BY ordinal_position;";
+		}
 		// Rewriting optimize table
 		elseif( 0 === strpos($sql, 'OPTIMIZE TABLE'))
 		{
@@ -548,7 +585,7 @@
 			$pattern = '/INSERT INTO ([\w\.]+)\s+\([ a-zA-Z_"]+/';
 			//$GLOBALS['pg4wp_ins_table'] = $matches[1];
 
-			$match_list = split(' ', $matches[0]);
+			$match_list = explode(' ', $matches[0]);
 			if( $GLOBALS['pg4wp_ins_table'])
 			{
 				$GLOBALS['pg4wp_ins_field'] = trim($match_list[3],' ()	');

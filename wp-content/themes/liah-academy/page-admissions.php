@@ -290,7 +290,20 @@ if ( $show_fapshi_checkout ) {
                                         <li><strong>Degree:</strong> <?php echo esc_html( strtoupper( $student->degree_type ) ); ?></li>
                                         <li><strong>Program Track:</strong> <?php echo esc_html( $student->program_type ); ?></li>
                                         <li><strong>Format:</strong> <?php echo esc_html( ucfirst( $student->study_format ) ); ?></li>
-                                        <li><strong>Document:</strong> <a href="<?php echo esc_url( $student->document_url ); ?>" target="_blank" style="color:#E28704; text-decoration: underline;"><i class="fa-solid fa-file-pdf" style="margin-right:6px;"></i> View Uploaded File</a></li>
+                                                                                <li><strong>Documents:</strong> 
+                                            <?php 
+                                            $docs = explode( ',', $student->document_url );
+                                            $doc_count = count( $docs );
+                                            foreach ( $docs as $index => $doc_url ) {
+                                                $doc_url = trim( $doc_url );
+                                                if ( empty( $doc_url ) ) continue;
+                                                $label = $doc_count > 1 ? 'Doc ' . ($index + 1) : 'View Uploaded File';
+                                                ?>
+                                                <a href="<?php echo esc_url( $doc_url ); ?>" target="_blank" style="color:#E28704; text-decoration: underline; margin-right: 12px;"><i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i> <?php echo esc_html( $label ); ?></a>
+                                                <?php
+                                            }
+                                            ?>
+                                        </li>
                                     </ul>
                                 </div>
 
@@ -310,7 +323,7 @@ if ( $show_fapshi_checkout ) {
                                             </div>
 
                                             <!-- Step 2: Under Review -->
-                                            <div class="timeline-event-node <?php echo ($student->admission_status === 'Under Review' || $student->admission_status === 'Approved') ? 'active' : ''; ?>">
+                                            <div class="timeline-event-node <?php echo ($student->admission_status === 'Under Review' || $student->admission_status === 'Approved' || $student->admission_status === 'Rejected') ? 'active' : ''; ?>">
                                                 <span class="timeline-dot"></span>
                                                 <div class="timeline-text">
                                                     <h5>Academic Board Review</h5>
@@ -319,13 +332,21 @@ if ( $show_fapshi_checkout ) {
                                             </div>
 
                                             <!-- Step 3: Result -->
-                                            <div class="timeline-event-node <?php echo ($student->admission_status === 'Approved') ? 'completed' : ''; ?>">
+                                            <div class="timeline-event-node <?php echo ($student->admission_status === 'Approved' || $student->admission_status === 'Rejected') ? 'completed' : ''; ?>">
                                                 <span class="timeline-dot"></span>
                                                 <div class="timeline-text">
                                                     <h5>Admissions Result</h5>
                                                     <p>
                                                         Current Status: 
-                                                        <strong style="color: <?php echo ($student->admission_status === 'Approved') ? '#10B981' : '#E28704'; ?>;">
+                                                        <strong style="color: <?php 
+                                                            if ($student->admission_status === 'Approved') {
+                                                                echo '#10B981';
+                                                            } elseif ($student->admission_status === 'Rejected') {
+                                                                echo '#EF4444';
+                                                            } else {
+                                                                echo '#E28704';
+                                                            }
+                                                        ?>;">
                                                             <?php echo esc_html( $student->admission_status ); ?>
                                                         </strong>
                                                     </p>
@@ -335,11 +356,37 @@ if ( $show_fapshi_checkout ) {
                                     </div>
                                     
                                     <!-- Dynamic Action notice depending on status -->
-                                    <div style="margin-top:20px; padding:16px; background:#FEF3C7; border: 1px solid #F5A623; border-radius: var(--border-radius-sm); font-size: 13px; color:#B45309;">
+                                    <div style="margin-top:20px; padding:20px; background: rgba(8, 31, 62, 0.3); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: var(--border-radius-sm); color:#F8FAFC;">
                                         <?php if ( $student->admission_status === 'Approved' ) : ?>
-                                            <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i> Congratulations! Your application has been approved. Please check your email or proceed to pay the enrollment fee using bank codes.
+                                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                                <div style="display: flex; align-items: center; gap: 8px; color: #10B981; font-weight: 600;">
+                                                    <i class="fa-solid fa-circle-check" style="font-size: 16px;"></i>
+                                                    <span>Congratulations! Your application has been approved.</span>
+                                                </div>
+                                                
+                                                <?php if ( $student->payment_status !== 'Paid' ) : ?>
+                                                    <p style="color: #94A3B8; font-size: 14px; margin: 0;">Your admission auditing fee (10,000 XAF) is pending authorization.</p>
+                                                    <a href="<?php echo esc_url( home_url( '/admissions?fapshi_checkout=1&id=' . $student->id ) ); ?>" class="btn btn-primary" style="align-self: flex-start; font-size: 13px; padding: 10px 20px;">
+                                                        <i class="fa-solid fa-credit-card" style="margin-right:8px;"></i> Pay Auditing Fee (10,000 XAF)
+                                                    </a>
+                                                <?php else : ?>
+                                                    <div style="display: flex; align-items: center; gap: 8px; color: #F5A623; font-weight: 600; background: rgba(245, 166, 35, 0.1); padding: 10px 14px; border-radius: 4px; border-left: 3px solid #F5A623; margin-top: 10px;">
+                                                        <i class="fa-solid fa-check-double"></i>
+                                                        <span>Auditing Fee Paid (10,000 XAF) - Verification Complete!</span>
+                                                    </div>
+                                                    <p style="color: #94A3B8; font-size: 14px; margin-top: 8px;">You are officially enrolled in the Liah Academy database. Our student affairs team will contact you with course enrollment dates and credentials.</p>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php elseif ( $student->admission_status === 'Rejected' ) : ?>
+                                            <div style="display: flex; align-items: center; gap: 8px; color: #EF4444; font-weight: 600;">
+                                                <i class="fa-solid fa-circle-xmark" style="font-size: 16px;"></i>
+                                                <span>We regret to inform you that your application has been rejected based on the academic board review.</span>
+                                            </div>
                                         <?php else: ?>
-                                            <i class="fa-solid fa-clock" style="margin-right:6px;"></i> Your application is currently under academic review. Once approved, details on how to pay the registration and tuition fees will populate here.
+                                            <div style="display: flex; align-items: center; gap: 8px; color: #E28704;">
+                                                <i class="fa-solid fa-clock" style="font-size: 16px;"></i>
+                                                <span>Your application is currently under academic review. Once approved, the payment panel to authorize tuition fees will populate here.</span>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>

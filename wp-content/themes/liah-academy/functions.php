@@ -109,40 +109,77 @@ function liah_initialize_database() {
     $table_exists = $wpdb->get_var( $query );
 
     if ( ! $table_exists ) {
-        // Standard SQL compatible with PostgreSQL and MySQL.
-        // We'll write the column definition. Under PG4WP, serial column creations
-        // are translated from the AUTO_INCREMENT syntax, or we can check the database engine.
-        // dbDelta requires very specific formatting: two spaces after PRIMARY KEY.
-        $charset_collate = '';
-        if ( ! empty( $wpdb->charset ) ) {
-            $charset_collate = "DEFAULT CHARACTER SET {$wpdb->charset}";
+        $is_pgsql = ( strpos( get_class( $wpdb ), 'pgsql' ) !== false || defined( 'PG4WP_ROOT' ) );
+        if ( $is_pgsql ) {
+            $sql = "CREATE SEQUENCE IF NOT EXISTS {$table_name}_seq;
+            CREATE TABLE $table_name (
+                id bigint NOT NULL DEFAULT nextval('{$table_name}_seq'::text) PRIMARY KEY,
+                full_name varchar(100) NOT NULL,
+                email varchar(100) NOT NULL UNIQUE,
+                password varchar(255) NOT NULL,
+                phone varchar(50) NOT NULL,
+                degree_type varchar(50) NOT NULL,
+                program_type varchar(100) NOT NULL,
+                study_format varchar(50) NOT NULL,
+                document_url varchar(255) NOT NULL,
+                payment_status varchar(30) DEFAULT 'Pending' NOT NULL,
+                admission_status varchar(30) DEFAULT 'Under Review' NOT NULL,
+                submission_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+            );";
+        } else {
+            $sql = "CREATE TABLE $table_name (
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                full_name varchar(100) NOT NULL,
+                email varchar(100) NOT NULL UNIQUE,
+                password varchar(255) NOT NULL,
+                phone varchar(50) NOT NULL,
+                degree_type varchar(50) NOT NULL,
+                program_type varchar(100) NOT NULL,
+                study_format varchar(50) NOT NULL,
+                document_url varchar(255) NOT NULL,
+                payment_status varchar(30) DEFAULT 'Pending' NOT NULL,
+                admission_status varchar(30) DEFAULT 'Under Review' NOT NULL,
+                submission_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB;";
         }
-        if ( ! empty( $wpdb->collate ) ) {
-            $charset_collate .= " COLLATE {$wpdb->collate}";
+        $wpdb->query( $sql );
+    }
+
+    $reviews_table = $wpdb->prefix . 'liah_reviews';
+    $reviews_query = $wpdb->prepare(
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = %s",
+        $reviews_table
+    );
+    $reviews_table_exists = $wpdb->get_var( $reviews_query );
+    
+    if ( ! $reviews_table_exists ) {
+        $is_pgsql = ( strpos( get_class( $wpdb ), 'pgsql' ) !== false || defined( 'PG4WP_ROOT' ) );
+        if ( $is_pgsql ) {
+            $sql_reviews = "CREATE SEQUENCE IF NOT EXISTS {$reviews_table}_seq;
+            CREATE TABLE $reviews_table (
+                id bigint NOT NULL DEFAULT nextval('{$reviews_table}_seq'::text) PRIMARY KEY,
+                reviewer_name varchar(100) NOT NULL,
+                reviewer_role varchar(100) NOT NULL,
+                rating int NOT NULL,
+                review_text text NOT NULL,
+                submission_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+            );";
+        } else {
+            $sql_reviews = "CREATE TABLE $reviews_table (
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                reviewer_name varchar(100) NOT NULL,
+                reviewer_role varchar(100) NOT NULL,
+                rating int(11) NOT NULL,
+                review_text text NOT NULL,
+                submission_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB;";
         }
-
-        // Standard dbDelta syntax. PG4WP intercepts and translates this perfectly.
-        $sql = "CREATE TABLE $table_name (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            full_name varchar(100) NOT NULL,
-            email varchar(100) NOT NULL UNIQUE,
-            password varchar(255) NOT NULL,
-            phone varchar(50) NOT NULL,
-            degree_type varchar(50) NOT NULL,
-            program_type varchar(100) NOT NULL,
-            study_format varchar(50) NOT NULL,
-            document_url varchar(255) NOT NULL,
-            payment_status varchar(30) DEFAULT 'Pending' NOT NULL,
-            admission_status varchar(30) DEFAULT 'Under Review' NOT NULL,
-            submission_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            PRIMARY KEY  (id)
-        ) $charset_collate;";
-
-        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-        dbDelta( $sql );
+        $wpdb->query( $sql_reviews );
     }
 }
-add_action( 'after_switch_theme', 'liah_initialize_database' );
+add_action( 'init', 'liah_initialize_database' );
 
 /* ==========================================================================
    5. SEED DEFAULT DATA ON ACTIVE (Premium Out-of-the-Box Experience)
@@ -349,6 +386,34 @@ function liah_handle_student_registration() {
     }
 
     $application_id = $wpdb->insert_id;
+
+    // Send email notifications
+    $admin_email = get_option( 'admin_email' );
+    $subject_admin = '[Liah Academy] New Student Application Submitted';
+    $message_admin = "Hello Admin,\n\n" .
+                     "A new student application has been submitted:\n" .
+                     "- Name: $full_name\n" .
+                     "- Email: $email\n" .
+                     "- Phone: $phone\n" .
+                     "- Degree Preference: $degree_type\n" .
+                     "- Program Preference: $program_type\n\n" .
+                     "You can review and update their status in the Admissions Dashboard:\n" .
+                     home_url( '/wp-admin/admin.php?page=liah-admissions' ) . "\n\n" .
+                     "Regards,\nLiah Academy System";
+    
+    wp_mail( $admin_email, $subject_admin, $message_admin );
+
+    $subject_student = 'Welcome to Liah Academy - Application Received';
+    $message_student = "Dear $full_name,\n\n" .
+                       "Thank you for registering at Liah Academy! Your application has been successfully received.\n\n" .
+                       "Here is a summary of your choice:\n" .
+                       "- Selected Program: $program_type\n" .
+                       "- Study Format: $study_format\n\n" .
+                       "Our academic board is currently reviewing your uploaded documents. You can log into your portal at any time to monitor your status:\n" .
+                       home_url( '/admissions' ) . "\n\n" .
+                       "Best regards,\nLiah Academy Admissions Team";
+                       
+    wp_mail( $email, $subject_student, $message_student );
 
     // Log the user into session
     $_SESSION['liah_student_id']    = $application_id;
@@ -593,4 +658,219 @@ function liah_fetch_google_reviews() {
     }
 
     return $default_data;
+}
+
+// AJAX Website Review Submission Endpoint
+function liah_handle_submit_review() {
+    check_ajax_referer( 'liah-portal-nonce', 'nonce' );
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'liah_reviews';
+
+    $name    = sanitize_text_field( $_POST['name'] );
+    $role    = sanitize_text_field( $_POST['role'] );
+    $rating  = intval( $_POST['rating'] );
+    $comment = sanitize_textarea_field( $_POST['comment'] );
+
+    if ( empty( $name ) || empty( $role ) || empty( $comment ) || $rating < 1 || $rating > 5 ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'Please fill out all fields correctly.', 'liah-academy' ) ) );
+    }
+
+    $insert_result = $wpdb->insert(
+        $table_name,
+        array(
+            'reviewer_name' => $name,
+            'reviewer_role' => $role,
+            'rating'        => $rating,
+            'review_text'   => $comment
+        ),
+        array( '%s', '%s', '%d', '%s' )
+    );
+
+    if ( $insert_result === false ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'Database error: Could not submit review.', 'liah-academy' ) ) );
+    }
+
+    wp_send_json_success( array(
+        'message' => esc_html__( 'Review submitted successfully!', 'liah-academy' )
+    ) );
+}
+add_action( 'wp_ajax_nopriv_liah_submit_review', 'liah_handle_submit_review' );
+add_action( 'wp_ajax_liah_submit_review', 'liah_handle_submit_review' );
+
+// Admissions Admin Dashboard Page
+function liah_admissions_admin_menu() {
+    add_menu_page(
+        __( 'Liah Admissions', 'liah-academy' ),
+        __( 'Admissions', 'liah-academy' ),
+        'manage_options',
+        'liah-admissions',
+        'liah_render_admissions_admin_page',
+        'dashicons-welcome-learn-more',
+        6
+    );
+}
+add_action( 'admin_menu', 'liah_admissions_admin_menu' );
+
+function liah_render_admissions_admin_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'liah_applications';
+
+    // Handle Actions (Status Updates)
+    if ( isset( $_POST['liah_action'] ) && check_admin_referer( 'liah_admin_action', 'liah_nonce' ) ) {
+        $app_id = intval( $_POST['app_id'] );
+        if ( $_POST['liah_action'] === 'update_status' ) {
+            $new_status = sanitize_text_field( $_POST['status'] );
+            $wpdb->update( $table_name, array( 'admission_status' => $new_status ), array( 'id' => $app_id ) );
+            
+            // Send status update notification email to the student
+            $student_row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $app_id ) );
+            if ( $student_row ) {
+                $subject = '[Liah Academy] Application Review Status Update';
+                if ( $new_status === 'Approved' ) {
+                    $message = "Dear {$student_row->full_name},\n\n" .
+                               "Congratulations! Your application to Liah Academy has been reviewed and APPROVED by the academic board.\n\n" .
+                               "Please log into your portal dashboard to pay the admission auditing fee (10,000 XAF) and begin your enrollment process:\n" .
+                               home_url( '/admissions' ) . "\n\n" .
+                               "Best regards,\nLiah Academy Admissions Team";
+                } elseif ( $new_status === 'Rejected' ) {
+                    $message = "Dear {$student_row->full_name},\n\n" .
+                               "Thank you for your interest in Liah Academy. After reviewing your documents, the academic board has decided not to move forward with your application at this time.\n\n" .
+                               "If you have any questions or want to appeal this decision, please reply directly to this email.\n\n" .
+                               "Best regards,\nLiah Academy Admissions Team";
+                } else {
+                    $message = "Dear {$student_row->full_name},\n\n" .
+                               "Your application status has been updated to: $new_status.\n\n" .
+                               "You can track your timeline at:\n" .
+                               home_url( '/admissions' ) . "\n\n" .
+                               "Best regards,\nLiah Academy Admissions Team";
+                }
+                wp_mail( $student_row->email, $subject, $message );
+            }
+            
+            echo '<div class="notice notice-success is-dismissible"><p>Application status updated successfully.</p></div>';
+        } elseif ( $_POST['liah_action'] === 'update_payment' ) {
+            $new_payment = sanitize_text_field( $_POST['payment'] );
+            $wpdb->update( $table_name, array( 'payment_status' => $new_payment ), array( 'id' => $app_id ) );
+            echo '<div class="notice notice-success is-dismissible"><p>Payment status updated successfully.</p></div>';
+        }
+    }
+
+    // Fetch all applications
+    $applications = $wpdb->get_results( "SELECT * FROM $table_name ORDER BY id DESC" );
+
+    // Count stats
+    $total = count( $applications );
+    $pending = 0;
+    $approved = 0;
+    $rejected = 0;
+    foreach ( $applications as $app ) {
+        if ( $app->admission_status === 'Approved' ) {
+            $approved++;
+        } elseif ( $app->admission_status === 'Rejected' ) {
+            $rejected++;
+        } else {
+            $pending++;
+        }
+    }
+    ?>
+    <div class="wrap">
+        <h1 class="wp-heading-inline">Liah Academy - Student Admissions Manager</h1>
+        <hr class="wp-header-end">
+
+        <!-- Stats Overview Cards -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0;">
+            <div style="background: #fff; padding: 20px; border-left: 4px solid #0073aa; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 4px;">
+                <span style="font-size: 14px; color: #666; font-weight: 600;">Total Registrations</span>
+                <div style="font-size: 28px; font-weight: 700; color: #333; margin-top: 5px;"><?php echo $total; ?></div>
+            </div>
+            <div style="background: #fff; padding: 20px; border-left: 4px solid #f0b849; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 4px;">
+                <span style="font-size: 14px; color: #666; font-weight: 600;">Pending Review</span>
+                <div style="font-size: 28px; font-weight: 700; color: #333; margin-top: 5px;"><?php echo $pending; ?></div>
+            </div>
+            <div style="background: #fff; padding: 20px; border-left: 4px solid #46b450; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 4px;">
+                <span style="font-size: 14px; color: #666; font-weight: 600;">Approved</span>
+                <div style="font-size: 28px; font-weight: 700; color: #333; margin-top: 5px;"><?php echo $approved; ?></div>
+            </div>
+            <div style="background: #fff; padding: 20px; border-left: 4px solid #dc3232; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 4px;">
+                <span style="font-size: 14px; color: #666; font-weight: 600;">Rejected</span>
+                <div style="font-size: 28px; font-weight: 700; color: #333; margin-top: 5px;"><?php echo $rejected; ?></div>
+            </div>
+        </div>
+
+        <!-- Main Applications Table -->
+        <table class="wp-list-table widefat fixed striped table-view-list" style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th style="font-weight: 700;">Candidate Info</th>
+                    <th style="font-weight: 700;">Academic Preference</th>
+                    <th style="font-weight: 700;">Uploaded Docs</th>
+                    <th style="font-weight: 700; width: 120px;">Payment Status</th>
+                    <th style="font-weight: 700; width: 150px;">Admission Status</th>
+                    <th style="font-weight: 700;">Submission Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ( empty( $applications ) ) : ?>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">No applications found.</td>
+                    </tr>
+                <?php else : ?>
+                    <?php foreach ( $applications as $app ) : ?>
+                        <tr>
+                            <td><?php echo $app->id; ?></td>
+                            <td>
+                                <strong><?php echo esc_html( $app->full_name ); ?></strong><br>
+                                <span style="font-size: 12px; color: #555;">Email: <?php echo esc_html( $app->email ); ?></span><br>
+                                <span style="font-size: 12px; color: #555;">Phone: <?php echo esc_html( $app->phone ); ?></span>
+                            </td>
+                            <td>
+                                <span style="text-transform: uppercase; font-weight: 600; font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 3px;"><?php echo esc_html( $app->degree_type ); ?></span>
+                                <div style="margin-top: 4px; font-size: 13px; font-weight: 500; color: #222;"><?php echo esc_html( $app->program_type ); ?></div>
+                                <span style="font-size: 12px; color: #666;">Format: <?php echo esc_html( $app->study_format ); ?></span>
+                            </td>
+                            <td>
+                                <?php
+                                $docs = explode( ',', $app->document_url );
+                                $idx = 1;
+                                foreach ( $docs as $doc ) {
+                                    $doc = trim( $doc );
+                                    if ( ! empty( $doc ) ) {
+                                        echo '<a href="' . esc_url( $doc ) . '" target="_blank" class="button button-small" style="margin-right: 4px; margin-bottom: 4px;"><i class="dashicons dashicons-media-document" style="font-size:16px; width:16px; height:16px; margin-top:2px;"></i> Doc ' . $idx++ . '</a>';
+                                    }
+                                }
+                                ?>
+                            </td>
+                            <td>
+                                <form method="post" style="display:inline-block;">
+                                    <?php wp_nonce_field( 'liah_admin_action', 'liah_nonce' ); ?>
+                                    <input type="hidden" name="app_id" value="<?php echo $app->id; ?>">
+                                    <input type="hidden" name="liah_action" value="update_payment">
+                                    <select name="payment" onchange="this.form.submit()" style="font-size: 12px; padding: 2px; <?php echo $app->payment_status === 'Paid' ? 'color:#46b450; font-weight:600;' : 'color:#d54e21;'; ?>">
+                                        <option value="Pending" <?php selected( $app->payment_status, 'Pending' ); ?>>Pending</option>
+                                        <option value="Paid" <?php selected( $app->payment_status, 'Paid' ); ?>>Paid</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" style="display:inline-block;">
+                                    <?php wp_nonce_field( 'liah_admin_action', 'liah_nonce' ); ?>
+                                    <input type="hidden" name="app_id" value="<?php echo $app->id; ?>">
+                                    <input type="hidden" name="liah_action" value="update_status">
+                                    <select name="status" onchange="this.form.submit()" style="font-size: 12px; padding: 2px; <?php echo $app->admission_status === 'Approved' ? 'color:#46b450; font-weight:600;' : ($app->admission_status === 'Rejected' ? 'color:#dc3232;' : 'color:#f0b849;'); ?>">
+                                        <option value="Under Review" <?php selected( $app->admission_status, 'Under Review' ); ?>>Under Review</option>
+                                        <option value="Approved" <?php selected( $app->admission_status, 'Approved' ); ?>>Approved</option>
+                                        <option value="Rejected" <?php selected( $app->admission_status, 'Rejected' ); ?>>Rejected</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td><?php echo esc_html( date( 'M d, Y @ H:i', strtotime( $app->submission_date ) ) ); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
 }

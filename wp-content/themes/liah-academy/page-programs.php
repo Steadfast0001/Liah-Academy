@@ -107,8 +107,9 @@ get_header();
                             <span><strong>Degree:</strong> <?php echo esc_html( strtoupper($degree) ); ?></span>
                             <span><strong>Duration:</strong> <?php echo esc_html( $duration ); ?></span>
                         </div>
-                        <div>
+                        <div style="display:flex; justify-content:space-between;">
                             <span><strong>Study Format:</strong> <?php echo esc_html( ucfirst( $format ) ); ?></span>
+                            <span><strong>Tuition:</strong> <strong style="color: #081F3E;"><?php echo number_format( intval($fee) ); ?> FRS</strong></span>
                         </div>
                     </div>
 

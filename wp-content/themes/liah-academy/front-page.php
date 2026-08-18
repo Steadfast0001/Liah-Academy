@@ -58,6 +58,24 @@ get_header();
     </div>
 </section>
 
+<!-- 2.5 VIDEO PRESENTATION SECTION -->
+<section class="section-padding bg-dark-section" style="padding: 80px 0; background: #041021; border-bottom: 1px solid rgba(245, 166, 35, 0.1);">
+    <div class="container">
+        <div class="section-header" style="text-align: center; max-width: 700px; margin: 0 auto 50px auto;">
+            <span class="course-badge" style="background: rgba(245, 166, 35, 0.15); color: #F5A623;">Liah Experience</span>
+            <h2 style="color: #F8FAFC; margin-top: 15px;">Liah Academy in Action</h2>
+            <p class="sub-header" style="color: #94A3B8; margin-top: 10px;">Watch our campus walk-through, laboratory practicals, and see how our graduates forge careers in corporate technology.</p>
+        </div>
+
+        <div style="max-width: 960px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 20px rgba(245, 166, 35, 0.08); border: 1px solid rgba(245, 166, 35, 0.15); background: #081F3E; line-height: 0;">
+            <video width="100%" height="auto" controls preload="metadata" style="display: block; border-radius: 11px;">
+                <source src="<?php echo esc_url( get_template_directory_uri() . '/video.mp4' ); ?>" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+</section>
+
 <!-- 3. DEGREE AND PROGRAM PATHWAYS -->
 <section class="section-padding bg-light-section">
     <div class="container">
@@ -322,26 +340,57 @@ get_header();
             <div>
                 <h3 style="color: #F8FAFC; margin-bottom: 20px;">Recent Student Submissions</h3>
                 <div id="websiteReviewsStream" style="display: flex; flex-direction: column; gap: 16px; max-height: 280px; overflow-y: auto; padding-right: 10px;">
-                    <!-- Review 1 -->
-                    <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Belmonde T.</span>
-                            <div style="color: #F5A623; font-size: 11px;">
-                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    <?php
+                    global $wpdb;
+                    $db_reviews = array();
+                    if ( isset( $wpdb ) && get_class( $wpdb ) !== 'MockWPDB' ) {
+                        $db_reviews = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}liah_reviews ORDER BY id DESC LIMIT 10" );
+                    }
+                    if ( ! empty( $db_reviews ) ) :
+                        foreach ( $db_reviews as $dbrev ) :
+                    ?>
+                            <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;"><?php echo esc_html( $dbrev->reviewer_name ); ?> (<?php echo esc_html( $dbrev->reviewer_role ); ?>)</span>
+                                    <div style="color: #F5A623; font-size: 11px;">
+                                        <?php
+                                        for ( $i = 0; $i < 5; $i++ ) {
+                                            if ( $i < $dbrev->rating ) {
+                                                echo '<i class="fa-solid fa-star"></i>';
+                                            } else {
+                                                echo '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
+                                            }
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                                <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"<?php echo esc_html( $dbrev->review_text ); ?>"</p>
                             </div>
-                        </div>
-                        <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"The networking classes are extremely engaging. I appreciate that we work on real hardware configs."</p>
-                    </div>
-                    <!-- Review 2 -->
-                    <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Etonge S.</span>
-                            <div style="color: #F5A623; font-size: 11px;">
-                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    <?php
+                        endforeach;
+                    else :
+                    ?>
+                        <!-- Review 1 -->
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Belmonde T. (Student)</span>
+                                <div style="color: #F5A623; font-size: 11px;">
+                                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                </div>
                             </div>
+                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"The networking classes are extremely engaging. I appreciate that we work on real hardware configs."</p>
                         </div>
-                        <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"Buea finally has a top tier software development academy. The direct internship program with the company is amazing."</p>
-                    </div>
+                        <!-- Review 2 -->
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Etonge S. (Student)</span>
+                                <div style="color: #F5A623; font-size: 11px;">
+                                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                </div>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"Buea finally has a top tier software development academy. The direct internship program with the company is amazing."</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

@@ -12,13 +12,13 @@
             <!-- Brand Column -->
             <div class="footer-brand-col">
                 <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="logo-link" style="height:44px; margin-bottom: 20px;">
-                    <img class="logo-img" src="<?php echo esc_url( get_template_directory_uri() . '/logo.svg' ); ?>" alt="Liah Academy Logo">
+                    <img class="logo-img" src="<?php echo esc_url( get_template_directory_uri() . '/logo.png' ); ?>" alt="Liah Academy Logo">
                     <span class="logo-text" style="font-size:18px;">Liah <span style="color:#F5A623;">Academy</span></span>
                 </a>
                 <p>Buea's premier tech academy and software engineering company, training industry-ready tech specialists and building corporate-level solutions.</p>
                 <div class="social-links-grid" style="margin-top: 16px;">
-                    <a href="https://facebook.com" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="https://instagram.com" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://facebook.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://instagram.com/liahacademy" target="_blank" class="social-circle-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://linkedin.com" target="_blank" class="social-circle-link" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
                 </div>
             </div>
@@ -51,15 +51,15 @@
                 <ul class="footer-links" style="color:#64748B; font-size:15px; line-height:1.8;">
                     <li style="margin-bottom: 8px;">
                         <i class="fa-solid fa-location-dot" style="color:#F5A623; margin-right:8px;"></i>
-                        Bakweri Town, Buea, Southwest Region, Cameroon
+                        Backweri Town, Buea, Southwest Region, Cameroon
                     </li>
                     <li style="margin-bottom: 8px;">
                         <i class="fa-solid fa-phone" style="color:#F5A623; margin-right:8px;"></i>
-                        +237 677 889 900
+                        +237 652 154 095 / 699 526 607
                     </li>
                     <li style="margin-bottom: 8px;">
                         <i class="fa-solid fa-envelope" style="color:#F5A623; margin-right:8px;"></i>
-                        admissions@liahacademy.org
+                        info@liahacademy.com
                     </li>
                 </ul>
             </div>
