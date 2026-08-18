@@ -67,6 +67,8 @@ if ( ! defined( 'DB_DRIVER' ) ) {
 	define( 'DB_DRIVER', 'pgsql' );
 }
 
+define( 'DISALLOW_FILE_EDIT', true );
+
 /* That's all, stop editing! Happy publishing. */
 
 /** Absolute path to the WordPress directory. */
