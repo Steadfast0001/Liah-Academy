@@ -29,7 +29,7 @@ Requires PHP: 7.4
     --color-bg-dark: #041021;           /* Deep Space Blue */
     --color-bg-light: #F8FAFC;          /* Off-White / Ghost */
     --color-text-primary: #0F172A;      /* Dark Slate */
-    --color-text-muted: #64748B;        /* Cool Gray */
+    --color-text-muted: #475569;        /* Slate 600 - High Contrast AA Compliant */
     
     /* Specific Accent Highlights */
     --color-badge-bg: #FEF3C7;          /* Soft Gold Background */

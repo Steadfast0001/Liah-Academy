@@ -465,6 +465,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
 
+        // Trigger on Enter or Space for keyboard accessibility
+        chatWidgetToggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                chatWidgetToggle.click();
+            }
+        });
+
         if (closeChatBtn) {
             closeChatBtn.addEventListener('click', function() {
                 chatWidgetWindow.classList.remove('open');

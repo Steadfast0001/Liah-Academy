@@ -75,7 +75,7 @@
      CHAT ASSISTANT FLOATING WIDGET
      ========================================================================== -->
 <!-- Chat Floating Toggle Bubble Button -->
-<div class="chat-widget-bubble" id="chatWidgetToggle" aria-label="Open Chat Assistant">
+<div class="chat-widget-bubble" id="chatWidgetToggle" aria-label="Open Chat Assistant" tabindex="0" role="button">
     <i class="fa-solid fa-comment-dots" style="font-size: 24px;"></i>
 </div>
 
@@ -110,7 +110,7 @@
 
     <!-- Bottom Input row -->
     <div class="chat-input-row">
-        <input type="text" class="chat-text-input" id="chatTextInput" placeholder="Type your question..." autocomplete="off">
+        <input type="text" class="chat-text-input" id="chatTextInput" placeholder="Type your question..." autocomplete="off" aria-label="Type your message to Liah Assist Bot">
         <button class="chat-send-btn" id="chatSendBtn" aria-label="Send Message">
             <i class="fa-solid fa-paper-plane"></i>
         </button>
