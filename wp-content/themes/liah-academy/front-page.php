@@ -181,41 +181,42 @@ get_header();
         </div>
 
         <div class="grid-3">
-            <!-- News post -->
-            <div class="highlight-post-card">
-                <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&q=80');">
-                    <span class="course-badge highlight-badge">News</span>
-                </div>
-                <div class="highlight-body">
-                    <span class="highlight-meta">August 14, 2026</span>
-                    <h3>Annual Tech Innovation Summit Announced</h3>
-                    <p class="body-normal" style="color: #64748B; margin-top: 8px;">Liah Academy is hosting its annual summit uniting tech leaders from across the region to present research projects.</p>
-                </div>
-            </div>
+            <?php
+            $news_query = new WP_Query( array(
+                'post_type'      => 'liah_news',
+                'posts_per_page' => 3
+            ) );
 
-            <!-- Event post -->
+            if ( $news_query->have_posts() ) :
+                while ( $news_query->have_posts() ) : $news_query->the_post();
+                    $post_id = get_the_ID();
+                    $meta    = get_post_meta( $post_id, 'liah_news_meta', true );
+                    $badge   = get_post_meta( $post_id, 'liah_news_badge', true );
+                    $color   = get_post_meta( $post_id, 'liah_news_color', true );
+                    $image   = get_post_meta( $post_id, 'liah_news_image', true );
+                    $color   = $color ? $color : '#081F3E';
+                    $badge   = $badge ? $badge : 'Notice';
+                    $image   = $image ? $image : 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80';
+            ?>
             <div class="highlight-post-card">
-                <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80');">
-                    <span class="course-badge highlight-badge" style="background: #E28704; color: #ffffff;">Event</span>
+                <div class="highlight-thumb" style="background-image: url('<?php echo esc_url( $image ); ?>');">
+                    <span class="course-badge highlight-badge" style="background: <?php echo esc_attr( $color ); ?>; color: #ffffff;"><?php echo esc_html( $badge ); ?></span>
                 </div>
                 <div class="highlight-body">
-                    <span class="highlight-meta">September 5, 2026</span>
-                    <h3>Buea Cybersecurity Capture The Flag (CTF)</h3>
-                    <p class="body-normal" style="color: #64748B; margin-top: 8px;">Join local developers and defense specialists in our interactive networking challenges hosted at the campus labs.</p>
+                    <span class="highlight-meta"><?php echo esc_html( $meta ); ?></span>
+                    <h3><?php the_title(); ?></h3>
+                    <p class="body-normal" style="color: #64748B; margin-top: 8px;"><?php the_content(); ?></p>
                 </div>
             </div>
-
-            <!-- Announcement post -->
-            <div class="highlight-post-card">
-                <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80');">
-                    <span class="course-badge highlight-badge" style="background: #081F3E; color: #F5A623;">Notice</span>
-                </div>
-                <div class="highlight-body">
-                    <span class="highlight-meta">October 1, 2026</span>
-                    <h3>Official Fall Admissions Portal Is Open</h3>
-                    <p class="body-normal" style="color: #64748B; margin-top: 8px;">Prospective students are invited to register, submit documents, and join the orientation tracks for fall intake.</p>
-                </div>
+            <?php
+                endwhile;
+                wp_reset_postdata();
+            else :
+            ?>
+            <div style="grid-column: span 3; text-align:center; padding: 40px; color:#64748B;">
+                <p>No highlights or updates published yet.</p>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </section>

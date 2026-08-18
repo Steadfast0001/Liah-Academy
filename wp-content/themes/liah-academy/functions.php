@@ -90,6 +90,20 @@ function liah_register_custom_posts() {
         'menu_icon'   => 'dashicons-networking',
         'show_in_rest'=> true,
     ) );
+
+    // 3. News, Events & Announcements Custom Post Type
+    register_post_type( 'liah_news', array(
+        'labels'      => array(
+            'name'          => __( 'News & Highlights', 'liah-academy' ),
+            'singular_name' => __( 'Highlight', 'liah-academy' ),
+            'add_new_item'  => __( 'Add New Highlight', 'liah-academy' ),
+            'edit_item'     => __( 'Edit Highlight', 'liah-academy' ),
+        ),
+        'public'      => true,
+        'supports'    => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
+        'menu_icon'   => 'dashicons-megaphone',
+        'show_in_rest'=> true,
+    ) );
 }
 add_action( 'init', 'liah_register_custom_posts' );
 
@@ -270,6 +284,52 @@ function liah_seed_default_posts() {
             ) );
             if ( $post_id ) {
                 update_post_meta( $post_id, 'liah_service_icon', $s['icon'] );
+            }
+        }
+    }
+
+    // 3. Seed News CPT if empty
+    $news_count = wp_count_posts( 'liah_news' );
+    if ( ! isset( $news_count->publish ) || $news_count->publish == 0 ) {
+        $default_news = array(
+            array(
+                'title'   => 'Annual Tech Innovation Summit Announced',
+                'content' => 'Liah Academy is hosting its annual summit uniting tech leaders from across the region to present research projects.',
+                'meta'    => 'August 14, 2026',
+                'badge'   => 'News',
+                'color'   => '#F5A623',
+                'image'   => 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&q=80'
+            ),
+            array(
+                'title'   => 'Buea Cybersecurity Capture The Flag (CTF)',
+                'content' => 'Join local developers and defense specialists in our interactive networking challenges hosted at the campus labs.',
+                'meta'    => 'September 5, 2026',
+                'badge'   => 'Event',
+                'color'   => '#E28704',
+                'image'   => 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80'
+            ),
+            array(
+                'title'   => 'Official Fall Admissions Portal Is Open',
+                'content' => 'Prospective students are invited to register, submit documents, and join the orientation tracks for fall intake.',
+                'meta'    => 'October 1, 2026',
+                'badge'   => 'Notice',
+                'color'   => '#081F3E',
+                'image'   => 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80'
+            )
+        );
+
+        foreach ( $default_news as $n ) {
+            $post_id = wp_insert_post( array(
+                'post_title'   => $n['title'],
+                'post_content' => $n['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'liah_news',
+            ) );
+            if ( $post_id ) {
+                update_post_meta( $post_id, 'liah_news_meta', $n['meta'] );
+                update_post_meta( $post_id, 'liah_news_badge', $n['badge'] );
+                update_post_meta( $post_id, 'liah_news_color', $n['color'] );
+                update_post_meta( $post_id, 'liah_news_image', $n['image'] );
             }
         }
     }
@@ -708,6 +768,31 @@ function liah_admissions_admin_menu() {
         'liah_render_admissions_admin_page',
         'dashicons-welcome-learn-more',
         6
+    );
+
+    // Add direct shortcut menus for managing custom post types
+    add_submenu_page(
+        'liah-admissions',
+        __( 'Manage Courses', 'liah-academy' ),
+        __( 'Manage Courses', 'liah-academy' ),
+        'manage_options',
+        'edit.php?post_type=liah_course'
+    );
+
+    add_submenu_page(
+        'liah-admissions',
+        __( 'Manage Highlights & News', 'liah-academy' ),
+        __( 'Manage News', 'liah-academy' ),
+        'manage_options',
+        'edit.php?post_type=liah_news'
+    );
+
+    add_submenu_page(
+        'liah-admissions',
+        __( 'Manage Media Library', 'liah-academy' ),
+        __( 'Manage Media', 'liah-academy' ),
+        'manage_options',
+        'upload.php'
     );
 }
 add_action( 'admin_menu', 'liah_admissions_admin_menu' );

@@ -504,26 +504,35 @@ document.addEventListener('DOMContentLoaded', function() {
         function getBotResponse(userQuery) {
             const query = userQuery.toLowerCase().trim();
 
-            if (query.includes('admission') || query.includes('requirement') || query.includes('apply') || query.includes('register')) {
-                return "To apply at Liah Academy, you need at least 2 GCE Advanced Level papers. Fill out our step-by-step Registration Form on the Admissions page, upload your GCE slip/transcript (PDF/Word), and audit your status later by logging in!";
+            if (query.includes('admission') || query.includes('requirement') || query.includes('apply') || query.includes('register') || query.includes('signup')) {
+                return "To apply at Liah Academy, select your desired track (HND, ND, or Certification) and fill out the step-by-step Admissions Form. Upload your credentials (GCE slip, transcripts) in PDF/DOC format. Once submitted, log in to track your status on the dashboard!";
             }
-            if (query.includes('fee') || query.includes('tuition') || query.includes('cost') || query.includes('pay') || query.includes('finance')) {
-                return "Tuition details: HND is 350,000 XAF, B.Tech is 450,000 XAF, B.Sc is 500,000 XAF. We offer discounts for single upfront payments and semester installment options. Try our live Tuition Calculator on the Admissions page!";
+            if (query.includes('fee') || query.includes('tuition') || query.includes('cost') || query.includes('pay') || query.includes('finance') || query.includes('price')) {
+                return "Tuition fees: HND programs are 250,000 XAF/year; National Diploma (ND) programs are 150,000 XAF/year; Professional Certifications are 300,000 to 350,000 XAF. We offer discounts for one-time payments and flexible installment options. Check our Tuition Estimator on the Admissions page!";
             }
-            if (query.includes('degree') || query.includes('program') || query.includes('course') || query.includes('hnd') || query.includes('bsc') || query.includes('btech')) {
-                return "We offer 3 core tracks: 1. Software Engineering B.Tech, 2. Cybersecurity & Network Defense B.Sc, 3. DevOps Pipelines HND. These are available in full-time on-campus or flexible online formats. Browse the Degrees & Programs page for details!";
+            if (query.includes('degree') || query.includes('program') || query.includes('course') || query.includes('hnd') || query.includes('nd') || query.includes('certification') || query.includes('track')) {
+                return "We offer tracks under three main divisions:\n1. HND (Software Engineering, Web/Graphics, Network/Maintenance, Digital Marketing, and Business Management courses like Accounting, HR, Marketing).\n2. ND (Computer Engineering, ICT, Web Design, QuickBooks).\n3. Certifications (9-month Data Science and DevOps, 6-month Industrial Web Design). Check the Degrees & Programs page!";
             }
-            if (query.includes('location') || query.includes('address') || query.includes('buea') || query.includes('bakweri') || query.includes('find')) {
-                return "Liah Academy is located in Bakweri Town, Buea, Southwest Region, Cameroon, right along the scenic slopes of Mount Cameroon. Check our interactive SVG map on the Contact page for directions!";
+            if (query.includes('location') || query.includes('address') || query.includes('buea') || query.includes('backweri') || query.includes('bakweri') || query.includes('find') || query.includes('map')) {
+                return "Liah Academy is located in Backweri Town, Buea, Southwest Region, Cameroon. Our campus is set on the lower slopes of Mount Cameroon, providing a serene environment for practical studies. See our interactive contact map page!";
             }
-            if (query.includes('wifi') || query.includes('internet') || query.includes('security') || query.includes('experience')) {
-                return "We provide 24/7 high-speed fiber-optic Wi-Fi and strictly monitored campus keycard security. Students also enjoy hackathons, hands-on bootcamps, and direct paid internships at our software development division!";
+            if (query.includes('housing') || query.includes('hostel') || query.includes('accommodation') || query.includes('dorm')) {
+                return "While we do not have student dormitories on campus, our student affairs office helps students locate safe and affordable student hostels and local apartments in Backweri Town, Buea.";
             }
-            if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('greetings')) {
-                return "Hello! I am the Liah virtual helper. How can I guide your navigation today?";
+            if (query.includes('internship') || query.includes('job') || query.includes('work') || query.includes('employ') || query.includes('benefit')) {
+                return "A key benefit of Liah Academy is that all students undergo direct practical internship placements in our corporate software development division, building real-world enterprise applications before graduation.";
+            }
+            if (query.includes('scholarship') || query.includes('financial') || query.includes('aid') || query.includes('discount')) {
+                return "Yes! Liah Academy offers merit-based and need-based financial aid. You can also get a 5% discount on tuition if you pay the full amount upfront. Contact our finance desk at info@liahacademy.com for more info.";
+            }
+            if (query.includes('wifi') || query.includes('internet') || query.includes('security') || query.includes('experience') || query.includes('lab')) {
+                return "Our campus features high-speed fiber-optic Wi-Fi, modern computer laboratories with dedicated power backup, and card-key security systems to protect our practical workspaces.";
+            }
+            if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('greetings') || query.includes('whatsapp')) {
+                return "Hello! I'm Liah Assist Bot. I'm here to help with information about admissions, courses, fees, location, and housing. What would you like to know?";
             }
             
-            return "Thank you for asking. I recommend reviewing our Admissions portal, checking our Degree modules, or writing directly to info@liahacademy.org for dedicated assistance!";
+            return "Thank you for asking! I recommend visiting our Admissions Portal, checking our Programs listings, or contacting our administration team directly at info@liahacademy.com or +237 652 154 095.";
         }
 
         // Process message transmission
