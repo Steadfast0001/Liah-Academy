@@ -308,6 +308,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Dynamic Program/Track Selection based on Degree Level
+    const regDegreeType = document.getElementById('regDegreeType');
+    const regProgramType = document.getElementById('regProgramType');
+
+    if (regDegreeType && regProgramType) {
+        const programOptions = {
+            'HND': [
+                { value: 'Software Engineering HND', label: 'Software Engineering HND' },
+                { value: 'Web and Graphics Design HND', label: 'Web and Graphics Design HND' },
+                { value: 'Digital Marketing and E-Commerce HND', label: 'Digital Marketing and E-Commerce HND' },
+                { value: 'Network and Maintenance HND', label: 'Network and Maintenance HND' },
+                { value: 'Accounting HND', label: 'Accounting HND' },
+                { value: 'Management HND', label: 'Management HND' },
+                { value: 'Marketing HND', label: 'Marketing HND' },
+                { value: 'Digital Marketing HND', label: 'Digital Marketing HND' },
+                { value: 'Human Resource Management HND', label: 'Human Resource Management HND' }
+            ],
+            'ND': [
+                { value: 'Computer Engineering ND', label: 'Computer Engineering ND' },
+                { value: 'ICT ND', label: 'ICT ND' },
+                { value: 'Web Design ND', label: 'Web Design ND' },
+                { value: 'Graphics Design and Printing ND', label: 'Graphics Design and Printing ND' },
+                { value: 'Basic Computer ND', label: 'Basic Computer ND' },
+                { value: 'Office Automation Secretaryship ND', label: 'Office Automation Secretaryship ND' },
+                { value: 'Computerized Accounting ND', label: 'Computerized Accounting ND' }
+            ],
+            'Certification': [
+                { value: 'Data Science Certification', label: 'Data Science Certification' },
+                { value: 'DevOps Certification', label: 'DevOps Certification' },
+                { value: 'Industrial Web Design', label: 'Industrial Web Design' },
+                { value: 'Digital Marketing and SEO', label: 'Digital Marketing and SEO' }
+            ]
+        };
+
+        function updateProgramOptions() {
+            const selectedDegree = regDegreeType.value;
+            const options = programOptions[selectedDegree] || [];
+            
+            // Clear existing options
+            regProgramType.innerHTML = '';
+            
+            // Populate new options
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt.value;
+                el.textContent = opt.label;
+                regProgramType.appendChild(el);
+            });
+        }
+
+        regDegreeType.addEventListener('change', updateProgramOptions);
+        // Initial run to sync on page load
+        updateProgramOptions();
+    }
+
     /* ==========================================================================
        6. AJAX DATABASE ENDPOINTS CALLS (Submit, Login & Logout)
        ========================================================================== */

@@ -366,13 +366,14 @@ function liah_handle_student_registration() {
         wp_send_json_error( array( 'message' => esc_html__( 'Please provide a valid email address.', 'liah-academy' ) ) );
     }
 
-    // Check if email already registered
+    // Check if email or phone number already registered
     $existing = $wpdb->get_var( $wpdb->prepare(
-        "SELECT id FROM $table_name WHERE email = %s",
-        $email
+        "SELECT id FROM $table_name WHERE email = %s OR phone = %s",
+        $email,
+        $phone
     ) );
     if ( $existing ) {
-        wp_send_json_error( array( 'message' => esc_html__( 'This email is already registered. Please log in instead.', 'liah-academy' ) ) );
+        wp_send_json_error( array( 'message' => esc_html__( 'You have already registered with this email or phone number. Please log in to check your application status.', 'liah-academy' ) ) );
     }
 
     // Handle document upload (single or multiple)
