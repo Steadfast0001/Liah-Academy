@@ -16,6 +16,14 @@ get_header();
         <!-- Local school photos playing in rotation background -->
         <div class="slide active" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_1.jpg' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_2.jpg' ); ?>"></div>
+        
+        <!-- Muted video slide enqueued in rotation -->
+        <div class="slide">
+            <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;">
+                <source src="<?php echo esc_url( get_template_directory_uri() . '/video.mp4' ); ?>" type="video/mp4">
+            </video>
+        </div>
+
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_3.jpg' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_4.jpg' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_5.jpg' ); ?>"></div>

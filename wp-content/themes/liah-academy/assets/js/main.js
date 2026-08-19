@@ -64,9 +64,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Rotate slideshow every 5 seconds
         setInterval(function() {
+            const currentVideo = slides[currentSlide].querySelector('video');
+            if (currentVideo) {
+                currentVideo.pause();
+            }
+
             slides[currentSlide].classList.remove('active');
             currentSlide = (currentSlide + 1) % slides.length;
             slides[currentSlide].classList.add('active');
+
+            const nextVideo = slides[currentSlide].querySelector('video');
+            if (nextVideo) {
+                nextVideo.play();
+            }
         }, 5000);
     }
 
