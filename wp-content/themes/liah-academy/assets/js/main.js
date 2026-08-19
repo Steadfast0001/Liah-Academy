@@ -832,5 +832,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
+
+        // Header Dropdown Search Bar Toggle
+        const headerSearchToggle = document.getElementById('headerSearchToggle');
+        const headerSearchFormWrap = document.getElementById('headerSearchFormWrap');
+        const headerSearchInput = document.getElementById('headerSearchInput');
+
+        if (headerSearchToggle && headerSearchFormWrap) {
+            headerSearchToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                headerSearchFormWrap.classList.toggle('active');
+                if (headerSearchFormWrap.classList.contains('active') && headerSearchInput) {
+                    headerSearchInput.focus();
+                }
+            });
+
+            // Close search bar dropdown on click outside
+            document.addEventListener('click', function(e) {
+                if (!headerSearchFormWrap.contains(e.target) && !headerSearchToggle.contains(e.target)) {
+                    headerSearchFormWrap.classList.remove('active');
+                }
+            });
+        }
     }
 });

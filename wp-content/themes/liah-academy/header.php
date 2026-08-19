@@ -128,6 +128,13 @@ if ( ! function_exists( 'liah_nav_active_class' ) ) {
                 <li class="menu-item<?php echo liah_nav_active_class('contact'); ?>">
                     <a href="<?php echo esc_url( home_url( '/contact' ) ); ?>" class="menu-link">Contact</a>
                 </li>
+
+                <!-- Header Search Icon Trigger -->
+                <li class="menu-item" style="display: flex; align-items: center;">
+                    <button class="menu-link" id="headerSearchToggle" aria-label="Toggle Search" style="background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; padding: 0 12px; height: 100%;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </li>
                 
                 <!-- Navbar Primary CTA Button -->
                 <li class="menu-item">
@@ -138,19 +145,14 @@ if ( ! function_exists( 'liah_nav_active_class' ) ) {
     </div>
 </header>
 
-<?php
-/**
- * Search Bar: Positioned DIRECTLY below the navigation bar.
- * Appears exclusively on the Landing Home Page.
- */
-if ( is_front_page() ) :
-?>
-<div class="home-search-bar-wrap">
-    <form role="search" method="get" class="home-search-form" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-        <input type="search" class="search-input-field" placeholder="Search courses, degree tracks, workshops, or academic requirements..." value="<?php echo get_search_query(); ?>" name="s" id="courseSearchInput" autocomplete="off" />
-        <button type="submit" class="search-submit-btn">
-            <i class="fa-solid fa-magnifying-glass" style="margin-right: 6px;"></i> Search
-        </button>
-    </form>
+<!-- Dropdown Header Search Bar Wrap -->
+<div class="header-search-bar-wrap" id="headerSearchFormWrap">
+    <div class="container">
+        <form role="search" method="get" class="header-search-form" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+            <input type="search" class="search-input-field" placeholder="Search courses, degree tracks, or requirements..." value="<?php echo get_search_query(); ?>" name="s" id="headerSearchInput" autocomplete="off" />
+            <button type="submit" class="search-submit-btn">
+                <i class="fa-solid fa-magnifying-glass" style="margin-right: 6px;"></i> Search
+            </button>
+        </form>
+    </div>
 </div>
-<?php endif; ?>
