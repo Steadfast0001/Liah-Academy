@@ -146,11 +146,11 @@ if ( ! function_exists( 'liah_nav_active_class' ) ) {
 </header>
 
 <!-- Dropdown Header Search Bar Wrap -->
-<div class="header-search-bar-wrap" id="headerSearchFormWrap">
+<div class="header-search-bar-wrap" id="headerSearchFormWrap" style="position: fixed; top: 70px; left: 0; width: 100%; background: rgba(8, 31, 62, 0.97); border-bottom: 1px solid rgba(245, 166, 35, 0.2); padding: 18px 0; z-index: 998; display: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);">
     <div class="container">
-        <form role="search" method="get" class="header-search-form" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-            <input type="search" class="search-input-field" placeholder="Search courses, degree tracks, or requirements..." value="<?php echo get_search_query(); ?>" name="s" id="headerSearchInput" autocomplete="off" />
-            <button type="submit" class="search-submit-btn">
+        <form role="search" method="get" class="header-search-form" action="<?php echo esc_url( home_url( '/' ) ); ?>" style="display: flex; width: 100%; max-width: 800px; margin: 0 auto; gap: 12px; padding: 0 20px;">
+            <input type="search" class="search-input-field" placeholder="Search courses, degree tracks, or requirements..." value="<?php echo get_search_query(); ?>" name="s" id="headerSearchInput" autocomplete="off" style="flex-grow: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #F8FAFC; padding: 12px 18px; border-radius: 8px; font-size: 15px; outline: none;" />
+            <button type="submit" class="search-submit-btn" style="background: var(--color-primary-accent); color: #081F3E; border: none; padding: 12px 26px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px;">
                 <i class="fa-solid fa-magnifying-glass" style="margin-right: 6px;"></i> Search
             </button>
         </form>

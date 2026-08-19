@@ -866,16 +866,20 @@ document.addEventListener('DOMContentLoaded', function() {
             headerSearchToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                headerSearchFormWrap.classList.toggle('active');
-                if (headerSearchFormWrap.classList.contains('active') && headerSearchInput) {
-                    headerSearchInput.focus();
+                if (headerSearchFormWrap.style.display === 'none' || !headerSearchFormWrap.style.display) {
+                    headerSearchFormWrap.style.display = 'block';
+                    if (headerSearchInput) {
+                        headerSearchInput.focus();
+                    }
+                } else {
+                    headerSearchFormWrap.style.display = 'none';
                 }
             });
 
             // Close search bar dropdown on click outside
             document.addEventListener('click', function(e) {
                 if (!headerSearchFormWrap.contains(e.target) && !headerSearchToggle.contains(e.target)) {
-                    headerSearchFormWrap.classList.remove('active');
+                    headerSearchFormWrap.style.display = 'none';
                 }
             });
         }
