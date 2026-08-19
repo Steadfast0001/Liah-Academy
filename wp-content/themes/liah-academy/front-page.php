@@ -233,126 +233,117 @@ get_header();
     </div>
 </section>
 
-<!-- 6. GOOGLE & WEBSITE REVIEWS SECTION -->
-<section class="section-padding bg-dark-section" style="border-top: 1px solid rgba(245, 166, 35, 0.1);">
+<!-- 6. PARTNERS LOGOS & COMMUNITY REVIEWS -->
+<section class="section-padding bg-dark-section" style="border-top: 1px solid rgba(245, 166, 35, 0.1); padding: 60px 0;">
     <div class="container">
         <?php
         $google_data = liah_fetch_google_reviews();
         $rating = isset( $google_data['rating'] ) ? floatval( $google_data['rating'] ) : 4.9;
         $total_ratings = isset( $google_data['user_ratings_total'] ) ? intval( $google_data['user_ratings_total'] ) : 85;
         ?>
-        <div class="section-header">
-            <span class="course-badge" style="background: rgba(245, 166, 35, 0.15); color: #F5A623;"><i class="fa-brands fa-google" style="margin-right:6px;"></i> Google Reviews</span>
-            <h2 style="color: #F8FAFC;">What our community says</h2>
-            <p class="sub-header" style="color: #64748B;">Liah Academy maintains a <?php echo esc_html( number_format( $rating, 1 ) ); ?> ★ rating on Google. Check out verified reviews from our tech students and software partners.</p>
+        <!-- Part A: Partners Logos Display -->
+        <div style="text-align: center; margin-bottom: 50px;">
+            <span class="course-badge" style="background: rgba(245, 166, 35, 0.1); color: #F5A623; margin-bottom: 15px;">Our Network & Partners</span>
+            <div class="grid-4" style="margin-top: 25px; gap: 20px; align-items: center;">
+                <div style="background: rgba(8, 31, 62, 0.3); border: 1px solid rgba(245, 166, 35, 0.08); border-radius: 8px; padding: 20px; text-align: center;">
+                    <span style="font-family: var(--font-heading); font-weight: 800; color: #94A3B8; font-size: 14px; letter-spacing: 1px;">SILICON MOUNTAIN</span>
+                </div>
+                <div style="background: rgba(8, 31, 62, 0.3); border: 1px solid rgba(245, 166, 35, 0.08); border-radius: 8px; padding: 20px; text-align: center;">
+                    <span style="font-family: var(--font-heading); font-weight: 800; color: #94A3B8; font-size: 14px; letter-spacing: 1px;">MINESEC CERTIFIED</span>
+                </div>
+                <div style="background: rgba(8, 31, 62, 0.3); border: 1px solid rgba(245, 166, 35, 0.08); border-radius: 8px; padding: 20px; text-align: center;">
+                    <span style="font-family: var(--font-heading); font-weight: 800; color: #94A3B8; font-size: 14px; letter-spacing: 1px;">LINUX LABS</span>
+                </div>
+                <div style="background: rgba(8, 31, 62, 0.3); border: 1px solid rgba(245, 166, 35, 0.08); border-radius: 8px; padding: 20px; text-align: center;">
+                    <span style="font-family: var(--font-heading); font-weight: 800; color: #94A3B8; font-size: 14px; letter-spacing: 1px;">AWS ACADEMY</span>
+                </div>
+            </div>
         </div>
 
-        <div class="grid-3" style="margin-bottom: 50px; align-items: stretch;">
-            <!-- Google Rating Summary Card -->
-            <div class="premium-card" style="background: rgba(8, 31, 62, 0.5); border-color: rgba(245, 166, 35, 0.15); color: #F8FAFC; text-align: center; padding: 40px 30px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png" style="width: 48px; height: 48px; margin-bottom: 16px;" alt="Google Logo">
-                <h3 style="font-size: 56px; font-weight: 800; color: #F5A623; line-height: 1;"><?php echo esc_html( number_format( $rating, 1 ) ); ?></h3>
-                <div style="color: #F5A623; margin: 12px 0; font-size: 18px;">
-                    <?php
-                    $full_stars = floor( $rating );
-                    for ( $i = 0; $i < 5; $i++ ) {
-                        if ( $i < $full_stars ) {
-                            echo '<i class="fa-solid fa-star"></i>';
-                        } else {
-                            echo '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
-                        }
-                    }
-                    ?>
-                </div>
-                <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">Based on <?php echo esc_html( $total_ratings ); ?> verified Google reviews</p>
-                <a href="https://share.google/2pqoSX2O6DET6vL5q" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 13px;"><i class="fa-brands fa-google" style="margin-right: 8px;"></i> Verify on Google</a>
-            </div>
+        <hr style="border: 0; border-top: 1px solid rgba(245, 166, 35, 0.1); margin: 45px 0 35px 0;">
 
-            <?php
-            $reviews_list = isset( $google_data['reviews'] ) ? $google_data['reviews'] : array();
-            $display_reviews = array_slice( $reviews_list, 0, 2 );
-            foreach ( $display_reviews as $rev ) :
-                $initials = '';
-                if ( ! empty( $rev['author_name'] ) ) {
-                    $parts = explode( ' ', $rev['author_name'] );
-                    $initials = strtoupper( substr( $parts[0], 0, 1 ) . ( isset( $parts[1] ) ? substr( $parts[1], 0, 1 ) : '' ) );
-                }
-                $initials = $initials ? $initials : 'GA';
-            ?>
-            <div class="premium-card" style="background: rgba(8, 31, 62, 0.3); border-color: rgba(245, 166, 35, 0.08); color: #F8FAFC; padding: 30px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="color: #F5A623; margin-bottom: 16px; font-size: 14px;">
-                        <?php for ( $i = 0; $i < 5; $i++ ) : ?>
-                            <?php if ( $i < $rev['rating'] ) : ?>
-                                <i class="fa-solid fa-star"></i>
-                            <?php else : ?>
-                                <i class="fa-regular fa-star" style="color: #64748B;"></i>
-                            <?php endif; ?>
-                        <?php endfor; ?>
-                    </div>
-                    <p class="body-normal" style="color: #94A3B8; font-style: italic; line-height: 1.6;">"<?php echo esc_html( $rev['text'] ); ?>"</p>
+        <!-- Part B: Google & Website Reviews Side-by-Side -->
+        <div class="grid-2" style="gap: 40px; align-items: start;">
+            <!-- Left Side: Google Reviews -->
+            <div style="background: rgba(8, 31, 62, 0.25); border: 1px solid rgba(245, 166, 35, 0.1); border-radius: 12px; padding: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png" style="width: 28px; height: 28px;" alt="Google Logo">
+                    <h3 style="color: #F8FAFC; margin: 0; font-size: 20px;">Google Reviews</h3>
+                    <span style="background: rgba(245, 166, 35, 0.2); color: #F5A623; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+                        <?php echo esc_html( number_format( $rating, 1 ) ); ?> ★ (<?php echo esc_html( $total_ratings ); ?>)
+                    </span>
                 </div>
-                <div style="margin-top: 24px; display: flex; align-items: center; gap: 12px;">
-                    <?php if ( ! empty( $rev['profile_photo_url'] ) ) : ?>
-                        <img src="<?php echo esc_url( $rev['profile_photo_url'] ); ?>" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" alt="<?php echo esc_attr( $rev['author_name'] ); ?>">
-                    <?php else : ?>
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: #F5A623; color: #081F3E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
-                            <?php echo esc_html( $initials ); ?>
+                
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <?php
+                    $reviews_list = isset( $google_data['reviews'] ) ? $google_data['reviews'] : array();
+                    $display_reviews = array_slice( $reviews_list, 0, 2 );
+                    if ( ! empty( $display_reviews ) ) :
+                        foreach ( $display_reviews as $rev ) :
+                    ?>
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid #4285F4; padding: 14px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 13px;"><?php echo esc_html( $rev['author_name'] ); ?></span>
+                                <div style="color: #F5A623; font-size: 10px;">
+                                    <?php for ( $i = 0; $i < $rev['rating']; $i++ ) { echo '★'; } ?>
+                                </div>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 12px; line-height: 1.5; font-style: italic; margin: 0;">"<?php echo esc_html( wp_trim_words( $rev['text'], 18 ) ); ?>"</p>
+                        </div>
+                    <?php 
+                        endforeach;
+                    else:
+                    ?>
+                        <!-- Fallback Google Reviews if API is offline -->
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid #4285F4; padding: 14px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 13px;">Steddy Lyonga</span>
+                                <div style="color: #F5A623; font-size: 10px;">★★★★★</div>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 12px; line-height: 1.5; font-style: italic; margin: 0;">"Best academic incubator and tech lab in Buea. Highly practical training curriculum!"</p>
                         </div>
                     <?php endif; ?>
-                    <div>
-                        <h4 style="font-size: 15px; color: #F8FAFC;"><?php echo esc_html( $rev['author_name'] ); ?></h4>
-                        <span style="font-size: 12px; color: #64748B;"><?php echo esc_html( isset( $rev['relative_time_description'] ) ? $rev['relative_time_description'] : 'Verified Reviewer' ); ?></span>
-                    </div>
                 </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-
-        <!-- On-Site Website Review Form / Interactive Submission -->
-        <div class="grid-2" style="gap: 40px; background: rgba(8, 31, 62, 0.2); padding: 40px; border-radius: var(--border-radius-md); border: 1px solid rgba(245, 166, 35, 0.1);">
-            <div>
-                <h3 style="color: #F8FAFC; margin-bottom: 12px;">Submit a Website Review</h3>
-                <p class="body-normal" style="color: #64748B; margin-bottom: 24px;">Are you a current student or partner? Share your training or software development experience with us and help others find us.</p>
-                
-                <form id="websiteReviewForm" style="display: flex; flex-direction: column; gap: 16px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <input type="text" id="revName" placeholder="Your Name" style="width:100%; background: rgba(8, 31, 62, 0.4); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 12px; color: #fff; font-size:14px;" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <input type="text" id="revRole" placeholder="Role (e.g. Student, Partner)" style="width:100%; background: rgba(8, 31, 62, 0.4); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 12px; color: #fff; font-size:14px;" required>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="color: #94A3B8; font-size: 14px;">Select Rating:</span>
-                        <div class="star-rating-select" style="display: flex; gap: 6px; font-size: 20px; color: #64748B; cursor: pointer;">
-                            <i class="fa-solid fa-star rating-star" data-value="1"></i>
-                            <i class="fa-solid fa-star rating-star" data-value="2"></i>
-                            <i class="fa-solid fa-star rating-star" data-value="3"></i>
-                            <i class="fa-solid fa-star rating-star" data-value="4"></i>
-                            <i class="fa-solid fa-star rating-star" data-value="5"></i>
-                        </div>
-                        <input type="hidden" id="revRating" value="5">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:0;">
-                        <textarea id="revComment" rows="3" placeholder="Write your review here..." style="width:100%; background: rgba(8, 31, 62, 0.4); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 12px; color: #fff; font-size:14px; resize: none;" required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="align-self: flex-start; padding: 10px 24px;"><i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Review</button>
-                </form>
-                
-                <div id="reviewSuccessMsg" style="display:none; color: #F5A623; margin-top: 15px; font-size: 14px; font-weight:600;">
-                    <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i> Review submitted successfully!
+                <div style="margin-top: 20px;">
+                    <a href="https://share.google/2pqoSX2O6DET6vL5q" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="font-size: 12px; padding: 8px 16px; width: 100%; text-align: center; display: block;"><i class="fa-brands fa-google" style="margin-right: 8px;"></i> Verify on Google</a>
                 </div>
             </div>
 
-            <!-- Dynamic reviews stream -->
-            <div>
-                <h3 style="color: #F8FAFC; margin-bottom: 20px;">Recent Student Submissions</h3>
-                <div id="websiteReviewsStream" style="display: flex; flex-direction: column; gap: 16px; max-height: 280px; overflow-y: auto; padding-right: 10px;">
+            <!-- Right Side: Website Reviews & Submit Review Form -->
+            <div style="background: rgba(8, 31, 62, 0.25); border: 1px solid rgba(245, 166, 35, 0.1); border-radius: 12px; padding: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: #F8FAFC; margin: 0; font-size: 20px;"><i class="fa-solid fa-comments" style="color: var(--color-primary-accent); margin-right: 8px;"></i> Student Reviews</h3>
+                    <button id="toggleReviewFormBtn" class="btn btn-primary" style="font-size: 11px; padding: 6px 12px; height: auto;"><i class="fa-solid fa-pen-to-square"></i> Write Review</button>
+                </div>
+
+                <!-- Toggleable Form -->
+                <div id="websiteReviewFormContainer" style="display: none; margin-bottom: 20px; background: rgba(8, 31, 62, 0.4); padding: 20px; border-radius: 8px; border: 1px solid rgba(245, 166, 35, 0.15);">
+                    <form id="websiteReviewForm" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <input type="text" id="revName" placeholder="Your Name" style="background: rgba(8, 31, 62, 0.6); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 10px; color: #fff; font-size:13px;" required>
+                            <input type="text" id="revRole" placeholder="Role (e.g. Student)" style="background: rgba(8, 31, 62, 0.6); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 10px; color: #fff; font-size:13px;" required>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size:13px; color: #94A3B8;">Rating:</span>
+                            <div style="display: flex; gap: 6px; font-size: 14px; color: #64748B;">
+                                <i class="fa-solid fa-star rating-star" data-value="1" style="cursor:pointer;"></i>
+                                <i class="fa-solid fa-star rating-star" data-value="2" style="cursor:pointer;"></i>
+                                <i class="fa-solid fa-star rating-star" data-value="3" style="cursor:pointer;"></i>
+                                <i class="fa-solid fa-star rating-star" data-value="4" style="cursor:pointer;"></i>
+                                <i class="fa-solid fa-star rating-star" data-value="5" style="cursor:pointer;"></i>
+                            </div>
+                            <input type="hidden" id="revRating" value="5">
+                        </div>
+                        <textarea id="revComment" rows="2" placeholder="Write review..." style="background: rgba(8, 31, 62, 0.6); border: 1px solid rgba(245, 166, 35, 0.15); border-radius: 6px; padding: 10px; color: #fff; font-size:13px; resize: none;" required></textarea>
+                        <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px; align-self: flex-start;">Submit Review</button>
+                    </form>
+                    <div id="reviewSuccessMsg" style="display:none; color: #F5A623; margin-top: 10px; font-size: 13px; font-weight:600;">
+                        <i class="fa-solid fa-circle-check"></i> Review submitted!
+                    </div>
+                </div>
+
+                <!-- Reviews Stream (Side by Side layout) -->
+                <div id="websiteReviewsStream" style="display: flex; flex-direction: column; gap: 16px; max-height: 180px; overflow-y: auto; padding-right: 6px;">
                     <?php
                     global $wpdb;
                     $db_reviews = array();
@@ -362,46 +353,32 @@ get_header();
                     if ( ! empty( $db_reviews ) ) :
                         foreach ( $db_reviews as $dbrev ) :
                     ?>
-                            <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;"><?php echo esc_html( $dbrev->reviewer_name ); ?> (<?php echo esc_html( $dbrev->reviewer_role ); ?>)</span>
-                                    <div style="color: #F5A623; font-size: 11px;">
-                                        <?php
-                                        for ( $i = 0; $i < 5; $i++ ) {
-                                            if ( $i < $dbrev->rating ) {
-                                                echo '<i class="fa-solid fa-star"></i>';
-                                            } else {
-                                                echo '<i class="fa-regular fa-star" style="color: #64748B;"></i>';
-                                            }
-                                        }
-                                        ?>
+                            <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 14px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <span style="font-weight: 600; color: #F8FAFC; font-size: 13px;"><?php echo esc_html( $dbrev->reviewer_name ); ?> (<?php echo esc_html( $dbrev->reviewer_role ); ?>)</span>
+                                    <div style="color: #F5A623; font-size: 9px;">
+                                        <?php for ( $i = 0; $i < $dbrev->rating; $i++ ) { echo '★'; } ?>
                                     </div>
                                 </div>
-                                <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"<?php echo esc_html( $dbrev->review_text ); ?>"</p>
+                                <p style="color: #94A3B8; font-size: 12px; line-height: 1.5; margin: 0;">"<?php echo esc_html( $dbrev->review_text ); ?>"</p>
                             </div>
                     <?php
                         endforeach;
                     else :
                     ?>
-                        <!-- Review 1 -->
-                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Belmonde T. (Student)</span>
-                                <div style="color: #F5A623; font-size: 11px;">
-                                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                </div>
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 14px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 13px;">Belmonde T. (Student)</span>
+                                <div style="color: #F5A623; font-size: 9px;">★★★★★</div>
                             </div>
-                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"The networking classes are extremely engaging. I appreciate that we work on real hardware configs."</p>
+                            <p style="color: #94A3B8; font-size: 12px; line-height: 1.5; margin: 0;">"The networking classes are extremely engaging. I appreciate that we work on real hardware configs."</p>
                         </div>
-                        <!-- Review 2 -->
-                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 16px; border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600; color: #F8FAFC; font-size: 14px;">Etonge S. (Student)</span>
-                                <div style="color: #F5A623; font-size: 11px;">
-                                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                </div>
+                        <div style="background: rgba(8, 31, 62, 0.15); border-left: 3px solid var(--color-primary-accent); padding: 14px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-weight: 600; color: #F8FAFC; font-size: 13px;">Etonge S. (Student)</span>
+                                <div style="color: #F5A623; font-size: 9px;">★★★★★</div>
                             </div>
-                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.5;">"Buea finally has a top tier software development academy. The direct internship program with the company is amazing."</p>
+                            <p style="color: #94A3B8; font-size: 12px; line-height: 1.5; margin: 0;">"Buea finally has a top tier software development academy. The direct internship program is amazing."</p>
                         </div>
                     <?php endif; ?>
                 </div>

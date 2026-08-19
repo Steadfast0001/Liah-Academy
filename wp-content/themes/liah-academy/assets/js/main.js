@@ -840,6 +840,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Review';
                     alert('A connection error occurred.');
                 });
+        }
+
+        // Toggle website review form layout
+        const toggleReviewBtn = document.getElementById('toggleReviewFormBtn');
+        const reviewFormContainer = document.getElementById('websiteReviewFormContainer');
+        if (toggleReviewBtn && reviewFormContainer) {
+            toggleReviewBtn.addEventListener('click', function() {
+                if (reviewFormContainer.style.display === 'none' || !reviewFormContainer.style.display) {
+                    reviewFormContainer.style.display = 'block';
+                    toggleReviewBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel';
+                } else {
+                    reviewFormContainer.style.display = 'none';
+                    toggleReviewBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Write Review';
+                }
             });
         }
 
