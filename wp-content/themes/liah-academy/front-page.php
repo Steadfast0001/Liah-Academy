@@ -13,10 +13,11 @@ get_header();
 <section class="hero-slider-section">
     <!-- Image Slides Container -->
     <div class="slider-container" id="heroSliderContainer">
-        <!-- Initial slides, background-images enqueued via JS for performance -->
-        <div class="slide active" data-bg="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1600&q=80"></div>
-        <div class="slide" data-bg="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1600&q=80"></div>
-        <div class="slide" data-bg="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1600&q=80"></div>
+        <!-- Local school photos playing in rotation background -->
+        <div class="slide active" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_1.jpg' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_2.jpg' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP_2.webp' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP.webp' ); ?>"></div>
     </div>
     
     <!-- Dark Color Overlay filter for text readability -->
