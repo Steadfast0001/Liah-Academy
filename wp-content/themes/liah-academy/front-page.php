@@ -16,6 +16,9 @@ get_header();
         <!-- Local school photos playing in rotation background -->
         <div class="slide active" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_1.jpg' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_2.jpg' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_3.jpg' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_4.jpg' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_5.jpg' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP_2.webp' ); ?>"></div>
         <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP.webp' ); ?>"></div>
     </div>
