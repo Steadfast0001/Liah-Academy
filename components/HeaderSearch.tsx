@@ -60,6 +60,9 @@ export default function HeaderSearch({ isOpen, onClose }: HeaderSearchProps) {
               style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#F5A623' }} 
             />
             <input
+              id="global_header_search_input"
+              name="global_header_search_input"
+              aria-label="Search degrees, courses, tuition fees, or requirements"
               type="search"
               placeholder="Search degrees, courses, tuition fees, or requirements..."
               value={query}

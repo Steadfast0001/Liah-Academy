@@ -180,8 +180,10 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit}>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Your Name *</label>
+                    <label htmlFor="contact_user_name">Your Name *</label>
                     <input
+                      id="contact_user_name"
+                      name="name"
                       type="text"
                       className="form-input-light"
                       required
@@ -191,8 +193,10 @@ export default function ContactPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Your Email *</label>
+                    <label htmlFor="contact_user_email">Your Email *</label>
                     <input
+                      id="contact_user_email"
+                      name="email"
                       type="email"
                       className="form-input-light"
                       required
@@ -204,8 +208,10 @@ export default function ContactPage() {
                 </div>
 
                 <div className="form-group">
-                  <label>Subject</label>
+                  <label htmlFor="contact_user_subject">Subject</label>
                   <input
+                    id="contact_user_subject"
+                    name="subject"
                     type="text"
                     className="form-input-light"
                     placeholder="e.g. Admissions Inquiry / Corporate Software"
@@ -215,8 +221,10 @@ export default function ContactPage() {
                 </div>
 
                 <div className="form-group">
-                  <label>Message *</label>
+                  <label htmlFor="contact_user_message">Message *</label>
                   <textarea
+                    id="contact_user_message"
+                    name="message"
                     className="form-input-light"
                     rows={4}
                     required

@@ -829,11 +829,13 @@ export default function AdminDashboardPage() {
 
               <form onSubmit={handleAdminLogin}>
                 <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                  <label htmlFor="admin_auth_identifier" style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
                     Administrator Identifier / Email
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="admin_auth_identifier"
+                      name="admin_identifier"
                       type="text"
                       required
                       placeholder="info@liahacademy.com or admin"
@@ -855,12 +857,14 @@ export default function AdminDashboardPage() {
 
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#081F3E' }}>
+                    <label htmlFor="admin_auth_password" style={{ fontSize: '0.84rem', fontWeight: 700, color: '#081F3E' }}>
                       Master Security Password
                     </label>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="admin_auth_password"
+                      name="admin_password"
                       type={showPassword ? 'text' : 'password'}
                       required
                       placeholder="••••••••••••"
@@ -1414,8 +1418,13 @@ export default function AdminDashboardPage() {
             >
               {/* Search */}
               <div style={{ position: 'relative', minWidth: '280px', flexGrow: 1 }}>
-                <Search size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94A3B8' }} />
+                <label htmlFor="admin_search_applicants_input" style={{ position: 'absolute', left: '12px', top: '12px', color: '#94A3B8', cursor: 'pointer' }}>
+                  <Search size={18} />
+                </label>
                 <input 
+                  id="admin_search_applicants_input"
+                  name="admin_search_applicants_input"
+                  aria-label="Search applicants by student name, email, program or ID"
                   type="text" 
                   placeholder="Search by student name, email, program or ID..." 
                   value={searchQuery}

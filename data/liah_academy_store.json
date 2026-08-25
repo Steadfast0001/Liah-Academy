@@ -601,8 +601,24 @@
       "document_url": "",
       "documents": [],
       "payment_status": "Pending",
+      "admission_status": "Approved",
+      "created_at": "2026-08-25T09:39:55.315Z",
+      "updated_at": "2026-08-25T10:00:38.435Z"
+    },
+    {
+      "id": 8240,
+      "full_name": "Dr. Diagnostic Test",
+      "email": "student.audit.1787654912778@liahacademy.com",
+      "password": "password123",
+      "phone": "+237 652 154 095",
+      "degree_type": "HND",
+      "program_type": "Software Engineering HND",
+      "study_format": "oncampus",
+      "document_url": "",
+      "documents": [],
+      "payment_status": "Pending",
       "admission_status": "Under Review",
-      "created_at": "2026-08-25T09:39:55.315Z"
+      "created_at": "2026-08-25T10:48:33.023Z"
     }
   ],
   "reviews": [
@@ -879,6 +895,14 @@
       "subject": "System Check Inquiry",
       "message": "Testing direct inquiry pipeline verification.",
       "created_at": "2026-08-25T09:39:55.551Z"
+    },
+    {
+      "id": 32,
+      "name": "Corporate Partner Audit",
+      "email": "partner@techcorp.com",
+      "subject": "System Check Inquiry",
+      "message": "Testing direct inquiry pipeline verification.",
+      "created_at": "2026-08-25T10:48:33.139Z"
     }
   ],
   "courses": [
@@ -1046,6 +1070,46 @@
     "instagram_url": "https://www.instagram.com/p/DZ7omcLtYKT/"
   },
   "email_logs": [
+    {
+      "id": "em_1787654913195_xd4bv",
+      "created_at": "2026-08-25T10:48:33.195Z",
+      "recipient": "info@liahacademy.com",
+      "recipient_type": "admin",
+      "subject": "📬 [Direct Inquiry] System Check Inquiry (from Corporate Partner Audit)",
+      "type": "admin_alert",
+      "status": "logged",
+      "preview": "New Direct Inquiry from Corporate Partner Audit (partner@techcorp.com). Subject: System Check Inquiry. Message: Testing direct inquiry pipeline verification."
+    },
+    {
+      "id": "em_1787654913168_zmbyk",
+      "created_at": "2026-08-25T10:48:33.168Z",
+      "recipient": "partner@techcorp.com",
+      "recipient_type": "user",
+      "subject": "Inquiry Received: System Check Inquiry - Liah Academy",
+      "type": "inquiry_submitted",
+      "status": "logged",
+      "preview": "Hello Corporate Partner Audit, thank you for contacting Liah Academy regarding \"System Check Inquiry\". We will reply shortly."
+    },
+    {
+      "id": "em_1787654913090_si7nc",
+      "created_at": "2026-08-25T10:48:33.090Z",
+      "recipient": "info@liahacademy.com",
+      "recipient_type": "admin",
+      "subject": "🚨 [New Application] #8240: Dr. Diagnostic Test - Software Engineering HND",
+      "type": "admin_alert",
+      "status": "logged",
+      "preview": "🚨 New Application #8240 submitted by Dr. Diagnostic Test for Software Engineering HND (HND). Email: student.audit.1787654912778@liahacademy.com. Open admin pan"
+    },
+    {
+      "id": "em_1787654913063_j2csp",
+      "created_at": "2026-08-25T10:48:33.063Z",
+      "recipient": "student.audit.1787654912778@liahacademy.com",
+      "recipient_type": "applicant",
+      "subject": "Application Confirmation #8240 - Liah Academy",
+      "type": "application_submitted",
+      "status": "logged",
+      "preview": "Application Received at Liah Academy! Reference ID: #8240. Track: Software Engineering HND (HND). Status: Under Review. Log in to http://localhost:3000/admissio"
+    },
     {
       "id": "em_1787650795636_65o45",
       "created_at": "2026-08-25T09:39:55.636Z",
@@ -1739,7 +1803,7 @@
   ],
   "_metadata": {
     "version": "2.2.0",
-    "last_updated": "2026-08-25T09:39:55.551Z",
+    "last_updated": "2026-08-25T10:48:33.139Z",
     "total_writes": 2
   }
 }

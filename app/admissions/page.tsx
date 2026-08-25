@@ -856,8 +856,10 @@ function AdmissionsContent() {
                     {currentStep === 1 && (
                       <div>
                         <div className="form-group">
-                          <label>Full Legal Name *</label>
+                          <label htmlFor="reg_applicant_fullname">Full Legal Name *</label>
                           <input
+                            id="reg_applicant_fullname"
+                            name="full_name"
                             type="text"
                             className="form-input-light"
                             required
@@ -869,8 +871,10 @@ function AdmissionsContent() {
 
                         <div className="form-row">
                           <div className="form-group">
-                            <label>Email Address *</label>
+                            <label htmlFor="reg_applicant_email">Email Address *</label>
                             <input
+                              id="reg_applicant_email"
+                              name="email"
                               type="email"
                               className="form-input-light"
                               required
@@ -881,8 +885,10 @@ function AdmissionsContent() {
                           </div>
 
                           <div className="form-group">
-                            <label>WhatsApp / Phone *</label>
+                            <label htmlFor="reg_applicant_phone">WhatsApp / Phone *</label>
                             <input
+                              id="reg_applicant_phone"
+                              name="phone"
                               type="tel"
                               className="form-input-light"
                               required
@@ -894,8 +900,10 @@ function AdmissionsContent() {
                         </div>
 
                         <div className="form-group">
-                          <label>Create Portal Password *</label>
+                          <label htmlFor="reg_applicant_password">Create Portal Password *</label>
                           <input
+                            id="reg_applicant_password"
+                            name="password"
                             type="password"
                             className="form-input-light"
                             required
@@ -1155,8 +1163,10 @@ function AdmissionsContent() {
 
                   <form onSubmit={handleLoginSubmit}>
                     <div className="form-group">
-                      <label>Registered Email Address *</label>
+                      <label htmlFor="admissions_login_email">Registered Email Address *</label>
                       <input
+                        id="admissions_login_email"
+                        name="login_email"
                         type="email"
                         className="form-input-light"
                         required
@@ -1167,8 +1177,10 @@ function AdmissionsContent() {
                     </div>
 
                     <div className="form-group">
-                      <label>Portal Password *</label>
+                      <label htmlFor="admissions_login_password">Portal Password *</label>
                       <input
+                        id="admissions_login_password"
+                        name="login_password"
                         type="password"
                         className="form-input-light"
                         required
@@ -1273,8 +1285,10 @@ function AdmissionsContent() {
               ) : (
                 <form onSubmit={handleCampayPayment}>
                   <div className="form-group">
-                    <label>Mobile Money Phone Number (MTN / Orange) *</label>
+                    <label htmlFor="campay_checkout_phone">Mobile Money Phone Number (MTN / Orange) *</label>
                     <input
+                      id="campay_checkout_phone"
+                      name="campay_phone"
                       type="tel"
                       className="form-input-light"
                       required

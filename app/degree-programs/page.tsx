@@ -567,8 +567,13 @@ export default function DegreeProgramsPage() {
 
             {/* Quick Course Search */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '240px' }}>
-              <Search size={16} color="#94A3B8" />
+              <label htmlFor="degree_course_search_input" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <Search size={16} color="#94A3B8" />
+              </label>
               <input
+                id="degree_course_search_input"
+                name="degree_course_search_input"
+                aria-label="Quick course search"
                 type="text"
                 placeholder="Quick course search..."
                 value={searchQuery}

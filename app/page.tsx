@@ -13,13 +13,16 @@ import { PARTNERSHIP_MAILTO_LINK } from '@/lib/constants';
 import WebThreads from '@/components/WebThreads';
 
 const heroSlides = [
-  { type: 'image', src: '/assets/images/1.jpg' },
-  { type: 'image', src: '/assets/images/2.jpg' },
   { type: 'video', src: '/assets/videos/1.mp4' },
+  { type: 'image', src: '/assets/images/1.jpg' },
+  { type: 'video', src: '/assets/videos/video.mp4' },
+  { type: 'image', src: '/assets/images/2.jpg' },
+  { type: 'video', src: '/assets/videos/E1.mp4' },
   { type: 'image', src: '/assets/images/image_3.jpg' },
+  { type: 'video', src: '/assets/videos/E2.mp4' },
   { type: 'image', src: '/assets/images/image_4.jpg' },
   { type: 'image', src: '/assets/images/image_5.jpg' },
-  { type: 'image', src: '/assets/images/OIP_2.webp' },
+  { type: 'image', src: '/assets/images/OIP_2.webp' }
 ];
 
 const newsArticles = [
@@ -1092,22 +1095,32 @@ export default function HomePage() {
                   )}
                   <form onSubmit={handleReviewSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="Your Name *" 
-                        value={reviewName} 
-                        onChange={e => setReviewName(e.target.value)} 
-                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
-                      />
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="e.g. Student (HND) *" 
-                        value={reviewRole} 
-                        onChange={e => setReviewRole(e.target.value)} 
-                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
-                      />
+                      <div>
+                        <label htmlFor="review_author_name" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Your Name *</label>
+                        <input 
+                          id="review_author_name"
+                          name="review_author_name"
+                          type="text" 
+                          required 
+                          placeholder="Your Name *" 
+                          value={reviewName} 
+                          onChange={e => setReviewName(e.target.value)} 
+                          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="review_student_role" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Program / Role *</label>
+                        <input 
+                          id="review_student_role"
+                          name="review_student_role"
+                          type="text" 
+                          required 
+                          placeholder="e.g. Student (HND) *" 
+                          value={reviewRole} 
+                          onChange={e => setReviewRole(e.target.value)} 
+                          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
+                        />
+                      </div>
                     </div>
                     <div style={{ marginBottom: '10px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Rating:</span>
@@ -1122,14 +1135,19 @@ export default function HomePage() {
                         />
                       ))}
                     </div>
-                    <textarea 
-                      required 
-                      rows={2} 
-                      placeholder="Your feedback on Liah Academy..." 
-                      value={reviewComment} 
-                      onChange={e => setReviewComment(e.target.value)} 
-                      style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '10px' }}
-                    />
+                    <div style={{ marginBottom: '10px' }}>
+                      <label htmlFor="review_feedback_message" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Your Feedback *</label>
+                      <textarea 
+                        id="review_feedback_message"
+                        name="review_feedback_message"
+                        required 
+                        rows={2} 
+                        placeholder="Your feedback on Liah Academy..." 
+                        value={reviewComment} 
+                        onChange={e => setReviewComment(e.target.value)} 
+                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }}
+                      />
+                    </div>
                     <button 
                       type="submit" 
                       disabled={reviewSubmitting}

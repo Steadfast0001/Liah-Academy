@@ -152,6 +152,9 @@ export default function ChatWidget() {
           {/* Bottom Input Row */}
           <div className="chat-input-row">
             <input
+              id="chat_ai_assistant_input"
+              name="chat_ai_assistant_input"
+              aria-label="Type your message to admissions assistant"
               type="text"
               className="chat-text-input"
               placeholder="Type your question..."
