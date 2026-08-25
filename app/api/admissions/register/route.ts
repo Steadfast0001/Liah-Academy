@@ -5,7 +5,8 @@ import { sendApplicationSignals } from '@/lib/email';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fullname, email, password, phone, degree_type, program_type, study_format, document_url, documents } = body;
+    const fullname = body.fullname || body.full_name;
+    const { email, password, phone, degree_type, program_type, study_format, document_url, documents } = body;
 
     if (!fullname || !email || !password || !phone) {
       return NextResponse.json(
