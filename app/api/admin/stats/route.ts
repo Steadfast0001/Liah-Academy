@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import db, { adminStore } from '@/lib/db';
+import { verifyAdminAuth } from '@/lib/auth';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const students = adminStore.getStudents();
     const inquiries = adminStore.getInquiries();
     const courses = adminStore.getCourses();

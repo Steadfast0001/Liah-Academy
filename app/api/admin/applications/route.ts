@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
 import { sendDecisionSignal } from '@/lib/email';
+import { verifyAdminAuth } from '@/lib/auth';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const applications = adminStore.getStudents();
     return NextResponse.json({ success: true, data: applications });
   } catch (error: any) {
@@ -13,6 +23,13 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { id, admission_status, payment_status, notify_applicant } = body;
 
@@ -64,15 +81,21 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ success: false, message: 'Application ID is required.' }, { status: 400 });
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
     }
 
-    const deleted = adminStore.deleteStudent(id);
-    return NextResponse.json({ success: true, message: `Application #${id} deleted successfully.`, deleted });
+    const { searchParams } = new URL(request.url);
+    const idStr = searchParams.get('id');
+    if (!idStr) {
+      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+    }
+
+    adminStore.deleteStudent(parseInt(idStr));
+    return NextResponse.json({ success: true, message: `Application #${idStr} removed.` });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

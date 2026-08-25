@@ -9,7 +9,7 @@ import {
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
-  Database, HardDrive, Cpu, Activity
+  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff
 } from 'lucide-react';
 
 interface Application {
@@ -144,17 +144,101 @@ export default function AdminDashboardPage() {
   const [newMediaCategory, setNewMediaCategory] = useState('Workshops');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
+  // Authentication & Restriction States
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authIdentifier, setAuthIdentifier] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const getAuthHeaders = (explicitToken?: string) => {
+    const token = explicitToken || (typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {})
+    };
+  };
+
+  const checkAuth = async () => {
+    try {
+      const storedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
+      const res = await fetch('/api/admin/auth/check', {
+        headers: storedToken ? { 'Authorization': `Bearer ${storedToken}`, 'x-admin-token': storedToken } : {},
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+        loadDashboardData(storedToken || '');
+      } else {
+        setIsAuthenticated(false);
+        setLoading(false);
+      }
+    } catch {
+      setIsAuthenticated(false);
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authIdentifier || !authPassword) {
+      setAuthError('Please provide your administrator email/username and security key.');
+      return;
+    }
+    setAuthSubmitting(true);
+    setAuthError(null);
+    try {
+      const res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authIdentifier, password: authPassword }),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('liah_admin_token', data.token);
+          localStorage.setItem('liah_admin_token', data.token);
+        }
+        setIsAuthenticated(true);
+        showNotification('Administrator authenticated. Welcome to Master Studio.');
+        loadDashboardData(data.token);
+      } else {
+        setAuthError(data.message || 'Invalid administrative credentials. Access restricted.');
+      }
+    } catch {
+      setAuthError('Authentication server communication error. Please try again.');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('liah_admin_token');
+      localStorage.removeItem('liah_admin_token');
+    }
+    setIsAuthenticated(false);
+    showNotification('Administrative session locked and signed out.');
+  };
+
   // Fetch all admin data
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (explicitToken?: string) => {
     setLoading(true);
+    const headers = getAuthHeaders(explicitToken);
     try {
       const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes] = await Promise.all([
-        fetch('/api/admin/stats').then(r => r.json()),
-        fetch('/api/admin/applications').then(r => r.json()),
-        fetch('/api/admin/inquiries').then(r => r.json()),
-        fetch('/api/admin/media').then(r => r.json()),
-        fetch('/api/admin/content').then(r => r.json()),
-        fetch('/api/admin/emails').then(r => r.json())
+        fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/inquiries', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/media', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/content', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/emails', { headers, credentials: 'include' }).then(r => r.json())
       ]);
 
       if (statsRes.success) {
@@ -185,7 +269,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ type: 'backup' })
       });
       const data = await res.json();
@@ -203,21 +288,26 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    loadDashboardData();
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
     const interval = setInterval(() => {
       // Background silent polling to ensure paid statuses sync in real-time
-      fetch('/api/admin/stats').then(r => r.json()).then(res => {
+      const headers = getAuthHeaders();
+      fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) {
           setStats(res.stats);
           if (res.db_health) setDbHealth(res.db_health);
         }
       }).catch(() => {});
-      fetch('/api/admin/applications').then(r => r.json()).then(res => {
+      fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) setApplications(res.data || []);
       }).catch(() => {});
     }, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
@@ -230,7 +320,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/applications', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ id, admission_status: newStatus })
       });
       const data = await res.json();
@@ -240,7 +331,7 @@ export default function AdminDashboardPage() {
         if (selectedApp && selectedApp.id === id) {
           setSelectedApp({ ...selectedApp, admission_status: newStatus });
         }
-        fetch('/api/admin/emails').then(r => r.json()).then(res => {
+        fetch('/api/admin/emails', { headers: getAuthHeaders(), credentials: 'include' }).then(r => r.json()).then(res => {
           if (res.success) setEmailLogs(res.data || []);
         });
       } else {
@@ -258,7 +349,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/applications', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ id, payment_status: nextPayment })
       });
       const data = await res.json();
@@ -274,7 +366,11 @@ export default function AdminDashboardPage() {
   const deleteApplication = async (id: number) => {
     if (!confirm(`Are you sure you want to delete application #${id}?`)) return;
     try {
-      const res = await fetch(`/api/admin/applications?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/applications?id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       const data = await res.json();
       if (data.success) {
         showNotification(`Application #${id} deleted.`);
@@ -321,7 +417,11 @@ export default function AdminDashboardPage() {
   const deleteInquiry = async (id: number) => {
     if (!confirm(`Delete message #${id}?`)) return;
     try {
-      const res = await fetch(`/api/admin/inquiries?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/inquiries?id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       const data = await res.json();
       if (data.success) {
         showNotification(`Inquiry #${id} deleted.`);
@@ -340,6 +440,7 @@ export default function AdminDashboardPage() {
       return;
     }
 
+    const token = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
     const formData = new FormData();
     formData.append('file', uploadFile);
     formData.append('title', newMediaTitle || uploadFile.name);
@@ -349,6 +450,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/media', {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {},
+        credentials: 'include',
         body: formData
       });
       const data = await res.json();
@@ -370,7 +473,11 @@ export default function AdminDashboardPage() {
   const deleteMedia = async (id: string) => {
     if (!confirm('Are you sure you want to remove this media reference?')) return;
     try {
-      const res = await fetch(`/api/admin/media?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/media?id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       const data = await res.json();
       if (data.success) {
         showNotification('Media asset removed.');
@@ -418,7 +525,8 @@ export default function AdminDashboardPage() {
       if (editingCourse) {
         const res = await fetch('/api/admin/content', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
+          credentials: 'include',
           body: JSON.stringify({ type: 'course', id: editingCourse.id, data: courseForm })
         });
         const data = await res.json();
@@ -430,7 +538,8 @@ export default function AdminDashboardPage() {
       } else {
         const res = await fetch('/api/admin/content', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
+          credentials: 'include',
           body: JSON.stringify({ type: 'course', data: courseForm })
         });
         const data = await res.json();
@@ -450,7 +559,11 @@ export default function AdminDashboardPage() {
   const deleteCourse = async (id: number) => {
     if (!confirm('Are you sure you want to delete this course?')) return;
     try {
-      const res = await fetch(`/api/admin/content?type=course&id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/content?type=course&id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       const data = await res.json();
       if (data.success) {
         showNotification('Course deleted.');
@@ -494,7 +607,8 @@ export default function AdminDashboardPage() {
       if (editingNews) {
         const res = await fetch('/api/admin/content', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
+          credentials: 'include',
           body: JSON.stringify({ type: 'news', id: editingNews.id, data: newsForm })
         });
         const data = await res.json();
@@ -506,7 +620,8 @@ export default function AdminDashboardPage() {
       } else {
         const res = await fetch('/api/admin/content', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
+          credentials: 'include',
           body: JSON.stringify({ type: 'news', data: newsForm })
         });
         const data = await res.json();
@@ -526,7 +641,11 @@ export default function AdminDashboardPage() {
   const deleteNews = async (id: number) => {
     if (!confirm('Are you sure you want to delete this announcement?')) return;
     try {
-      const res = await fetch(`/api/admin/content?type=news&id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/content?type=news&id=${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
       const data = await res.json();
       if (data.success) {
         showNotification('Announcement deleted.');
@@ -544,7 +663,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ type: 'settings', data: settings })
       });
       const data = await res.json();
@@ -563,7 +683,8 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           to: settings.admin_email,
           subject: 'Admin Test Signal - Liah Academy Console',
@@ -573,7 +694,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.success) {
         showNotification(`Test email signal dispatched to ${settings.admin_email}!`);
-        fetch('/api/admin/emails').then(r => r.json()).then(res => {
+        fetch('/api/admin/emails', { headers: getAuthHeaders(), credentials: 'include' }).then(r => r.json()).then(res => {
           if (res.success) setEmailLogs(res.data || []);
         });
       }
@@ -596,6 +717,240 @@ export default function AdminDashboardPage() {
     const matchesPayment = paymentFilter === 'ALL' ? true : app.payment_status === paymentFilter;
     return matchesSearch && matchesStatus && matchesPayment;
   });
+
+  // 1. Loading state during auth check
+  if (isAuthenticated === null) {
+    return (
+      <main style={{ marginTop: 'calc(var(--header-height) + 50px)', marginBottom: '80px', minHeight: '75vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ display: 'inline-block', width: '48px', height: '48px', border: '4px solid #E2E8F0', borderTopColor: '#F5A623', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px' }} />
+          <h3 style={{ color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, margin: '0 0 8px 0' }}>
+            Verifying Master Security Protocols
+          </h3>
+          <p style={{ color: '#64748B', fontSize: '0.9rem', margin: 0 }}>
+            Checking administrator session authorization...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // 2. Access Restricted Gate for normal users
+  if (!isAuthenticated) {
+    return (
+      <main style={{ marginTop: 'calc(var(--header-height) + 30px)', marginBottom: '80px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto' }}>
+          
+          {/* Main Security Card */}
+          <div 
+            style={{ 
+              background: '#FFFFFF', 
+              borderRadius: '20px', 
+              boxShadow: '0 25px 60px -15px rgba(8, 31, 62, 0.25)', 
+              border: '1px solid rgba(8, 31, 62, 0.08)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Header Banner */}
+            <div 
+              style={{ 
+                background: 'linear-gradient(135deg, #081F3E 0%, #041021 100%)', 
+                padding: '36px 30px 28px', 
+                textAlign: 'center', 
+                color: '#FFFFFF',
+                position: 'relative'
+              }}
+            >
+              <div 
+                style={{ 
+                  width: '64px', 
+                  height: '64px', 
+                  borderRadius: '16px', 
+                  background: 'rgba(245, 166, 35, 0.15)', 
+                  border: '1px solid rgba(245, 166, 35, 0.4)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  margin: '0 auto 16px auto',
+                  color: '#F5A623',
+                  boxShadow: '0 0 25px rgba(245, 166, 35, 0.2)'
+                }}
+              >
+                <Lock size={30} strokeWidth={2.2} />
+              </div>
+
+              <span 
+                style={{ 
+                  display: 'inline-block', 
+                  background: '#FEF3C7', 
+                  color: '#92400E', 
+                  fontSize: '0.72rem', 
+                  fontWeight: 800, 
+                  padding: '4px 12px', 
+                  borderRadius: '20px', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.06em', 
+                  marginBottom: '10px' 
+                }}
+              >
+                RESTRICTED PORTAL
+              </span>
+
+              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 8px 0', color: '#FFFFFF' }}>
+                Executive Management Center
+              </h2>
+              <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: 0, lineHeight: '1.5' }}>
+                Authorized administrative personnel only. Public users and students cannot access this console.
+              </p>
+            </div>
+
+            {/* Form Section */}
+            <div style={{ padding: '32px 30px' }}>
+              {authError && (
+                <div 
+                  style={{ 
+                    background: '#FEF2F2', 
+                    border: '1px solid #FCA5A5', 
+                    borderRadius: '10px', 
+                    padding: '12px 16px', 
+                    marginBottom: '20px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px', 
+                    color: '#991B1B', 
+                    fontSize: '0.86rem', 
+                    fontWeight: 600 
+                  }}
+                >
+                  <ShieldAlert size={18} style={{ flexShrink: 0 }} />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleAdminLogin}>
+                <div style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    Administrator Identifier / Email
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      required
+                      placeholder="info@liahacademy.com or admin"
+                      value={authIdentifier}
+                      onChange={(e) => setAuthIdentifier(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        border: '1px solid #CBD5E1',
+                        borderRadius: '8px',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        color: '#081F3E',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#081F3E' }}>
+                      Master Security Password
+                    </label>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 42px 12px 14px',
+                        border: '1px solid #CBD5E1',
+                        borderRadius: '8px',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        color: '#081F3E',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#94A3B8',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authSubmitting}
+                  className="btn"
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: '#081F3E',
+                    color: '#FFFFFF',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 15px rgba(8, 31, 62, 0.2)'
+                  }}
+                >
+                  <Key size={16} color="#F5A623" />
+                  {authSubmitting ? 'Verifying Security Token...' : 'Unlock Management Studio'}
+                </button>
+              </form>
+
+              <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+                <Link
+                  href="/"
+                  style={{
+                    color: '#64748B',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  &larr; Return to Liah Academy Homepage
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '0.78rem', marginTop: '20px' }}>
+            🔒 Protected by Liah Academy Institutional Security Protocol.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main style={{ marginTop: 'calc(var(--header-height) + 25px)', marginBottom: '80px', minHeight: '85vh' }}>
@@ -642,7 +997,7 @@ export default function AdminDashboardPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
-              onClick={loadDashboardData} 
+              onClick={() => loadDashboardData()} 
               disabled={loading}
               className="btn btn-secondary"
               style={{ padding: '10px 18px', fontSize: '0.85rem', color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)' }}
@@ -656,6 +1011,25 @@ export default function AdminDashboardPage() {
             >
               View Public Portal <ExternalLink size={14} />
             </Link>
+            <button
+              onClick={handleAdminLogout}
+              className="btn"
+              style={{ 
+                padding: '10px 16px', 
+                fontSize: '0.85rem', 
+                background: 'rgba(239, 68, 68, 0.15)', 
+                color: '#FCA5A5', 
+                border: '1px solid rgba(239, 68, 68, 0.3)', 
+                borderRadius: '8px', 
+                fontWeight: 700, 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px' 
+              }}
+            >
+              <LogOut size={15} /> Lock Studio
+            </button>
           </div>
         </div>
 

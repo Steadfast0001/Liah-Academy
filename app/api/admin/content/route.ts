@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import db, { adminStore } from '@/lib/db';
+import { verifyAdminAuth } from '@/lib/auth';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const courses = adminStore.getCourses();
     const news = adminStore.getNews();
-    const reviews = adminStore.getMedia(); // or reviews
     const settings = adminStore.getSettings();
 
     return NextResponse.json({
@@ -21,6 +30,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { type, data } = body;
 
@@ -39,12 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'Instant snapshot backup created successfully in data/backups/', data: result });
     }
 
-    if (type === 'settings') {
-      const updatedSettings = adminStore.updateSettings(data);
-      return NextResponse.json({ success: true, message: 'Site settings updated.', data: updatedSettings });
-    }
-
-    return NextResponse.json({ success: false, message: 'Invalid content type.' }, { status: 400 });
+    return NextResponse.json({ success: false, message: 'Unknown content type specified' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -52,12 +63,19 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { type, id, data } = body;
 
     if (type === 'course') {
       const updated = adminStore.updateCourse(id, data);
-      return NextResponse.json({ success: true, message: 'Course updated.', data: updated });
+      return NextResponse.json({ success: true, message: 'Course track updated.', data: updated });
     }
 
     if (type === 'news') {
@@ -67,10 +85,10 @@ export async function PUT(request: Request) {
 
     if (type === 'settings') {
       const updated = adminStore.updateSettings(data);
-      return NextResponse.json({ success: true, message: 'Settings saved.', data: updated });
+      return NextResponse.json({ success: true, message: 'Institutional settings updated successfully.', data: updated });
     }
 
-    return NextResponse.json({ success: false, message: 'Invalid type.' }, { status: 400 });
+    return NextResponse.json({ success: false, message: 'Unknown type for update' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -78,25 +96,34 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    if (!verifyAdminAuth(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Administrator credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
-    const id = parseInt(searchParams.get('id') || '0');
+    const idStr = searchParams.get('id');
 
-    if (!type || !id) {
-      return NextResponse.json({ success: false, message: 'Type and ID required.' }, { status: 400 });
+    if (!idStr || !type) {
+      return NextResponse.json({ success: false, message: 'Type and ID are required' }, { status: 400 });
     }
+
+    const id = parseInt(idStr);
 
     if (type === 'course') {
       adminStore.deleteCourse(id);
-      return NextResponse.json({ success: true, message: `Course #${id} deleted.` });
+      return NextResponse.json({ success: true, message: `Course #${id} removed.` });
     }
 
     if (type === 'news') {
       adminStore.deleteNews(id);
-      return NextResponse.json({ success: true, message: `News #${id} deleted.` });
+      return NextResponse.json({ success: true, message: `Announcement #${id} removed.` });
     }
 
-    return NextResponse.json({ success: false, message: 'Invalid type.' }, { status: 400 });
+    return NextResponse.json({ success: false, message: 'Invalid deletion type' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
