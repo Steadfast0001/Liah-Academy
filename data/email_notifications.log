@@ -71,3 +71,7 @@
 [2026-08-25T10:48:33.090Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "🚨 [New Application] #8240: Dr. Diagnostic Test - Software Engineering HND"
 [2026-08-25T10:48:33.168Z] [LOGGED] TO: partner@techcorp.com | TYPE: inquiry_submitted | SUBJECT: "Inquiry Received: System Check Inquiry - Liah Academy"
 [2026-08-25T10:48:33.195Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "📬 [Direct Inquiry] System Check Inquiry (from Corporate Partner Audit)"
+[2026-08-25T11:29:21.655Z] [LOGGED] TO: student.audit.1787657361249@liahacademy.com | TYPE: application_submitted | SUBJECT: "Application Confirmation #5489 - Liah Academy"
+[2026-08-25T11:29:21.700Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "🚨 [New Application] #5489: Dr. Diagnostic Test - Software Engineering HND"
+[2026-08-25T11:29:21.853Z] [LOGGED] TO: partner@techcorp.com | TYPE: inquiry_submitted | SUBJECT: "Inquiry Received: System Check Inquiry - Liah Academy"
+[2026-08-25T11:29:21.928Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "📬 [Direct Inquiry] System Check Inquiry (from Corporate Partner Audit)"
