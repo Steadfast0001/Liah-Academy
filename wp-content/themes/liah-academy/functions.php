@@ -2,7 +2,7 @@
 /**
  * Liah Academy Theme Functions
  *
- * Provides all core theme support, custom post types, PostgreSQL-compatible 
+ * Provides all core theme support, custom post types, MySQL/MariaDB 
  * database creation for student applications, AJAX portal endpoints, and file upload handlers.
  */
 
@@ -33,11 +33,15 @@ function liah_theme_assets() {
     // Enqueue FontAwesome for icons
     wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', array(), '6.4.0' );
     
-    // Theme primary stylesheet (style.css contains Google Fonts import)
-    wp_enqueue_style( 'liah-main-style', get_stylesheet_uri(), array(), '1.0.0' );
+    // Theme primary stylesheet with cache-busting dynamic version
+    $theme_css_path = get_template_directory() . '/style.css';
+    $css_version = file_exists( $theme_css_path ) ? filemtime( $theme_css_path ) : '1.0.0';
+    wp_enqueue_style( 'liah-main-style', get_stylesheet_uri(), array(), $css_version );
     
-    // Theme custom JavaScript
-    wp_enqueue_script( 'liah-main-js', get_template_directory_uri() . '/assets/js/main.js', array(), '1.0.0', true );
+    // Theme custom JavaScript with cache-busting dynamic version
+    $theme_js_path = get_template_directory() . '/assets/js/main.js';
+    $js_version = file_exists( $theme_js_path ) ? filemtime( $theme_js_path ) : '1.0.0';
+    wp_enqueue_script( 'liah-main-js', get_template_directory_uri() . '/assets/js/main.js', array(), $js_version, true );
     
     // Pass admin-ajax.php URL and localized data to JS
     wp_localize_script( 'liah-main-js', 'liahSettings', array(
@@ -108,7 +112,7 @@ function liah_register_custom_posts() {
 add_action( 'init', 'liah_register_custom_posts' );
 
 /* ==========================================================================
-   4. DATABASE SETUP (PostgreSQL-compatible Admissions Table)
+   4. DATABASE SETUP (MySQL/MariaDB Admissions Table)
    ========================================================================== */
 function liah_initialize_database() {
     global $wpdb;
@@ -234,7 +238,7 @@ function liah_seed_default_posts() {
                 'format'      => 'fulltime',
                 'duration'    => '3 Years',
                 'fee'         => '450000', // XAF
-                'modules'     => 'Python, JavaScript, Django, PostgreSQL, Algorithms',
+                'modules'     => 'Python, JavaScript, Django, MySQL, Algorithms',
                 'badge'       => 'Academic Program'
             ),
             array(
@@ -448,7 +452,7 @@ function liah_handle_student_registration() {
     // Hash password securely
     $hashed_password = password_hash( $password, PASSWORD_DEFAULT );
 
-    // Insert record in Postgres/MySQL applications table
+    // Insert record in MySQL applications table
     $insert_result = $wpdb->insert(
         $table_name,
         array(
@@ -505,56 +509,176 @@ function liah_handle_student_registration() {
     $_SESSION['liah_student_email'] = $email;
     $_SESSION['liah_student_name']  = $full_name;
 
-    // Generate Fapshi link (if API configured) or fallback to simulator
-    $payment_url = liah_get_fapshi_payment_link( $email, $application_id );
+    // Generate Campay link
+    $payment_url = liah_get_campay_payment_link( $email, $application_id );
 
     wp_send_json_success( array(
-        'message'  => esc_html__( 'Registration successful! Redirecting to Fapshi payment gateway...', 'liah-academy' ),
+        'message'  => esc_html__( 'Registration successful! Redirecting to secure payment...', 'liah-academy' ),
         'redirect' => $payment_url
     ) );
 }
 add_action( 'wp_ajax_nopriv_liah_register_student', 'liah_handle_student_registration' );
 add_action( 'wp_ajax_liah_register_student', 'liah_handle_student_registration' );
 
-// Fapshi Integration Helper
-function liah_get_fapshi_payment_link( $email, $student_id ) {
-    $api_user = defined('FAPSHI_API_USER') ? FAPSHI_API_USER : 'mock_user';
-    $api_key  = defined('FAPSHI_API_KEY') ? FAPSHI_API_KEY : 'mock_key';
-    $sandbox  = defined('FAPSHI_SANDBOX') ? FAPSHI_SANDBOX : true;
+// Campay Integration Constant & Helper
+if ( ! defined( 'CAMPAY_MERCHANT_NUMBER' ) ) {
+    define( 'CAMPAY_MERCHANT_NUMBER', '670265493' );
+}
+
+function liah_get_campay_payment_link( $email, $student_id ) {
+    // Redirect directly to admissions local page with Campay checkout tab enqueued
+    return home_url( '/admissions?campay_checkout=1&id=' . $student_id );
+}
+
+// AJAX Handler to process Campay mobile money collections (MTN MoMo & Orange Money)
+function liah_handle_campay_payment() {
+    check_ajax_referer( 'liah-portal-nonce', 'nonce' );
     
-    // If mock or not configured, return a mock redirect to our local Fapshi Simulator
-    if ( $api_user === 'mock_user' || empty( $api_user ) ) {
-        return home_url( '/admissions?fapshi_checkout=1&id=' . $student_id );
+    // Release session lock early to prevent session file locking issues on concurrent requests
+    session_write_close();
+    
+    $student_id = isset( $_POST['student_id'] ) ? intval( $_POST['student_id'] ) : 0;
+    $phone      = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
+    
+    if ( ! $student_id || empty( $phone ) ) {
+        wp_send_json_error( array( 'message' => 'Invalid student or phone number.' ) );
     }
+
+    // Clean phone number: remove non-digits
+    $phone = preg_replace( '/\D/', '', $phone );
     
-    $url = $sandbox ? 'https://sandbox.fapshi.com/initiate-pay' : 'https://api.fapshi.com/initiate-pay';
+    // Ensure it starts with 237 country code
+    if ( substr( $phone, 0, 3 ) !== '237' ) {
+        $phone = '237' . $phone;
+    }
+
+    $api_username = defined('CAMPAY_USERNAME') ? CAMPAY_USERNAME : '';
+    $api_password = defined('CAMPAY_PASSWORD') ? CAMPAY_PASSWORD : '';
+    $sandbox      = defined('CAMPAY_SANDBOX') ? CAMPAY_SANDBOX : true;
     
+    // Fallback to simulator if credentials are not set
+    if ( empty( $api_username ) || empty( $api_password ) ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'students';
+        if ( $wpdb && get_class($wpdb) !== 'MockWPDB' ) {
+            $wpdb->update(
+                $table_name,
+                array( 'payment_status' => 'Paid' ),
+                array( 'id' => $student_id )
+            );
+        }
+        
+        wp_send_json_success( array(
+            'status'  => 'simulated',
+            'message' => 'Simulator Mode: Payment authorized successfully!'
+        ) );
+    }
+
+    // Call Campay API
+    $base_url = $sandbox ? 'https://demo.campay.net/api' : 'https://campay.net/api';
+    
+    // Step 1: Get Access Token
+    $token_url = $base_url . '/token/';
+    $token_response = wp_remote_post( $token_url, array(
+        'headers' => array( 'Content-Type' => 'application/json' ),
+        'body'    => json_encode( array(
+            'username' => $api_username,
+            'password' => $api_password
+        ) ),
+        'timeout' => 15
+    ) );
+
+    if ( is_wp_error( $token_response ) ) {
+        wp_send_json_error( array( 'message' => 'Connection to payment gateway failed: ' . $token_response->get_error_message() ) );
+    }
+
+    $token_data = json_decode( wp_remote_retrieve_body( $token_response ), true );
+    $token = isset( $token_data['token'] ) ? $token_data['token'] : '';
+
+    if ( empty( $token ) ) {
+        wp_send_json_error( array( 'message' => 'Authentication with payment gateway failed.' ) );
+    }
+
+    // Step 2: Request Collect
+    $collect_url = $base_url . '/collect/';
     $payload = array(
-        'amount'      => 10000, // 10,000 XAF Admission Fee
-        'email'       => $email,
-        'userId'      => 'student_' . $student_id,
-        'externalId'  => 'liah_admission_' . $student_id . '_' . time(),
-        'message'     => 'Liah Academy Admission Auditing Fee',
-        'redirectUrl' => home_url( '/admissions?payment=success&id=' . $student_id )
+        'amount'             => '10000', // 10,000 XAF
+        'currency'           => 'XAF',
+        'from'               => $phone,
+        'description'        => 'Liah Academy Admission Fee',
+        'external_reference' => 'liah_' . $student_id . '_' . time()
     );
-    
-    $response = wp_remote_post( $url, array(
+
+    $collect_response = wp_remote_post( $collect_url, array(
         'headers' => array(
-            'Content-Type' => 'application/json',
-            'apiuser'      => $api_user,
-            'apikey'       => $api_key
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Token ' . $token
         ),
         'body'    => json_encode( $payload ),
         'timeout' => 15
     ) );
-    
-    if ( is_wp_error( $response ) ) {
-        return home_url( '/admissions?fapshi_checkout=1&id=' . $student_id );
+
+    if ( is_wp_error( $collect_response ) ) {
+        wp_send_json_error( array( 'message' => 'Payment collection request failed: ' . $collect_response->get_error_message() ) );
     }
-    
-    $body = json_decode( wp_remote_retrieve_body( $response ) );
-    return isset( $body->link ) ? $body->link : home_url( '/admissions?fapshi_checkout=1&id=' . $student_id );
+
+    $collect_data = json_decode( wp_remote_retrieve_body( $collect_response ), true );
+    $reference = isset( $collect_data['reference'] ) ? $collect_data['reference'] : '';
+
+    if ( empty( $reference ) ) {
+        wp_send_json_error( array( 'message' => 'Failed to initiate mobile money collection.' ) );
+    }
+
+    // Update database with reference
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'students';
+    if ( $wpdb && get_class($wpdb) !== 'MockWPDB' ) {
+        $wpdb->update(
+            $table_name,
+            array(
+                'payment_status' => 'Pending',
+                'notes'          => 'Campay Ref: ' . $reference
+            ),
+            array( 'id' => $student_id )
+        );
+    }
+
+    wp_send_json_success( array(
+        'status'    => 'pending',
+        'reference' => $reference,
+        'message'   => 'USSD Prompt sent to your phone. Please confirm the transaction.'
+    ) );
 }
+add_action( 'wp_ajax_liah_process_campay_payment', 'liah_handle_campay_payment' );
+add_action( 'wp_ajax_nopriv_liah_process_campay_payment', 'liah_handle_campay_payment' );
+
+// AJAX Handler to complete payment from Campay SDK callback
+function liah_handle_complete_campay_payment() {
+    check_ajax_referer( 'liah-portal-nonce', 'nonce' );
+    
+    $student_id = isset( $_POST['student_id'] ) ? intval( $_POST['student_id'] ) : 0;
+    $reference  = isset( $_POST['reference'] ) ? sanitize_text_field( $_POST['reference'] ) : '';
+    
+    if ( $student_id ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'students';
+        if ( $wpdb && get_class($wpdb) !== 'MockWPDB' ) {
+            $wpdb->update(
+                $table_name,
+                array(
+                    'payment_status' => 'Paid',
+                    'notes'          => 'Campay SDK Ref: ' . $reference
+                ),
+                array( 'id' => $student_id )
+            );
+        }
+        $_SESSION['liah_student_status'] = 'Approved';
+        wp_send_json_success();
+    }
+    wp_send_json_error();
+}
+add_action( 'wp_ajax_liah_complete_campay_payment', 'liah_handle_complete_campay_payment' );
+add_action( 'wp_ajax_nopriv_liah_complete_campay_payment', 'liah_handle_complete_campay_payment' );
 
 // 2. AJAX Student Login (Check Application Status) Handler
 function liah_handle_student_login() {
@@ -686,7 +810,7 @@ function liah_fetch_google_reviews() {
             array(
                 'author_name'               => 'Nfor Collins',
                 'rating'                    => 5,
-                'text'                      => 'Outstanding developer-grade environment. Worked with their corporate dev team on a PostgreSQL deployment.',
+                'text'                      => 'Outstanding developer-grade environment. Worked with their corporate dev team on a MySQL deployment.',
                 'profile_photo_url'        => '',
                 'relative_time_description' => '3 months ago',
             )
@@ -696,7 +820,16 @@ function liah_fetch_google_reviews() {
     $api_key  = defined( 'GOOGLE_PLACES_API_KEY' ) ? GOOGLE_PLACES_API_KEY : '';
     $place_id = defined( 'GOOGLE_PLACE_ID' ) ? GOOGLE_PLACE_ID : '';
 
-    if ( empty( $api_key ) || empty( $place_id ) ) {
+    // Check if running on local development server
+    $is_local = false;
+    if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+        $host = strtolower( $_SERVER['HTTP_HOST'] );
+        if ( $host === 'localhost' || $host === '127.0.0.1' || strpos( $host, '.local' ) !== false || strpos( $host, '192.168.' ) === 0 || strpos( $host, '10.' ) === 0 ) {
+            $is_local = true;
+        }
+    }
+
+    if ( $is_local || empty( $api_key ) || empty( $place_id ) ) {
         // Cache defaults for 12 hours
         set_transient( 'liah_google_reviews', $default_data, 12 * HOUR_IN_SECONDS );
         return $default_data;
@@ -984,3 +1117,149 @@ function liah_render_admissions_admin_page() {
     </div>
     <?php
 }
+
+/* ==========================================================================
+   10. THEME CUSTOMIZER (Quick Stats Management)
+   ========================================================================== */
+function liah_customize_register( $wp_customize ) {
+    // Add Stats Section
+    $wp_customize->add_section( 'liah_stats_section', array(
+        'title'      => 'Quick Stats Section',
+        'priority'   => 30,
+        'description'=> 'Manage the figures and labels displayed in the homepage quick stats row.',
+    ) );
+
+    // Stat 1 (Year)
+    $wp_customize->add_setting( 'liah_stat1_num', array( 'default' => '2024', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat1_num', array( 'label' => 'Stat 1 Figure', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+    $wp_customize->add_setting( 'liah_stat1_lbl', array( 'default' => 'Year Established', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat1_lbl', array( 'label' => 'Stat 1 Label', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+
+    // Stat 2 (Graduates)
+    $wp_customize->add_setting( 'liah_stat2_num', array( 'default' => '500+', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat2_num', array( 'label' => 'Stat 2 Figure', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+    $wp_customize->add_setting( 'liah_stat2_lbl', array( 'default' => 'Trained Graduates', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat2_lbl', array( 'label' => 'Stat 2 Label', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+
+    // Stat 3 (Landing Rate)
+    $wp_customize->add_setting( 'liah_stat3_num', array( 'default' => '95%', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat3_num', array( 'label' => 'Stat 3 Figure', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+    $wp_customize->add_setting( 'liah_stat3_lbl', array( 'default' => 'Career Landing Rate', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat3_lbl', array( 'label' => 'Stat 3 Label', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+
+    // Stat 4 (Practical Focus)
+    $wp_customize->add_setting( 'liah_stat4_num', array( 'default' => '100%', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat4_num', array( 'label' => 'Stat 4 Figure', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+    $wp_customize->add_setting( 'liah_stat4_lbl', array( 'default' => 'Practical & Labs-Based', 'sanitize_callback' => 'sanitize_text_field' ) );
+    $wp_customize->add_control( 'liah_stat4_lbl', array( 'label' => 'Stat 4 Label', 'section' => 'liah_stats_section', 'type' => 'text' ) );
+}
+add_action( 'customize_register', 'liah_customize_register' );
+
+/* ==========================================================================
+   11. CUSTOM META BOXES FOR NEWS & HIGHLIGHTS (Admin Management)
+   ========================================================================== */
+function liah_news_add_meta_boxes() {
+    add_meta_box(
+        'liah_news_details',
+        __( 'Highlight Badge & Display Options', 'liah-academy' ),
+        'liah_news_render_meta_box',
+        'liah_news',
+        'normal',
+        'high'
+    );
+}
+add_action( 'add_meta_boxes', 'liah_news_add_meta_boxes' );
+
+function liah_news_render_meta_box( $post ) {
+    // Add nonce for security
+    wp_nonce_field( 'liah_news_save_meta_box_data', 'liah_news_meta_box_nonce' );
+
+    // Retrieve current values
+    $meta  = get_post_meta( $post->ID, 'liah_news_meta', true );
+    $badge = get_post_meta( $post->ID, 'liah_news_badge', true );
+    $color = get_post_meta( $post->ID, 'liah_news_color', true );
+    $image = get_post_meta( $post->ID, 'liah_news_image', true );
+
+    // Default values if empty
+    $meta  = $meta ? $meta : date( 'F d, Y' );
+    $badge = $badge ? $badge : 'Notice';
+    $color = $color ? $color : '#081F3E';
+    ?>
+    <div style="padding: 10px 0;">
+        <p style="margin-bottom: 15px;">
+            <label for="liah_news_meta" style="display: block; font-weight: bold; margin-bottom: 5px;"><?php _e( 'Date / Subtitle Meta (e.g., "August 19, 2026"):', 'liah-academy' ); ?></label>
+            <input type="text" id="liah_news_meta" name="liah_news_meta" value="<?php echo esc_attr( $meta ); ?>" style="width: 100%; max-width: 400px; padding: 6px;" />
+        </p>
+        
+        <p style="margin-bottom: 15px;">
+            <label for="liah_news_badge" style="display: block; font-weight: bold; margin-bottom: 5px;"><?php _e( 'Badge Label / Type:', 'liah-academy' ); ?></label>
+            <select id="liah_news_badge" name="liah_news_badge" style="width: 100%; max-width: 400px; padding: 6px;">
+                <option value="Announcement" <?php selected( $badge, 'Announcement' ); ?>>Announcement</option>
+                <option value="Event" <?php selected( $badge, 'Event' ); ?>>Event</option>
+                <option value="News" <?php selected( $badge, 'News' ); ?>>News</option>
+                <option value="Notice" <?php selected( $badge, 'Notice' ); ?>>Notice</option>
+                <option value="Highlight" <?php selected( $badge, 'Highlight' ); ?>>Highlight</option>
+            </select>
+        </p>
+
+        <p style="margin-bottom: 15px;">
+            <label for="liah_news_color" style="display: block; font-weight: bold; margin-bottom: 5px;"><?php _e( 'Badge Background Color:', 'liah-academy' ); ?></label>
+            <select id="liah_news_color" name="liah_news_color" style="width: 100%; max-width: 400px; padding: 6px;">
+                <option value="#081F3E" <?php selected( $color, '#081F3E' ); ?>>Midnight Navy (#081F3E)</option>
+                <option value="#E28704" <?php selected( $color, '#E28704' ); ?>>Amber Orange (#E28704)</option>
+                <option value="#10B981" <?php selected( $color, '#10B981' ); ?>>Emerald Green (#10B981)</option>
+                <option value="#DC2626" <?php selected( $color, '#DC2626' ); ?>>Crimson Red (#DC2626)</option>
+                <option value="#4F46E5" <?php selected( $color, '#4F46E5' ); ?>>Indigo Blue (#4F46E5)</option>
+            </select>
+        </p>
+
+        <p style="margin-bottom: 10px;">
+            <label for="liah_news_image" style="display: block; font-weight: bold; margin-bottom: 5px;"><?php _e( 'Custom Image URL (Fallback to standard Featured Image if blank):', 'liah-academy' ); ?></label>
+            <input type="text" id="liah_news_image" name="liah_news_image" value="<?php echo esc_url( $image ); ?>" style="width: 100%; padding: 6px;" placeholder="https://example.com/image.jpg or /wp-content/uploads/..." />
+        </p>
+    </div>
+    <?php
+}
+
+function liah_news_save_meta_box_data( $post_id ) {
+    // Check if nonce is set
+    if ( ! isset( $_POST['liah_news_meta_box_nonce'] ) ) {
+        return;
+    }
+
+    // Verify nonce
+    if ( ! wp_verify_nonce( $_POST['liah_news_meta_box_nonce'], 'liah_news_save_meta_box_data' ) ) {
+        return;
+    }
+
+    // If this is an autosave, our form has not been submitted, so we don't want to do anything
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+
+    // Check user permissions
+    if ( isset( $_POST['post_type'] ) && 'liah_news' === $_POST['post_type'] ) {
+        if ( ! current_user_can( 'edit_page', $post_id ) ) {
+            return;
+        }
+    } else {
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+    }
+
+    // Sanitize and save fields
+    if ( isset( $_POST['liah_news_meta'] ) ) {
+        update_post_meta( $post_id, 'liah_news_meta', sanitize_text_field( $_POST['liah_news_meta'] ) );
+    }
+    if ( isset( $_POST['liah_news_badge'] ) ) {
+        update_post_meta( $post_id, 'liah_news_badge', sanitize_text_field( $_POST['liah_news_badge'] ) );
+    }
+    if ( isset( $_POST['liah_news_color'] ) ) {
+        update_post_meta( $post_id, 'liah_news_color', sanitize_text_field( $_POST['liah_news_color'] ) );
+    }
+    if ( isset( $_POST['liah_news_image'] ) ) {
+        update_post_meta( $post_id, 'liah_news_image', esc_url_raw( $_POST['liah_news_image'] ) );
+    }
+}
+add_action( 'save_post', 'liah_news_save_meta_box_data' );

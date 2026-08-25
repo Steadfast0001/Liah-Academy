@@ -33,11 +33,11 @@ if ( $is_logged_in ) {
     }
 }
 
-// Check for Fapshi payment returns
+// Check for Campay payment returns
 if ( isset( $_GET['payment'] ) && $_GET['payment'] === 'success' && isset( $_GET['id'] ) ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'students';
-    if ( $wpdb ) {
+    if ( $wpdb && get_class($wpdb) !== 'MockWPDB' ) {
         $wpdb->update(
             $table_name,
             array( 'payment_status' => 'Paid' ),
@@ -49,9 +49,9 @@ if ( isset( $_GET['payment'] ) && $_GET['payment'] === 'success' && isset( $_GET
     $_SESSION['liah_student_status'] = 'Approved'; 
 }
 
-$show_fapshi_checkout = isset( $_GET['fapshi_checkout'] ) && isset( $_GET['id'] );
+$show_campay_checkout = isset( $_GET['campay_checkout'] ) && isset( $_GET['id'] );
 $checkout_student_name = '';
-if ( $show_fapshi_checkout ) {
+if ( $show_campay_checkout ) {
     $checkout_id = intval( $_GET['id'] );
     if ( isset( $_SESSION['liah_student_name'] ) && isset( $_SESSION['liah_student_id'] ) && $_SESSION['liah_student_id'] == $checkout_id ) {
         $checkout_student_name = $_SESSION['liah_student_name'];
@@ -69,104 +69,223 @@ if ( $show_fapshi_checkout ) {
 <main style="margin-top: calc(var(--header-height) + 40px); margin-bottom: 80px;">
     <div class="container">
         
-        <?php if ( $show_fapshi_checkout ) : ?>
-            <!-- FAPSHI CHECKOUT GATEWAY SIMULATOR -->
+        <?php
+        $campay_username = defined('CAMPAY_USERNAME') ? CAMPAY_USERNAME : '';
+        $campay_sandbox  = defined('CAMPAY_SANDBOX') ? CAMPAY_SANDBOX : false;
+        
+        // Use the demo SDK URL for sandbox, and live SDK URL for production
+        $campay_app_id   = 'tUNm1FL1E_DdbTQtTJSWaHmeWcltK1uZegWmZTKteSeE1h1po8zm6DhQSw_kS0_NX1lH93eCi-7X49WfahowPw';
+        $campay_sdk_url  = $campay_sandbox 
+            ? 'https://demo.campay.net/sdk/js?app-id=' . $campay_app_id 
+            : 'https://campay.net/sdk/js?app-id=' . $campay_app_id;
+            
+        $use_campay_sdk  = ! empty( $campay_username );
+        ?>
+
+        <?php if ( $show_campay_checkout ) : ?>
+            <!-- CAMPAY CHECKOUT GATEWAY -->
             <div class="premium-card" style="max-width: 500px; margin: 40px auto; border-top: 6px solid #F5A623; box-shadow: var(--box-shadow-premium);">
                 <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(15,23,42,0.08);">
-                    <span style="font-family: var(--font-mono); font-size:11px; background: rgba(245,166,35,0.15); color: #B45309; padding: 4px 10px; border-radius: 4px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Fapshi Secure Checkout</span>
+                    <span style="font-family: var(--font-mono); font-size:11px; background: rgba(245,166,35,0.15); color: #B45309; padding: 4px 10px; border-radius: 4px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Secure Mobile Checkout</span>
                     <h3 style="margin-top: 12px; color: #081F3E; text-transform:none;">Admission Fee Payment</h3>
-                    <p style="font-size:13px; color:#64748B; margin-top:4px;">Candidate: <strong><?php echo esc_html( $checkout_student_name ); ?></strong></p>
+                    <p style="font-size:13px; color:#0F172A; margin-top:4px;">Candidate: <strong><?php echo esc_html( $checkout_student_name ); ?></strong></p>
                 </div>
 
                 <div style="text-align:center; margin-bottom: 30px;">
-                    <span style="font-size: 13px; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount to Collect</span>
+                    <span style="font-size: 13px; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Payable</span>
                     <h2 style="font-size: 40px; font-weight: 800; color: #081F3E; margin: 4px 0;">10,000 XAF</h2>
-                    <span style="font-size: 12px; color: #10B981; font-weight:700;"><i class="fa-solid fa-lock"></i> Secured by Fapshi encryption</span>
+                    <span style="font-size: 12px; color: #10B981; font-weight:700;"><i class="fa-solid fa-lock"></i> Secured by end-to-end encryption</span>
                 </div>
 
-                <form id="fapshiSimulatorForm">
-                    <input type="hidden" id="fapshiStudentId" value="<?php echo esc_attr( $checkout_id ); ?>">
-                    
-                    <div class="form-group">
-                        <label style="font-weight: 700; color: #081F3E;">Select Mobile Wallet Provider</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; margin-bottom: 20px;">
-                            <label style="border: 2px solid #F5A623; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: rgba(245,166,35,0.05); font-weight: 700; font-size: 14px;" id="lblMtn">
-                                <input type="radio" name="wallet" value="MTN" checked style="accent-color: #F5A623;"> MTN MoMo
-                            </label>
-                            <label style="border: 2px solid rgba(15,23,42,0.1); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px;" id="lblOrange">
-                                <input type="radio" name="wallet" value="ORANGE" style="accent-color: #F5A623;"> Orange Money
-                            </label>
-                        </div>
+                <?php if ( $use_campay_sdk ) : ?>
+                    <!-- LIVE CAMPAY SDK WIDGET BUTTON -->
+                    <div style="padding: 10px 0; text-align: center;">
+                        <p style="font-size: 14px; color: #475569; margin-bottom: 24px; line-height: 1.6;">Click the button below to pay your application fee safely using MTN Mobile Money or Orange Money via Campay.</p>
+                        <button id="payButton" class="btn btn-primary" style="width: 100%; height: 50px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-credit-card"></i> Pay 10,000 XAF
+                        </button>
                     </div>
 
-                    <div class="form-group">
-                        <label for="fapshiPhone" style="font-weight: 700; color: #081F3E;">Mobile Money Number *</label>
-                        <input type="tel" class="form-input-light" id="fapshiPhone" placeholder="e.g. 677889900" style="margin-top: 8px;" required>
-                    </div>
+                    <script src="<?php echo esc_url( $campay_sdk_url ); ?>"></script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            if (typeof campay !== 'undefined') {
+                                campay.options({
+                                    payButtonId: "payButton",
+                                    description: "Liah Academy Admission Auditing Fee for <?php echo esc_js( $checkout_student_name ); ?>",
+                                    amount: "10000",
+                                    currency: "XAF",
+                                    externalReference: "liah_<?php echo esc_js( $checkout_id ); ?>_<?php echo time(); ?>",
+                                    redirectUrl: "<?php echo esc_url( home_url( '/admissions?payment=success&id=' . $checkout_id ) ); ?>",
+                                });
+                                
+                                campay.onSuccess = function (data) { 
+                                    // Update database status via AJAX and redirect
+                                    const formData = new FormData();
+                                    formData.append('action', 'liah_complete_campay_payment');
+                                    formData.append('nonce', '<?php echo wp_create_nonce( "liah-portal-nonce" ); ?>');
+                                    formData.append('student_id', '<?php echo esc_js( $checkout_id ); ?>');
+                                    formData.append('reference', data.reference || '');
 
-                    <input type="hidden" id="fapshiRedirectUrl" value="<?php echo esc_url( home_url( '/admissions?payment=success&id=' . $checkout_id ) ); ?>">
+                                    fetch('<?php echo admin_url( "admin-ajax.php" ); ?>', {
+                                        method: 'POST',
+                                        body: formData
+                                    }).then(() => {
+                                        window.location.href = "<?php echo esc_url( home_url( '/admissions?payment=success&id=' . $checkout_id ) ); ?>";
+                                    });
+                                };
+                                
+                                campay.onFail = function (data) { 
+                                    alert('Payment failed. Status: ' + (data.status || 'Failed'));
+                                };
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="btnFapshiPay">Authorize Mobile Payment <i class="fa-solid fa-circle-check" style="margin-left: 8px;"></i></button>
-                </form>
-            </div>
-            
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const form = document.getElementById('fapshiSimulatorForm');
-                    const lblMtn = document.getElementById('lblMtn');
-                    const lblOrange = document.getElementById('lblOrange');
-                    const radios = document.getElementsByName('wallet');
-
-                    radios.forEach(radio => {
-                        radio.addEventListener('change', function() {
-                            if (lblMtn && lblOrange) {
-                                if (radio.value === 'MTN') {
-                                    lblMtn.style.borderColor = '#F5A623';
-                                    lblMtn.style.background = 'rgba(245,166,35,0.05)';
-                                    lblOrange.style.borderColor = 'rgba(15,23,42,0.1)';
-                                    lblOrange.style.background = 'none';
-                                } else {
-                                    lblOrange.style.borderColor = '#F5A623';
-                                    lblOrange.style.background = 'rgba(245,166,35,0.05)';
-                                    lblMtn.style.borderColor = 'rgba(15,23,42,0.1)';
-                                    lblMtn.style.background = 'none';
-                                }
+                                campay.onModalClose = function (data) { 
+                                    console.log('Payment modal closed');
+                                };
                             }
                         });
-                    });
+                    </script>
+                <?php else : ?>
+                    <!-- FALLBACK LOCAL SIMULATOR FORM -->
+                    <form id="fapshiSimulatorForm">
+                        <input type="hidden" id="fapshiStudentId" value="<?php echo esc_attr( $checkout_id ); ?>">
+                        
+                        <div class="form-group">
+                            <label style="font-weight: 700; color: #081F3E;">Select Mobile Wallet Provider</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; margin-bottom: 20px;">
+                                <label style="border: 2px solid #EAB308; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: rgba(234,179,8,0.08); font-weight: 700; font-size: 14px; color: #854D0E;" id="lblMtn">
+                                    <input type="radio" name="wallet" value="MTN" checked style="accent-color: #EAB308;"> MTN MoMo
+                                </label>
+                                <label style="border: 2px solid rgba(15,23,42,0.1); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px;" id="lblOrange">
+                                    <input type="radio" name="wallet" value="ORANGE" style="accent-color: #F97316;"> Orange Money
+                                </label>
+                            </div>
+                        </div>
 
-                    if (form) {
-                        form.addEventListener('submit', function(e) {
-                            e.preventDefault();
-                            const btn = document.getElementById('btnFapshiPay');
-                            const phone = document.getElementById('fapshiPhone').value;
-                            const id = document.getElementById('fapshiStudentId').value;
-                            const redirectUrl = document.getElementById('fapshiRedirectUrl').value;
-                            const wallet = document.querySelector('input[name="wallet"]:checked').value;
+                        <div class="form-group">
+                            <label for="fapshiPhone" style="font-weight: 700; color: #081F3E;">Mobile Money Number *</label>
+                            <div style="display: flex; align-items: center; margin-top: 8px;">
+                                <span style="background: rgba(15,23,42,0.05); border: 1px solid rgba(15,23,42,0.15); border-right: none; padding: 10px 14px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-weight: 700; color: #081F3E; font-size: 15px; height: 46px; display: flex; align-items: center; justify-content: center;">+237</span>
+                                <input type="tel" class="form-input-light" id="fapshiPhone" placeholder="e.g. 67X XXX XXX" style="margin-top: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; flex-grow: 1; height: 46px;" required>
+                            </div>
+                            <p style="font-size: 12px; color: #64748B; margin-top: 8px; margin-bottom: 20px; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info" style="color: var(--color-primary-accent); margin-right: 4px;"></i>
+                                You will receive a USSD push notification on your phone to confirm your PIN.
+                            </p>
+                        </div>
 
-                            btn.disabled = true;
-                            btn.innerHTML = 'Connecting to Fapshi... <i class="fa-solid fa-spinner fa-spin" style="margin-left:6px;"></i>';
+                        <input type="hidden" id="fapshiRedirectUrl" value="<?php echo esc_url( home_url( '/admissions?payment=success&id=' . $checkout_id ) ); ?>">
 
-                            setTimeout(() => {
-                                btn.innerHTML = 'Sending push prompt to +237 ' + phone + '... <i class="fa-solid fa-spinner fa-spin" style="margin-left:6px;"></i>';
-                            }, 1500);
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="btnFapshiPay">Pay 10,000 XAF <i class="fa-solid fa-circle-check" style="margin-left: 8px;"></i></button>
+                    </form>
 
-                            setTimeout(() => {
-                                btn.innerHTML = 'Waiting for user PIN authorization... <i class="fa-solid fa-mobile-screen-button" style="margin-left:6px;"></i>';
-                            }, 3500);
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const form = document.getElementById('fapshiSimulatorForm');
+                            const lblMtn = document.getElementById('lblMtn');
+                            const lblOrange = document.getElementById('lblOrange');
+                            const radios = document.getElementsByName('wallet');
+                            const phoneInput = document.getElementById('fapshiPhone');
 
-                            setTimeout(() => {
-                                btn.innerHTML = 'Payment Received! Redirecting... <i class="fa-solid fa-circle-check" style="margin-left:6px;"></i>';
-                                btn.style.background = '#10B981';
-                            }, 5500);
+                            radios.forEach(radio => {
+                                radio.addEventListener('change', function() {
+                                    if (lblMtn && lblOrange) {
+                                        if (radio.value === 'MTN') {
+                                            lblMtn.style.borderColor = '#EAB308';
+                                            lblMtn.style.background = 'rgba(234,179,8,0.08)';
+                                            lblMtn.style.color = '#854D0E';
+                                            
+                                            lblOrange.style.borderColor = 'rgba(15,23,42,0.1)';
+                                            lblOrange.style.background = 'none';
+                                            lblOrange.style.color = '';
+                                            if (phoneInput) phoneInput.placeholder = 'e.g. 67X XXX XXX';
+                                        } else {
+                                            lblOrange.style.borderColor = '#F97316';
+                                            lblOrange.style.background = 'rgba(249,115,22,0.08)';
+                                            lblOrange.style.color = '#C2410C';
+                                            
+                                            lblMtn.style.borderColor = 'rgba(15,23,42,0.1)';
+                                            lblMtn.style.background = 'none';
+                                            lblMtn.style.color = '';
+                                            if (phoneInput) phoneInput.placeholder = 'e.g. 69X XXX XXX';
+                                        }
+                                    }
+                                });
+                            });
 
-                            setTimeout(() => {
-                                window.location.href = redirectUrl;
-                            }, 7000);
+                            if (form) {
+                                form.addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    const btn = document.getElementById('btnFapshiPay');
+                                    const phone = document.getElementById('fapshiPhone').value;
+                                    const id = document.getElementById('fapshiStudentId').value;
+                                    const redirectUrl = document.getElementById('fapshiRedirectUrl').value;
+                                    const wallet = document.querySelector('input[name="wallet"]:checked').value;
+
+                                    btn.disabled = true;
+                                    btn.innerHTML = 'Connecting to secure gateway... <i class="fa-solid fa-spinner fa-spin" style="margin-left:6px;"></i>';
+
+                                    // Prepare AJAX payload
+                                    const formData = new FormData();
+                                    formData.append('action', 'liah_process_campay_payment');
+                                    formData.append('nonce', liahSettings.nonce);
+                                    formData.append('student_id', id);
+                                    formData.append('phone', phone);
+
+                                    fetch(liahSettings.ajaxUrl, {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                    .then(response => response.json())
+                                    .then(res => {
+                                        if (res.success) {
+                                            if (res.data.status === 'simulated') {
+                                                // Simulator Mode timings
+                                                setTimeout(() => {
+                                                    btn.innerHTML = 'Sending push prompt to +237 ' + phone + '... <i class="fa-solid fa-spinner fa-spin" style="margin-left:6px;"></i>';
+                                                }, 1500);
+
+                                                setTimeout(() => {
+                                                    btn.innerHTML = 'Waiting for user PIN authorization... <i class="fa-solid fa-mobile-screen-button" style="margin-left:6px;"></i>';
+                                                }, 3500);
+
+                                                setTimeout(() => {
+                                                    btn.innerHTML = 'Payment Received! Redirecting... <i class="fa-solid fa-circle-check" style="margin-left:6px;"></i>';
+                                                    btn.style.background = '#10B981';
+                                                }, 5500);
+
+                                                setTimeout(() => {
+                                                    window.location.href = redirectUrl;
+                                                }, 7000);
+                                            } else {
+                                                // Live Campay USSD prompt initiated!
+                                                btn.innerHTML = 'USSD Push Sent! Check your phone... <i class="fa-solid fa-mobile-screen-button" style="margin-left:6px;"></i>';
+                                                
+                                                setTimeout(() => {
+                                                    btn.innerHTML = 'Payment Processing... Please authorize PIN prompt.';
+                                                }, 3000);
+
+                                                setTimeout(() => {
+                                                    window.location.href = redirectUrl;
+                                                }, 10000);
+                                            }
+                                        } else {
+                                            btn.disabled = false;
+                                            btn.innerHTML = 'Pay 10,000 XAF <i class="fa-solid fa-circle-check" style="margin-left:8px;"></i>';
+                                            alert(res.data.message || 'Payment initiation failed.');
+                                        }
+                                    })
+                                    .catch(err => {
+                                        btn.disabled = false;
+                                        btn.innerHTML = 'Pay 10,000 XAF <i class="fa-solid fa-circle-check" style="margin-left:8px;"></i>';
+                                        alert('A network error occurred: ' + err.message);
+                                    });
+                                });
+                            }
                         });
-                    }
-                });
-            </script>
+                    </script>
+                <?php endif; ?>
+            </div>
 
         <?php else : ?>
         <!-- HEADER TITLE -->
@@ -366,7 +485,7 @@ if ( $show_fapshi_checkout ) {
                                                 
                                                 <?php if ( $student->payment_status !== 'Paid' ) : ?>
                                                     <p style="color: #94A3B8; font-size: 14px; margin: 0;">Your admission auditing fee (10,000 XAF) is pending authorization.</p>
-                                                    <a href="<?php echo esc_url( home_url( '/admissions?fapshi_checkout=1&id=' . $student->id ) ); ?>" class="btn btn-primary" style="align-self: flex-start; font-size: 13px; padding: 10px 20px;">
+                                                    <a href="<?php echo esc_url( home_url( '/admissions?campay_checkout=1&id=' . $student->id ) ); ?>" class="btn btn-primary" style="align-self: flex-start; font-size: 13px; padding: 10px 20px;">
                                                         <i class="fa-solid fa-credit-card" style="margin-right:8px;"></i> Pay Auditing Fee (10,000 XAF)
                                                     </a>
                                                 <?php else : ?>
@@ -517,10 +636,10 @@ if ( $show_fapshi_checkout ) {
                                          </div>
                                      </div>
 
-                                    <div style="margin: 20px 0; padding: 16px; background: rgba(8, 31, 62, 0.04); border-radius: var(--border-radius-sm); font-size:13px; color:#64748B;">
-                                         <i class="fa-solid fa-credit-card" style="color:#F5A623; margin-right:6px;"></i>
-                                         <strong>Admission Fee:</strong> An application auditing fee of <strong>10,000 XAF</strong> applies. Payments are done using Mobile Money (MTN MoMo) and Orange Money (OM) via the Fapshi API.
-                                    </div>
+                                     <div style="margin: 20px 0; padding: 16px; background: rgba(8, 31, 62, 0.04); border-radius: var(--border-radius-sm); font-size:13px; color:#64748B;">
+                                          <i class="fa-solid fa-credit-card" style="color:#F5A623; margin-right:6px;"></i>
+                                          <strong>Application Fee:</strong> A non-refundable fee of <strong>10,000 XAF</strong> is required. We accept MTN Mobile Money (MoMo) and Orange Money (OM) via secure payment.
+                                     </div>
 
                                     <!-- Feedback message area -->
                                     <div class="portal-form-error" id="registerFormError" style="color:red; font-size:14px; margin-bottom:15px; display:none;"></div>

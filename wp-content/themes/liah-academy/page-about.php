@@ -121,41 +121,45 @@ get_header();
             </div>
 
             <div class="grid-3 highlights-grid">
-                <!-- News Card -->
-                <div class="premium-card highlight-post-card" style="box-shadow:none; border:1px solid rgba(15,23,42,0.08);">
-                    <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&q=80');">
-                        <span class="course-badge highlight-badge">News</span>
-                    </div>
-                    <div class="highlight-body">
-                        <span class="highlight-meta">August 14, 2026</span>
-                        <h3>Liah Software division Launches API suite</h3>
-                        <p class="body-normal" style="color:#64748B; margin-top:8px;">Our company division has officially deployed its new SaaS accounting API for businesses in Douala and Buea, built entirely on Python and PostgreSQL.</p>
-                    </div>
-                </div>
+                <?php
+                $news_query = new WP_Query( array(
+                    'post_type'      => 'liah_news',
+                    'posts_per_page' => 3
+                ) );
 
-                <!-- Event Card -->
-                <div class="premium-card highlight-post-card" style="box-shadow:none; border:1px solid rgba(15,23,42,0.08);">
-                    <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80');">
-                        <span class="course-badge highlight-badge" style="background:#E28704; color:#ffffff;">Event</span>
+                if ( $news_query->have_posts() ) :
+                    while ( $news_query->have_posts() ) : $news_query->the_post();
+                        $post_id = get_the_ID();
+                        $meta    = get_post_meta( $post_id, 'liah_news_meta', true );
+                        $badge   = get_post_meta( $post_id, 'liah_news_badge', true );
+                        $color   = get_post_meta( $post_id, 'liah_news_color', true );
+                        $image   = get_post_meta( $post_id, 'liah_news_image', true );
+                        $color   = $color ? $color : '#081F3E';
+                        $badge   = $badge ? $badge : 'Notice';
+                        $image   = $image ? $image : 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80';
+                ?>
+                <a href="<?php the_permalink(); ?>" class="premium-card highlight-post-card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; box-shadow: none; border: 1px solid rgba(15,23,42,0.08); padding: 0; overflow: hidden; height: 100%;">
+                    <div class="highlight-thumb" style="background-image: url('<?php echo esc_url( $image ); ?>'); height: 200px; background-size: cover; background-position: center; position: relative;">
+                        <span class="course-badge highlight-badge" style="background: <?php echo esc_attr( $color ); ?>; color: #ffffff; position: absolute; top: 15px; left: 15px;"><?php echo esc_html( $badge ); ?></span>
                     </div>
-                    <div class="highlight-body">
-                        <span class="highlight-meta">September 10, 2026</span>
-                        <h3>Front-End Engineering Bootcamp</h3>
-                        <p class="body-normal" style="color:#64748B; margin-top:8px;">A 3-day practical bootcamp in HTML5, CSS3, and React.js. Free registration for registered candidates and alumni.</p>
+                    <div class="highlight-body" style="padding: 24px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; background: #fff;">
+                        <div>
+                            <span class="highlight-meta" style="font-size: 12px; color: #64748B; display: block; margin-bottom: 8px;"><?php echo esc_html( $meta ); ?></span>
+                            <h3 style="color: #081F3E; font-size: 18px; margin-bottom: 12px; font-weight: 700; transition: color 0.2s ease;"><?php the_title(); ?></h3>
+                            <p class="body-normal" style="color: #64748B; margin-top: 8px; font-size: 14px; line-height: 1.6;"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 20 ) ); ?></p>
+                        </div>
+                        <span style="color: var(--color-primary-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-top: 15px;">Read Full Story <i class="fa-solid fa-arrow-right"></i></span>
                     </div>
+                </a>
+                <?php
+                    endwhile;
+                    wp_reset_postdata();
+                else :
+                ?>
+                <div style="grid-column: span 3; text-align:center; padding: 40px; color:#64748B;">
+                    <p>No highlights or updates published yet.</p>
                 </div>
-
-                <!-- Announcement Card -->
-                <div class="premium-card highlight-post-card" style="box-shadow:none; border:1px solid rgba(15,23,42,0.08);">
-                    <div class="highlight-thumb" style="background-image: url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80');">
-                        <span class="course-badge highlight-badge" style="background:#081F3E; color:#F5A623;">Announcement</span>
-                    </div>
-                    <div class="highlight-body">
-                        <span class="highlight-meta">August 28, 2026</span>
-                        <h3>Admissions Deadline Extension</h3>
-                        <p class="body-normal" style="color:#64748B; margin-top:8px;">Due to local requests, the early-bird registration and document upload window for Fall semester is extended to late September.</p>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>

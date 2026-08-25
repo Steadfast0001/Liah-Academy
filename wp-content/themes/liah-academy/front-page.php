@@ -14,21 +14,21 @@ get_header();
     <!-- Image Slides Container -->
     <div class="slider-container" id="heroSliderContainer">
         <!-- Local school photos playing in rotation background -->
-        <div class="slide active" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_1.jpg' ); ?>"></div>
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_2.jpg' ); ?>"></div>
+        <div class="slide active" data-bg="<?php echo esc_url( get_template_directory_uri() . '/1.jpg' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/1.jpg' ); ?>');"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/2.jpg' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/2.jpg' ); ?>');"></div>
         
         <!-- Muted video slide enqueued in rotation -->
         <div class="slide">
             <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;">
-                <source src="<?php echo esc_url( get_template_directory_uri() . '/video.mp4' ); ?>" type="video/mp4">
+                <source src="<?php echo esc_url( get_template_directory_uri() . '/1.mp4' ); ?>" type="video/mp4">
             </video>
         </div>
 
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_3.jpg' ); ?>"></div>
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_4.jpg' ); ?>"></div>
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_5.jpg' ); ?>"></div>
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP_2.webp' ); ?>"></div>
-        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP.webp' ); ?>"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_3.jpg' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/image_3.jpg' ); ?>');"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_4.jpg' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/image_4.jpg' ); ?>');"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/image_5.jpg' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/image_5.jpg' ); ?>');"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP_2.webp' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/OIP_2.webp' ); ?>');"></div>
+        <div class="slide" data-bg="<?php echo esc_url( get_template_directory_uri() . '/OIP.webp' ); ?>" style="background-image: url('<?php echo esc_url( get_template_directory_uri() . '/OIP.webp' ); ?>');"></div>
     </div>
     
     <!-- Dark Color Overlay filter for text readability -->
@@ -44,27 +44,38 @@ get_header();
             <a href="<?php echo esc_url( home_url( '/degree-programs' ) ); ?>" class="btn btn-secondary">Explore Programs</a>
         </div>
     </div>
+
+    <!-- Left & Right Corner Mission/Vision boxes -->
+    <div class="hero-corner-box mission-box" style="position: absolute; bottom: 24px; left: 24px; z-index: 5; max-width: 300px; background: rgba(8, 31, 62, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(245, 166, 35, 0.2); padding: 14px 18px; border-radius: 8px; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+        <h4 style="color: var(--color-primary-accent); font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; margin-top: 0;"><i class="fa-solid fa-bullseye" style="margin-right: 6px;"></i> Our Mission</h4>
+        <p style="color: #F8FAFC; font-size: 12px; line-height: 1.5; margin: 0;">To empower tech innovators through practical lab-based learning and build world-class digital solutions.</p>
+    </div>
+
+    <div class="hero-corner-box vision-box" style="position: absolute; bottom: 24px; right: 24px; z-index: 5; max-width: 300px; background: rgba(8, 31, 62, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(245, 166, 35, 0.2); padding: 14px 18px; border-radius: 8px; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+        <h4 style="color: var(--color-primary-accent); font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em; margin-top: 0;"><i class="fa-solid fa-eye" style="margin-right: 6px;"></i> Our Vision</h4>
+        <p style="color: #F8FAFC; font-size: 12px; line-height: 1.5; margin: 0;">To be the leading practical tech academy and engineering partner in Cameroon and Africa.</p>
+    </div>
 </section>
 
 <!-- 2. QUICK STATS ROW -->
-<section class="bg-dark-section" style="padding: 50px 0; border-bottom: 1px solid rgba(245, 166, 35, 0.1);">
+<section class="bg-light-section" style="padding: 50px 0; background: #FFFFFF; border-bottom: 1px solid rgba(15, 23, 42, 0.08);">
     <div class="container">
         <div class="grid-4" style="text-align: center;">
             <div>
-                <h3 style="font-size: 36px; font-weight: 800; color: #F5A623;">2024</h3>
-                <p class="small-badge" style="color: #64748B;">Year Established</p>
+                <h3 style="font-size: 36px; font-weight: 800; color: #081F3E;"><?php echo esc_html( get_theme_mod( 'liah_stat1_num', '2024' ) ); ?></h3>
+                <p class="small-badge" style="color: #334155;"><?php echo esc_html( get_theme_mod( 'liah_stat1_lbl', 'Year Established' ) ); ?></p>
             </div>
             <div>
-                <h3 style="font-size: 36px; font-weight: 800; color: #F5A623;">500+</h3>
-                <p class="small-badge" style="color: #64748B;">Trained Graduates</p>
+                <h3 style="font-size: 36px; font-weight: 800; color: #081F3E;"><?php echo esc_html( get_theme_mod( 'liah_stat2_num', '500+' ) ); ?></h3>
+                <p class="small-badge" style="color: #334155;"><?php echo esc_html( get_theme_mod( 'liah_stat2_lbl', 'Trained Graduates' ) ); ?></p>
             </div>
             <div>
-                <h3 style="font-size: 36px; font-weight: 800; color: #F5A623;">95%</h3>
-                <p class="small-badge" style="color: #64748B;">Career Landing Rate</p>
+                <h3 style="font-size: 36px; font-weight: 800; color: #081F3E;"><?php echo esc_html( get_theme_mod( 'liah_stat3_num', '95%' ) ); ?></h3>
+                <p class="small-badge" style="color: #334155;"><?php echo esc_html( get_theme_mod( 'liah_stat3_lbl', 'Career Landing Rate' ) ); ?></p>
             </div>
             <div>
-                <h3 style="font-size: 36px; font-weight: 800; color: #F5A623;">100%</h3>
-                <p class="small-badge" style="color: #64748B;">Practical & Labs-Based</p>
+                <h3 style="font-size: 36px; font-weight: 800; color: #081F3E;"><?php echo esc_html( get_theme_mod( 'liah_stat4_num', '100%' ) ); ?></h3>
+                <p class="small-badge" style="color: #334155;"><?php echo esc_html( get_theme_mod( 'liah_stat4_lbl', 'Practical & Labs-Based' ) ); ?></p>
             </div>
         </div>
     </div>
@@ -80,7 +91,7 @@ get_header();
         </div>
 
         <div style="max-width: 960px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 20px rgba(245, 166, 35, 0.08); border: 1px solid rgba(245, 166, 35, 0.15); background: #081F3E; line-height: 0;">
-            <video width="100%" height="auto" controls preload="metadata" style="display: block; border-radius: 11px;">
+            <video id="liahActionVideo" width="100%" height="auto" controls preload="metadata" style="display: block; border-radius: 11px;" muted>
                 <source src="<?php echo esc_url( get_template_directory_uri() . '/video.mp4' ); ?>" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -148,7 +159,24 @@ get_header();
                 <span class="course-badge" style="background: rgba(245, 166, 35, 0.15); color: #F5A623;">Corporate Division</span>
                 <h2 style="color: #F8FAFC;">Enterprise software & services from Buea</h2>
                 <p class="body-large" style="margin: 20px 0; color: #64748B;">Liah Academy is both an academy and a company. Our professional services arm develops production applications, performs compliance audits, and provides technical consulting globally.</p>
-                <a href="<?php echo esc_url( home_url( '/contact' ) ); ?>" class="btn btn-primary">Partner With Us</a>
+                <?php
+                $partner_email = 'info@liahacademy.com';
+                $partner_subject = 'Partnership Proposal: [Your Organization Name] + [Target Institution Name]';
+                $partner_body = "Dear [Name/Title],\n\n" .
+                    "I am reaching out to propose a mutual partnership between [Your Organization Name] and [Target Institution Name].\n\n" .
+                    "At [Your Organization Name], we specialize in [one sentence on what you do]. Given your focus on [mention target institution’s priority], a collaboration could enable us to:\n\n" .
+                    "Deliver [Value/Outcome 1, e.g., practical technical masterclasses for students].\n\n" .
+                    "Provide [Value/Outcome 2, e.g., subsidized access to digital tools/hubs].\n\n" .
+                    "I would love to share a brief presentation on how this could work and hear your thoughts on potential collaboration areas.\n\n" .
+                    "Are you available for a brief introductory meeting this [e.g., Thursday at 11:00 AM], or is there a better time that suits you?\n\n" .
+                    "Warm regards,\n\n" .
+                    "[Your Full Name]\n\n" .
+                    "[Your Title]\n\n" .
+                    "[Your Organization Name]\n\n" .
+                    "[Contact Information]";
+                $mailto_url = 'mailto:' . $partner_email . '?subject=' . rawurlencode( $partner_subject ) . '&body=' . rawurlencode( $partner_body );
+                ?>
+                <a href="<?php echo esc_url( $mailto_url ); ?>" class="btn btn-primary">Partner With Us</a>
             </div>
 
             <div class="services-list-wrapper" style="display: flex; flex-direction: column; gap: 24px;">
@@ -210,16 +238,19 @@ get_header();
                     $badge   = $badge ? $badge : 'Notice';
                     $image   = $image ? $image : 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80';
             ?>
-            <div class="highlight-post-card">
-                <div class="highlight-thumb" style="background-image: url('<?php echo esc_url( $image ); ?>');">
-                    <span class="course-badge highlight-badge" style="background: <?php echo esc_attr( $color ); ?>; color: #ffffff;"><?php echo esc_html( $badge ); ?></span>
+            <a href="<?php the_permalink(); ?>" class="highlight-post-card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+                <div class="highlight-thumb" style="background-image: url('<?php echo esc_url( $image ); ?>'); height: 200px; background-size: cover; background-position: center; position: relative;">
+                    <span class="course-badge highlight-badge" style="background: <?php echo esc_attr( $color ); ?>; color: #ffffff; position: absolute; top: 15px; left: 15px;"><?php echo esc_html( $badge ); ?></span>
                 </div>
-                <div class="highlight-body">
-                    <span class="highlight-meta"><?php echo esc_html( $meta ); ?></span>
-                    <h3><?php the_title(); ?></h3>
-                    <p class="body-normal" style="color: #64748B; margin-top: 8px;"><?php the_content(); ?></p>
+                <div class="highlight-body" style="padding: 24px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; background: #fff;">
+                    <div>
+                        <span class="highlight-meta" style="font-size: 12px; color: #64748B; display: block; margin-bottom: 8px;"><?php echo esc_html( $meta ); ?></span>
+                        <h3 style="color: #081F3E; font-size: 18px; margin-bottom: 12px; font-weight: 700; transition: color 0.2s ease;"><?php the_title(); ?></h3>
+                        <p class="body-normal" style="color: #64748B; margin-top: 8px; font-size: 14px; line-height: 1.6;"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 20 ) ); ?></p>
+                    </div>
+                    <span style="color: var(--color-primary-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-top: 15px;">Read Full Story <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
-            </div>
+            </a>
             <?php
                 endwhile;
                 wp_reset_postdata();

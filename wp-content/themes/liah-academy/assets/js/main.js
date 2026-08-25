@@ -31,20 +31,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle dropdown sub-menu on mobile when clicking "About" (default is hover on desktop)
     if (aboutMenuItem) {
         const link = aboutMenuItem.querySelector('.menu-link');
-        link.addEventListener('click', function(e) {
-            if (window.innerWidth <= 768) {
-                e.preventDefault();
-                aboutMenuItem.classList.toggle('dropdown-open');
-            }
-        });
-        
-        // Accessibility focus support
-        link.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                aboutMenuItem.classList.toggle('dropdown-open');
-            }
-        });
+        if (link) {
+            link.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    e.preventDefault();
+                    aboutMenuItem.classList.toggle('dropdown-open');
+                }
+            });
+            
+            // Accessibility focus support
+            link.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    aboutMenuItem.classList.toggle('dropdown-open');
+                }
+            });
+        }
     }
 
     /* ==========================================================================
@@ -270,10 +272,17 @@ document.addEventListener('DOMContentLoaded', function() {
         let valid = true;
         inputs.forEach(input => {
             if (input.hasAttribute('required') && !input.value.trim()) {
-                input.style.borderColor = 'red';
+                input.classList.add('invalid-field');
                 valid = false;
+                
+                // Real-time error clearing as user types
+                const clearError = () => {
+                    input.classList.remove('invalid-field');
+                    input.removeEventListener('input', clearError);
+                };
+                input.addEventListener('input', clearError);
             } else {
-                input.style.borderColor = '';
+                input.classList.remove('invalid-field');
             }
         });
         return valid;
@@ -380,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentLoginForm = document.getElementById('studentLoginForm');
     const portalLogoutBtn = document.getElementById('portalLogoutBtn');
 
-    // Submit Registration via AJAX (Postgres application database insert)
+    // Submit Registration via AJAX (MySQL application database insert)
     if (studentRegistrationForm) {
         studentRegistrationForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -839,8 +848,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Review';
                     alert('A connection error occurred.');
-                });
-        }
+            });
+        });
+    }
 
         // Toggle website review form layout
         const toggleReviewBtn = document.getElementById('toggleReviewFormBtn');
@@ -882,6 +892,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     headerSearchFormWrap.style.display = 'none';
                 }
             });
+        }
+
+        // Auto-play walk-through video on scroll using Intersection Observer
+        const actionVideo = document.getElementById('liahActionVideo');
+        if (actionVideo && 'IntersectionObserver' in window) {
+            const videoObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        actionVideo.play().catch(err => {
+                            console.log("Autoplay prevented: " + err.message);
+                        });
+                    } else {
+                        actionVideo.pause();
+                    }
+                });
+            }, {
+                threshold: 0.3 // Play when 30% of the video is visible
+            });
+            videoObserver.observe(actionVideo);
         }
     }
 });

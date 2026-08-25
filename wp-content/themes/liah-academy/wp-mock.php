@@ -94,7 +94,7 @@ function get_footer() {
     include 'footer.php';
 }
 
-// 3. Mock WordPress Database Class to avoid PostgreSQL errors
+// 3. Mock WordPress Database Class to avoid database connection errors
 class MockWPDB {
     public $prefix = 'wp_';
     public $insert_id = 0;
@@ -155,7 +155,7 @@ class WP_Query {
                     'format'       => 'fulltime',
                     'duration'     => '3 Years',
                     'fee'          => '450000',
-                    'modules'      => 'Python, JavaScript, Django, PostgreSQL, Algorithms',
+                    'modules'      => 'Python, JavaScript, Django, MySQL, Algorithms',
                     'badge'        => 'Academic Program'
                 ),
                 (object) array(

@@ -44,7 +44,7 @@ get_header();
             <div class="grid-3">
                 <div>
                     <h4 style="color:#081F3E; margin-bottom:12px;"><i class="fa-solid fa-laptop-code" style="color:#F5A623; margin-right:10px;" aria-hidden="true"></i> Technical Workshops</h4>
-                    <p style="font-size:15px; color:#475569; line-height:1.6;">Weekly interactive meetups focusing on specific tools (Docker pipelines, Django setups, PostgreSQL indexing, Git collaboration workflows).</p>
+                    <p style="font-size:15px; color:#475569; line-height:1.6;">Weekly interactive meetups focusing on specific tools (Docker pipelines, Django setups, MySQL indexing, Git collaboration workflows).</p>
                 </div>
                 
                 <div>

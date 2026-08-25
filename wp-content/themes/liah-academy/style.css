@@ -3,7 +3,7 @@ Theme Name: Liah Academy Theme
 Theme URI: https://liahacademy.org/
 Author: Nkenganyi steadfast
 Author URI: https://liahacademy.org/
-Description: Custom high-performance premium WordPress theme for Liah Academy, Buea. Compatible with PHP and PostgreSQL databases.
+Description: Custom high-performance premium WordPress theme for Liah Academy, Buea. Compatible with PHP and MySQL/MariaDB databases.
 Version: 1.0.0
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -428,7 +428,9 @@ small, .meta, .fine-print {
 
 .hero-subtitle {
     margin-bottom: 40px;
-    color: var(--color-text-muted);
+    color: #FFFFFF;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -1739,4 +1741,69 @@ small, .meta, .fine-print {
 
 .header-search-form .search-submit-btn:hover {
     background: #E0951D;
+}
+
+/* ==========================================================================
+   15. UX OPTIMIZATIONS (Smooth Transitions, Hover Effects, & Forms Animations)
+   ========================================================================== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Form Steps Automatic Transition Animations */
+.form-step-section {
+    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Invalid Input Shake & Visual Feedback */
+.form-input-light.invalid-field {
+    border-color: #EF4444 !important;
+    background-color: #FEF2F2 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    animation: inputShake 0.4s ease-in-out;
+}
+
+@keyframes inputShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+/* Modern Card Hover Effects */
+.premium-card, .highlight-post-card, .course-explorer-card {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.premium-card:hover, .highlight-post-card:hover, .course-explorer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(8, 31, 62, 0.08), 0 0 0 1px rgba(245, 166, 35, 0.1) !important;
+}
+
+/* Custom Portal Inputs Hover & Focus transitions */
+.form-input-light {
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.form-input-light:focus {
+    border-color: var(--color-primary-accent) !important;
+    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15) !important;
+    background: #FFFFFF;
+}
+
+/* Hide hero corner boxes on tablet/mobile layouts for readability */
+@media (max-width: 1024px) {
+    .hero-corner-box {
+        display: none !important;
+    }
 }

@@ -46,8 +46,8 @@ switch ( $action ) {
         echo json_encode( array(
             'success' => true,
             'data'    => array(
-                'message'  => 'Registration success! Redirecting to Fapshi payment gateway...',
-                'redirect' => 'preview.php?page=admissions&fapshi_checkout=1&id=' . $_SESSION['liah_student_id']
+                'message'  => 'Registration successful! Redirecting to secure payment...',
+                'redirect' => 'preview.php?page=admissions&campay_checkout=1&id=' . $_SESSION['liah_student_id']
             )
         ) );
         exit;
