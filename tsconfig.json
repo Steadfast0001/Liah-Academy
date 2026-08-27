@@ -22,5 +22,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "wp-admin", "wp-includes", "wp-content"]
+  "exclude": ["node_modules"]
 }

@@ -164,7 +164,7 @@ const programsData = [
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['UI/UX', 'Figma', 'Photoshop', 'HTML/CSS', 'WordPress'],
+    tags: ['UI/UX', 'Figma', 'Photoshop', 'HTML/CSS', 'Next.js'],
     featured: false
   },
   {
@@ -199,7 +199,7 @@ const programsData = [
     id: 15,
     school: 'CERTIFICATION',
     title: 'Industrial Web Design',
-    desc: 'Build fully responsive corporate websites, frontend layouts, animations, and custom WordPress setups.',
+    desc: 'Build fully responsive corporate websites, frontend layouts, animations, and modern CMS architectures.',
     degree: 'CERTIFICATION',
     duration: '6 Months',
     format: 'fulltime',
