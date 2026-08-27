@@ -394,7 +394,7 @@ function AdmissionsContent() {
           <span className="course-badge">Admissions &amp; Portal</span>
           <h1>Admissions &amp; Tuition Portal</h1>
           <p className="sub-header">
-            Review admission requirements, check transparent institutional tuition schedules, and register for upcoming cohorts.
+            Review admission requirements, check transparent institutional tuition schedules, and enrol for upcoming cohorts.
           </p>
         </div>
 
@@ -709,7 +709,7 @@ function AdmissionsContent() {
                     gap: '8px'
                   }}
                 >
-                  <UserPlus size={18} /> Register / Sign Up
+                  <UserPlus size={18} /> Enrolment
                 </button>
                 <button
                   onClick={() => setActiveTab('login')}
