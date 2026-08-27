@@ -10,14 +10,14 @@ interface HeaderSearchProps {
 }
 
 const searchableItems = [
-  { title: 'Software Engineering (B.Tech / HND)', category: 'Degree Track', link: '/degree-programs' },
-  { title: 'Cybersecurity & Cloud Defense (B.Sc)', category: 'Degree Track', link: '/degree-programs' },
+  { title: 'Software Engineering (HND)', category: 'HND Program', link: '/degree-programs' },
+  { title: 'Cybersecurity & Cloud Defense (HND)', category: 'HND Program', link: '/degree-programs' },
   { title: 'DevOps & Cloud Engineering Specialist', category: 'Certification', link: '/degree-programs' },
   { title: 'Data Science & Machine Learning', category: 'Certification', link: '/degree-programs' },
   { title: 'Computer Engineering (ND)', category: 'National Diploma', link: '/degree-programs' },
-  { title: 'Web & Graphics Design (HND)', category: 'Degree Track', link: '/degree-programs' },
+  { title: 'Web & Graphics Design (HND)', category: 'HND Program', link: '/degree-programs' },
   { title: 'Admissions Application Form', category: 'Admissions', link: '/admissions#apply' },
-  { title: 'Tuition Fee & Installments Calculator', category: 'Admissions', link: '/admissions#calculator' },
+  { title: 'Institutional Tuition Fee Schedule', category: 'Admissions', link: '/admissions' },
   { title: 'Student Portal & Status Check', category: 'Portal', link: '/admissions#portal' },
   { title: 'Top Administration & Leadership', category: 'About', link: '/about#top-admin' },
   { title: 'Corporate Software Partnerships', category: 'About', link: '/about#partnerships' },

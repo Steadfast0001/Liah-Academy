@@ -238,15 +238,15 @@ const programsData = [
 ];
 
 export default function DegreeProgramsPage() {
-  const [selectedFormat, setSelectedFormat] = useState<string>('all');
+  const [selectedSchool, setSelectedSchool] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredPrograms = programsData.filter((prog) => {
-    const matchesFormat = 
-      selectedFormat === 'all' || 
-      (selectedFormat === 'fulltime' && (prog.format === 'fulltime' || prog.studyFormat.toLowerCase().includes('fulltime'))) ||
-      (selectedFormat === 'oncampus' && (prog.format === 'oncampus' || prog.studyFormat.toLowerCase().includes('oncampus'))) ||
-      (selectedFormat === 'online' && prog.format === 'online');
+    const matchesSchool = 
+      selectedSchool === 'all' || 
+      (selectedSchool === 'ENGINEERING' && prog.school === 'SCHOOL OF ENGINEERING') ||
+      (selectedSchool === 'BUSINESS' && prog.school === 'SCHOOL OF BUSINESS') ||
+      (selectedSchool === 'CERTIFICATION' && prog.school === 'CERTIFICATION');
 
     const matchesSearch =
       searchQuery.trim() === '' ||
@@ -255,7 +255,7 @@ export default function DegreeProgramsPage() {
       prog.school.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prog.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesFormat && matchesSearch;
+    return matchesSchool && matchesSearch;
   });
 
   return (
@@ -329,7 +329,7 @@ export default function DegreeProgramsPage() {
 
         {/* 1. TOP 3 INFO CARDS */}
         <section className="grid-3" style={{ marginBottom: '80px', alignItems: 'stretch' }}>
-          {/* Card 1: Degree Levels */}
+          {/* Card 1: Higher National Diploma */}
           <div 
             className="premium-card"
             style={{
@@ -355,73 +355,27 @@ export default function DegreeProgramsPage() {
             }}>
               ACADEMIC CORE
             </span>
-            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Degree Levels</h3>
+            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Higher National Diploma</h3>
             <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              Liah Academy structures programs around three primary national certification levels:
+              Two-year national technical diploma accredited by the Ministry of Higher Education:
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.92rem', color: '#081F3E' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <GraduationCap size={20} color="#F5A623" />
-                <span><strong>HND</strong> - Higher National Diploma</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <GraduationCap size={20} color="#F5A623" />
-                <span><strong>B.Sc</strong> - Bachelor of Science</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <GraduationCap size={20} color="#F5A623" />
-                <span><strong>BA</strong> - Bachelor of Arts (Applied Tech)</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Card 2: Program Formats */}
-          <div 
-            className="premium-card"
-            style={{
-              background: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '36px 30px',
-              border: '1px solid rgba(15, 23, 42, 0.08)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.04)'
-            }}
-          >
-            <span style={{ 
-              display: 'inline-block', 
-              background: '#FEF3C7', 
-              color: '#B45309', 
-              padding: '4px 10px', 
-              borderRadius: '4px', 
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.72rem', 
-              fontWeight: 800, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.06em', 
-              marginBottom: '16px' 
-            }}>
-              SPECIALIZATION
-            </span>
-            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Program Formats</h3>
-            <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              We focus on technical engineering degrees configured for corporate integration:
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.92rem', color: '#081F3E' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Settings size={18} color="#F5A623" />
-                <span><strong>B.Tech</strong> - Bachelor of Technology</span>
+                <span><strong>Duration:</strong> 2 Academic Years</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Code size={18} color="#F5A623" />
-                <span><strong>B.Eng</strong> - Bachelor of Engineering</span>
+                <span>Software Engineering &amp; Networks</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Shield size={18} color="#F5A623" />
-                <span>Cyber Operations &amp; Cloud Engineering</span>
+                <CheckCircle2 size={18} color="#10B981" />
+                <span>National Examination Clearance</span>
               </li>
             </ul>
           </div>
 
-          {/* Card 3: Length & Format */}
+          {/* Card 2: National Diploma */}
           <div 
             className="premium-card"
             style={{
@@ -445,29 +399,29 @@ export default function DegreeProgramsPage() {
               letterSpacing: '0.06em', 
               marginBottom: '16px' 
             }}>
-              FORMAT &amp; LENGTH
+              TECHNICAL FOUNDATION
             </span>
-            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Length &amp; Format</h3>
+            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>National Diploma (ND)</h3>
             <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              Programs are designed to fit your schedule. Choose from the following study formats:
+              One-year foundational diploma focused on core engineering, hardware, and bookkeeping:
             </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.92rem', color: '#081F3E' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.92rem', color: '#081F3E' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Calendar size={18} color="#F5A623" />
-                <span><strong>Full-time:</strong> Daily intensive labs (3 Years)</span>
+                <GraduationCap size={20} color="#F5A623" />
+                <span><strong>Duration:</strong> 1 Academic Year</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Clock size={18} color="#F5A623" />
-                <span><strong>Part-time:</strong> Evenings &amp; weekends (3-4 Years)</span>
+                <Settings size={18} color="#F5A623" />
+                <span>Computer Engineering &amp; ICT</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <BookOpen size={18} color="#F5A623" />
-                <span><strong>Work-Study:</strong> Industry apprenticeship</span>
+                <CheckCircle2 size={18} color="#10B981" />
+                <span>Direct HND Pathway Entry</span>
               </li>
             </ul>
           </div>
 
-          {/* Card 3: Financial Aid & Corporate Grants */}
+          {/* Card 3: Professional Certifications */}
           <div 
             className="premium-card"
             style={{
@@ -491,24 +445,24 @@ export default function DegreeProgramsPage() {
               letterSpacing: '0.06em', 
               marginBottom: '16px' 
             }}>
-              TUITION SUPPORT
+              CAREER ACCELERATION
             </span>
-            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Tuition &amp; Aid</h3>
+            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Professional Certifications</h3>
             <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              Education is an investment in your career. We provide flexible financing:
+              Intensive, hands-on industry bootcamps built for direct job placement in technology:
             </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.92rem', color: '#081F3E' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.92rem', color: '#081F3E' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Award size={18} color="#10B981" />
-                <span><strong>Merit Scholarships:</strong> Up to 50% tuition waiver</span>
+                <span><strong>Duration:</strong> 6 to 9 Months</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Shield size={18} color="#10B981" />
+                <span>DevOps, Cloud Pipelines &amp; Data Science</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <CheckCircle2 size={18} color="#10B981" />
-                <span><strong>Corporate Sponsorships:</strong> Fully funded programs</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CheckCircle2 size={18} color="#10B981" />
-                <span><strong>Installment Plans:</strong> Pay per semester</span>
+                <span>Corporate Incubator Placement</span>
               </li>
             </ul>
           </div>
@@ -536,26 +490,16 @@ export default function DegreeProgramsPage() {
               marginBottom: '36px' 
             }}
           >
-            {/* Filter Buttons Horizontal Swipable Pill Bar */}
-            <div 
-              className="no-scrollbar"
-              style={{ 
-                display: 'flex', 
-                gap: '8px', 
-                alignItems: 'center', 
-                overflowX: 'auto',
-                maxWidth: '100%',
-                paddingBottom: '4px'
-              }}
-            >
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#081F3E', marginRight: '4px', whiteSpace: 'nowrap' }}>Format:</span>
+            {/* Filter Buttons Swipable Pill Bar */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#081F3E', marginRight: '4px', whiteSpace: 'nowrap' }}>Department:</span>
               
               <button 
-                onClick={() => setSelectedFormat('all')}
+                onClick={() => setSelectedSchool('all')}
                 style={{
-                  background: selectedFormat === 'all' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
-                  color: selectedFormat === 'all' ? '#FFFFFF' : '#081F3E',
-                  border: selectedFormat === 'all' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  background: selectedSchool === 'all' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedSchool === 'all' ? '#FFFFFF' : '#081F3E',
+                  border: selectedSchool === 'all' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
                   padding: '6px 16px',
                   borderRadius: '20px',
                   fontSize: '0.82rem',
@@ -569,11 +513,11 @@ export default function DegreeProgramsPage() {
               </button>
 
               <button 
-                onClick={() => setSelectedFormat('fulltime')}
+                onClick={() => setSelectedSchool('ENGINEERING')}
                 style={{
-                  background: selectedFormat === 'fulltime' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
-                  color: selectedFormat === 'fulltime' ? '#FFFFFF' : '#081F3E',
-                  border: selectedFormat === 'fulltime' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  background: selectedSchool === 'ENGINEERING' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedSchool === 'ENGINEERING' ? '#FFFFFF' : '#081F3E',
+                  border: selectedSchool === 'ENGINEERING' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
                   padding: '6px 16px',
                   borderRadius: '20px',
                   fontSize: '0.82rem',
@@ -583,15 +527,15 @@ export default function DegreeProgramsPage() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                Full-Time
+                School of Engineering
               </button>
 
               <button 
-                onClick={() => setSelectedFormat('online')}
+                onClick={() => setSelectedSchool('BUSINESS')}
                 style={{
-                  background: selectedFormat === 'online' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
-                  color: selectedFormat === 'online' ? '#FFFFFF' : '#081F3E',
-                  border: selectedFormat === 'online' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  background: selectedSchool === 'BUSINESS' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedSchool === 'BUSINESS' ? '#FFFFFF' : '#081F3E',
+                  border: selectedSchool === 'BUSINESS' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
                   padding: '6px 16px',
                   borderRadius: '20px',
                   fontSize: '0.82rem',
@@ -601,15 +545,15 @@ export default function DegreeProgramsPage() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                Online
+                School of Business
               </button>
 
               <button 
-                onClick={() => setSelectedFormat('oncampus')}
+                onClick={() => setSelectedSchool('CERTIFICATION')}
                 style={{
-                  background: selectedFormat === 'oncampus' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
-                  color: selectedFormat === 'oncampus' ? '#FFFFFF' : '#081F3E',
-                  border: selectedFormat === 'oncampus' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  background: selectedSchool === 'CERTIFICATION' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedSchool === 'CERTIFICATION' ? '#FFFFFF' : '#081F3E',
+                  border: selectedSchool === 'CERTIFICATION' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
                   padding: '6px 16px',
                   borderRadius: '20px',
                   fontSize: '0.82rem',
@@ -619,7 +563,7 @@ export default function DegreeProgramsPage() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                On-Campus
+                Professional Certifications
               </button>
             </div>
 
@@ -717,8 +661,8 @@ export default function DegreeProgramsPage() {
                     {/* Metadata Grid */}
                     <div style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: '1fr 1fr', 
-                      gap: '8px 16px', 
+                      gridTemplateColumns: '1fr 1fr 1fr', 
+                      gap: '8px 12px', 
                       fontSize: '0.85rem', 
                       color: '#475569',
                       borderTop: '1px solid rgba(15, 23, 42, 0.06)',
@@ -726,13 +670,10 @@ export default function DegreeProgramsPage() {
                       marginBottom: '20px'
                     }}>
                       <div>
-                        <span>Degree: <strong>{prog.degree}</strong></span>
+                        <span>Level: <strong>{prog.degree}</strong></span>
                       </div>
                       <div>
                         <span>Duration: <strong>{prog.duration}</strong></span>
-                      </div>
-                      <div>
-                        <span>Study Format: <strong>{prog.studyFormat}</strong></span>
                       </div>
                       <div>
                         <span>Tuition: <strong style={{ color: '#081F3E' }}>{prog.tuition}</strong></span>
@@ -763,7 +704,7 @@ export default function DegreeProgramsPage() {
 
                   {/* Enroll Action Button */}
                   <Link 
-                    href={`/admissions?degree=${encodeURIComponent(prog.degree)}&program=${encodeURIComponent(prog.title)}&format=${encodeURIComponent(prog.format)}#apply`}
+                    href={`/admissions?degree=${encodeURIComponent(prog.degree)}&program=${encodeURIComponent(prog.title)}#apply`}
                     className="btn" 
                     style={{ 
                       background: '#F5A623', 

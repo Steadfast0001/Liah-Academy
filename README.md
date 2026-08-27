@@ -32,12 +32,11 @@ Combining intensive hands-on lab practicals with corporate software engineering 
 ### 🎓 1. Academic Pathways & Curriculum Explorer
 - **Accredited Higher National Diplomas (HND)**: Software Engineering, Network & Security, Database Systems, Human Resource Management, Accounting & Finance.
 - **National Diplomas (ND) & Professional Certifications**: Full-Stack Web Development, Cloud DevOps Engineering, Mobile App Development, Cybersecurity Operations.
-- **Flexible Study Formats**: Full-Time On-Campus, 100% Online (**15% discount**), and Evening/Weekend Part-Time (**10% discount**).
-- **Interactive Course Search**: Instant search with format filter chips and clear buttons.
+- **Interactive Course Search**: Instant search with department filter tabs and quick clear controls.
 
-### 💰 2. Tuition Fee & Installment Calculator
-- Real-time computation of tuition fees, registration costs, and format discounts.
-- Transparent payment schedules: **Full Lump-Sum**, **2 Installments**, or **3 Installments**.
+### 💰 2. Transparent Institutional Tuition Schedule
+- Fixed, transparent pricing across all diploma and professional certification tracks.
+- Direct Mobile Money checkout with zero hidden fees.
 
 ### 📝 3. 3-Step Online Application Wizard
 - Streamlined digital admissions process capturing personal details, educational qualifications (GCE A/L, Baccalauréat), and career goals.

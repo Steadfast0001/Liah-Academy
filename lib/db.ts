@@ -375,11 +375,11 @@ const initialData: Schema = {
   courses: [
     {
       id: 1,
-      title: 'Software Engineering (B.Tech / HND)',
+      title: 'Software Engineering (HND)',
       degree_type: 'HND',
       program_type: 'Software Engineering',
-      study_format: 'fulltime',
-      duration: '3 Years',
+      study_format: 'oncampus',
+      duration: '2 Years',
       tuition_fee: 250000,
       description: 'Comprehensive software development covering data structures, fullstack TypeScript, Python backends, DevOps pipelines, database architectures, and distributed systems.',
       modules: 'TypeScript, React, Node.js, Python, PostgreSQL, Docker, Git',
@@ -388,11 +388,11 @@ const initialData: Schema = {
     },
     {
       id: 2,
-      title: 'Cybersecurity & Cloud Defense (B.Sc)',
+      title: 'Cybersecurity & Cloud Defense (HND)',
       degree_type: 'HND',
       program_type: 'Cybersecurity',
       study_format: 'oncampus',
-      duration: '3 Years',
+      duration: '2 Years',
       tuition_fee: 250000,
       description: 'Hands-on network defense, ethical hacking, SOC monitoring, penetration testing, cryptography, and cloud infrastructure security labs.',
       modules: 'Linux, Wireshark, Metasploit, Cryptography, AWS Security, SIEM',

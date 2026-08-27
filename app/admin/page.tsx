@@ -2168,7 +2168,7 @@ export default function AdminDashboardPage() {
                       <input 
                         type="text" 
                         required
-                        placeholder="e.g. Software Engineering (B.Tech / HND)"
+                        placeholder="e.g. Software Engineering HND"
                         value={courseForm.title}
                         onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)' }}
@@ -2188,7 +2188,6 @@ export default function AdminDashboardPage() {
                           <option value="HND">HND (Higher National Diploma)</option>
                           <option value="ND">ND (National Diploma)</option>
                           <option value="Certification">Professional Certification</option>
-                          <option value="B.Tech">B.Tech (Bachelor of Technology)</option>
                         </select>
                       </div>
 

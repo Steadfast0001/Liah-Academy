@@ -94,36 +94,6 @@ const docRequirementsByDegree: Record<string, DocRequirement[]> = {
       hint: 'Higher education diplomas or technical certifications (PDF, PNG, JPG)',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
-  ],
-  'B.Tech': [
-    {
-      id: 'hnd_cert',
-      label: 'HND / BTS / Associate Degree Transcript & Certificate',
-      required: true,
-      hint: 'Official 2-Year technical diploma certificate (PDF, PNG, JPG)',
-      accept: '.pdf,.png,.jpg,.jpeg'
-    },
-    {
-      id: 'gce_al',
-      label: 'GCE Advanced Level Results Slip',
-      required: true,
-      hint: 'High school leaving certificate (PDF, PNG, JPG)',
-      accept: '.pdf,.png,.jpg,.jpeg'
-    },
-    {
-      id: 'national_id',
-      label: 'National ID Card / Passport',
-      required: true,
-      hint: 'Official identity document (PDF, PNG, JPG)',
-      accept: '.pdf,.png,.jpg,.jpeg'
-    },
-    {
-      id: 'portfolio',
-      label: 'Technical Portfolio / GitHub Project Summary',
-      required: false,
-      hint: 'Summary of prior software/engineering projects (PDF)',
-      accept: '.pdf'
-    }
   ]
 };
 
@@ -131,12 +101,6 @@ function AdmissionsContent() {
   const searchParams = useSearchParams();
   const degreeParam = searchParams.get('degree');
   const programParam = searchParams.get('program');
-  const formatParam = searchParams.get('format');
-
-  // Calculator State
-  const [calcDegree, setCalcDegree] = useState<'HND' | 'ND' | 'Certification'>('HND');
-  const [calcFormat, setCalcFormat] = useState<number>(1.0);
-  const [calcInstallments, setCalcInstallments] = useState<number>(1);
 
   // Form Mode: 'register' | 'login' | 'dashboard'
   const [activeTab, setActiveTab] = useState<'register' | 'login'>('register');
@@ -174,18 +138,6 @@ function AdmissionsContent() {
   const [payOperator, setPayOperator] = useState<string>('');
   const [payError, setPayError] = useState<string>('');
   const [payPollActive, setPayPollActive] = useState<boolean>(false);
-
-  // Base fees for calculator
-  const baseFees: Record<string, number> = {
-    HND: 250000,
-    ND: 150000,
-    Certification: 350000
-  };
-
-  const discountRate = calcInstallments === 1 ? 0.05 : 0;
-  const rawTuition = baseFees[calcDegree] * calcFormat * (1 - discountRate);
-  const finalTuition = Math.round(rawTuition);
-  const installmentAmount = Math.round(finalTuition / calcInstallments);
 
   // Complete programs mapping
   const programOptions: Record<string, string[]> = {
@@ -231,7 +183,6 @@ function AdmissionsContent() {
       }
 
       setDegreeType(normalizedDegree);
-      setCalcDegree(normalizedDegree);
     }
 
     if (programParam) {
@@ -239,25 +190,11 @@ function AdmissionsContent() {
       setPrefilledMessage(`Enrolling in: ${programParam}`);
     }
 
-    if (formatParam) {
-      const fmt = formatParam.toLowerCase();
-      if (fmt.includes('online')) {
-        setStudyFormat('online');
-        setCalcFormat(0.85);
-      } else if (fmt.includes('parttime')) {
-        setStudyFormat('parttime');
-        setCalcFormat(0.9);
-      } else {
-        setStudyFormat('oncampus');
-        setCalcFormat(1.0);
-      }
-    }
-
     if (degreeParam || programParam) {
       setActiveTab('register');
       setCurrentStep(1);
     }
-  }, [degreeParam, programParam, formatParam]);
+  }, [degreeParam, programParam]);
 
   const handleFileUploadForSlot = (slotId: string, label: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -458,11 +395,11 @@ function AdmissionsContent() {
           <span className="course-badge">Admissions &amp; Portal</span>
           <h1>Admissions &amp; Tuition Portal</h1>
           <p className="sub-header">
-            Calculate your semester fees, register for upcoming cohorts, or log into your verified applicant portal to check status.
+            Review admission requirements, check transparent institutional tuition schedules, and register for upcoming cohorts.
           </p>
         </div>
 
-        {/* 1. ADMISSION REQUIREMENTS & TUITION CALCULATOR (SIDE-BY-SIDE) */}
+        {/* 1. ADMISSION REQUIREMENTS & TUITION SCHEDULE (SIDE-BY-SIDE) */}
         <section 
           style={{ 
             display: 'grid', 
@@ -535,7 +472,7 @@ function AdmissionsContent() {
             </div>
           </div>
 
-          {/* Card 2: Tuition & Installments Calculator */}
+          {/* Card 2: Transparent Tuition & Institutional Fee Schedule */}
           <div 
             className="premium-card" 
             style={{ 
@@ -551,73 +488,50 @@ function AdmissionsContent() {
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                <Calculator size={24} color="#F5A623" />
-                <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.45rem', fontWeight: 800 }}>Tuition &amp; Installments Calculator</h3>
+                <CreditCard size={24} color="#F5A623" />
+                <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.45rem', fontWeight: 800 }}>Institutional Tuition Schedule</h3>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-                {/* Degree Track Selection */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, marginBottom: '6px', color: '#081F3E', fontSize: '0.88rem' }}>
-                    1. Degree Level
-                  </label>
-                  <select
-                    className="form-input-light"
-                    value={calcDegree}
-                    onChange={(e) => {
-                      const val = e.target.value as 'HND' | 'ND' | 'Certification';
-                      setCalcDegree(val);
-                      setDegreeType(val);
-                      setProgramType(programOptions[val]?.[0] || '');
-                    }}
-                  >
-                    <option value="HND">Higher National Diploma (250,000 XAF/yr)</option>
-                    <option value="ND">National Diploma (150,000 XAF/yr)</option>
-                    <option value="Certification">Professional Certification (350,000 XAF)</option>
-                  </select>
+              <p style={{ color: '#64748B', fontSize: '0.94rem', lineHeight: '1.65', marginBottom: '20px' }}>
+                Official fixed tuition fees across all academic departments. Direct, transparent pricing:
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Higher National Diploma (HND)</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>2 Academic Years • National Exam</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '1.05rem' }}>250,000 XAF <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748B' }}>/yr</span></span>
                 </div>
 
-                {/* Study Format */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, marginBottom: '6px', color: '#081F3E', fontSize: '0.88rem' }}>
-                    2. Study Format
-                  </label>
-                  <select
-                    className="form-input-light"
-                    value={calcFormat}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      setCalcFormat(val);
-                      if (val === 0.85) setStudyFormat('online');
-                      else if (val === 0.9) setStudyFormat('parttime');
-                      else setStudyFormat('oncampus');
-                    }}
-                  >
-                    <option value={1.0}>On-Campus Labs in Buea (Standard)</option>
-                    <option value={0.85}>Online Remote (15% Cohort Discount)</option>
-                    <option value={0.90}>Part-Time Evening (10% Discount)</option>
-                  </select>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>National Diploma (ND)</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>1 Academic Year • Foundation</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '1.05rem' }}>150,000 XAF <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748B' }}>/yr</span></span>
                 </div>
 
-                {/* Payment Schedule */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, marginBottom: '6px', color: '#081F3E', fontSize: '0.88rem' }}>
-                    3. Payment Plan
-                  </label>
-                  <select
-                    className="form-input-light"
-                    value={calcInstallments}
-                    onChange={(e) => setCalcInstallments(parseInt(e.target.value))}
-                  >
-                    <option value={1}>Full Upfront Payment (Extra 5% Discount)</option>
-                    <option value={2}>2 Installments (50% / 50%)</option>
-                    <option value={3}>3 Installments (40% / 30% / 30%)</option>
-                  </select>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Professional Certifications</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>6 to 9 Months • DevOps &amp; Data</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '1.05rem' }}>350,000 XAF</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Application &amp; Registration Fee</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>One-time processing fee</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#10B981', fontSize: '1.05rem' }}>10,000 XAF</span>
                 </div>
               </div>
             </div>
 
-            {/* Calculator Output Banner */}
+            {/* Direct Admissions Call to Action Banner */}
             <div 
               style={{
                 background: '#081F3E',
@@ -632,20 +546,18 @@ function AdmissionsContent() {
             >
               <div>
                 <span style={{ fontSize: '0.78rem', color: '#F5A623', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  Estimated Total Tuition
+                  Direct Admissions
                 </span>
-                <h3 style={{ color: '#FFFFFF', margin: '2px 0', fontSize: '1.75rem', fontWeight: 800 }}>
-                  {finalTuition.toLocaleString()} XAF
-                </h3>
+                <h4 style={{ color: '#FFFFFF', margin: '2px 0', fontSize: '1.25rem', fontWeight: 800 }}>
+                  Ready to Begin?
+                </h4>
                 <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
-                  {calcInstallments === 1 
-                    ? 'Includes 5% upfront discount' 
-                    : `${calcInstallments} split payments of ${installmentAmount.toLocaleString()} XAF each`}
+                  Complete registration below to reserve your cohort lab station.
                 </span>
               </div>
 
               <a href="#apply" className="btn btn-primary" style={{ padding: '10px 18px', fontSize: '0.88rem' }}>
-                Apply With This Plan <ArrowRight size={16} />
+                Apply Now <ArrowRight size={16} />
               </a>
             </div>
           </div>
@@ -729,8 +641,8 @@ function AdmissionsContent() {
                     <p style={{ fontWeight: 700, color: '#081F3E', margin: '2px 0 0 0' }}>{student.degree_type}</p>
                   </div>
                   <div>
-                    <span style={{ color: '#64748B' }}>Study Format:</span>
-                    <p style={{ fontWeight: 700, color: '#081F3E', margin: '2px 0 0 0' }}>{student.study_format}</p>
+                    <span style={{ color: '#64748B' }}>Institution Campus:</span>
+                    <p style={{ fontWeight: 700, color: '#081F3E', margin: '2px 0 0 0' }}>Buea Main Campus</p>
                   </div>
                   <div>
                     <span style={{ color: '#64748B' }}>Email Contact:</span>
@@ -965,19 +877,6 @@ function AdmissionsContent() {
                           </select>
                         </div>
 
-                        <div className="form-group">
-                          <label>Preferred Study Format *</label>
-                          <select
-                            className="form-input-light"
-                            value={studyFormat}
-                            onChange={(e) => setStudyFormat(e.target.value)}
-                          >
-                            <option value="oncampus">On-Campus in Buea</option>
-                            <option value="online">Online Remote (15% Discount)</option>
-                            <option value="parttime">Part-Time / Evening (10% Discount)</option>
-                          </select>
-                        </div>
-
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
                           <button
                             type="button"
@@ -1121,7 +1020,6 @@ function AdmissionsContent() {
                           <h5 style={{ color: '#081F3E', marginBottom: '8px' }}>Application Summary:</h5>
                           <p style={{ margin: '4px 0', color: '#475569' }}>Applicant: <strong>{fullName}</strong></p>
                           <p style={{ margin: '4px 0', color: '#475569' }}>Selected Program: <strong>{programType}</strong> ({degreeType})</p>
-                          <p style={{ margin: '4px 0', color: '#475569' }}>Study Format: <strong>{studyFormat}</strong></p>
                           <p style={{ margin: '4px 0', color: '#475569' }}>
                             Attached Files: <strong>{Object.keys(uploadedDocs).length} uploaded</strong>
                           </p>

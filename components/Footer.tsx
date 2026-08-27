@@ -51,10 +51,10 @@ export default function Footer() {
           <div>
             <h3 className="footer-col-title">Programs</h3>
             <ul className="footer-links">
-              <li><Link href="/degree-programs">Software Engineering (B.Tech)</Link></li>
-              <li><Link href="/degree-programs">Cybersecurity Programs (B.Sc)</Link></li>
-              <li><Link href="/degree-programs">DevOps & Cloud Pipelines</Link></li>
-              <li><Link href="/degree-programs">Data Science & ML Labs</Link></li>
+              <li><Link href="/degree-programs">Software Engineering (HND)</Link></li>
+              <li><Link href="/degree-programs">Cybersecurity &amp; Cloud Defense (HND)</Link></li>
+              <li><Link href="/degree-programs">DevOps &amp; Cloud Pipelines</Link></li>
+              <li><Link href="/degree-programs">Data Science &amp; ML Labs</Link></li>
               <li><Link href="/about#partnerships">Corporate Innovations</Link></li>
             </ul>
           </div>

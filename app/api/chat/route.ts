@@ -95,23 +95,21 @@ export async function POST(request: Request) {
 • **Professional Certifications**: 350,000 XAF
 • **Application Auditing Fee**: 10,000 XAF
 
-💡 **Discounts & Installments**:
-- 15% discount for Online study format
-- 10% discount for Part-Time study format
-- 5% discount if paid upfront
-- Flexible 2 or 3 installment plans available!
+💡 **Payment Information**:
+- Transparent, fixed semester tuition fees
+- Convenient Mobile Money payment options (MTN MoMo & Orange Money)
 
 You can pay your tuition directly in this chat using Mobile Money!`,
         actionType: 'tuition_action'
       },
       {
         keywords: ['course', 'program', 'track', 'degree', 'major', 'study', 'learn', 'teach', 'hnd', 'nd', 'certification', 'software', 'marketing', 'accounting', 'devops', 'network', 'cybersecurity', 'data science'],
-        response: `We offer cutting-edge industry-standard degree tracks:
-• **School of Engineering & Technology**: Software Engineering (B.Tech/HND), Cybersecurity & Cloud Defense, Computer Engineering (ND), Web & Graphics Design.
-• **School of Business & Management**: Accounting, Marketing, Human Resource Management, Office Automation Secretaryship.
+        response: `We offer cutting-edge industry-standard programs:
+• **School of Engineering & Technology**: Software Engineering (HND), Cybersecurity & Cloud Defense (HND), Computer Engineering (ND), Web & Graphics Design.
+• **School of Business & Management**: Accounting, Marketing, Human Resource Management, Management.
 • **Certification Programs**: Data Science & Machine Learning (9 mos), DevOps & Cloud Specialist (9 mos), Industrial Web Design (6 mos).
 
-All tracks feature 100% lab-based projects and guaranteed corporate internships!`,
+All programs feature 100% lab-based projects and direct corporate integration!`,
         actionType: 'programs_action'
       },
       {

@@ -411,9 +411,9 @@ export default function HomePage() {
               background: '#FEF3C7', 
               color: '#B45309', 
               padding: '6px 14px', 
-              borderRadius: '6px', 
+              borderRadius: '20px', 
               fontFamily: 'var(--font-mono)', 
-              fontSize: '0.75rem', 
+              fontSize: '0.78rem', 
               fontWeight: 800, 
               textTransform: 'uppercase', 
               letterSpacing: '0.08em', 
@@ -422,10 +422,10 @@ export default function HomePage() {
               ACADEMIC PATHWAYS
             </span>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', fontWeight: 800, color: '#081F3E', marginBottom: '14px' }}>
-              Select your degree format
+              Select your academic pathway
             </h2>
             <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', color: '#475569', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Whether you seek HND certification or specialized professional bachelor degrees, we have a program custom built for you.
+              Explore accredited national diploma programs and professional certification tracks custom built for career excellence.
             </p>
           </div>
 
@@ -463,7 +463,7 @@ export default function HomePage() {
                   Higher National Diploma
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A highly practical two-year program focusing directly on core technical competencies and software operations.
+                  A highly practical two-year program focusing directly on core technical competencies, software, and management.
                 </p>
 
                 <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
@@ -472,7 +472,7 @@ export default function HomePage() {
                       <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 2 Years
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> DevOps &amp; Support Modules
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Software Engineering &amp; Networks
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
                       <Check size={16} color="#081F3E" strokeWidth={2.5} /> Standard National Exams
@@ -497,11 +497,11 @@ export default function HomePage() {
                   display: 'block'
                 }}
               >
-                View HND Modules
+                View HND Programs
               </Link>
             </div>
 
-            {/* Card 2: Bachelor of Science (B.Sc) - Highlighted */}
+            {/* Card 2: National Diploma (ND) - Highlighted */}
             <div 
               className="premium-card" 
               style={{ 
@@ -529,25 +529,25 @@ export default function HomePage() {
                   letterSpacing: '0.06em', 
                   marginBottom: '18px' 
                 }}>
-                  PROFESSIONAL DEGREE
+                  TECHNICAL DIPLOMA
                 </span>
                 <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
-                  Bachelor of Science (B.Sc)
+                  National Diploma (ND)
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A three-year comprehensive curriculum covering defense networks, information governance, and cryptography.
+                  A one-year foundational diploma designed for rapid technical skills acquisition and direct career entry.
                 </p>
 
                 <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 3 Years
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 1 Year
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Cybersecurity Focus
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Computer Engineering &amp; Web Design
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Laboratory Internships
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Direct Progression Pathway
                     </li>
                   </ul>
                 </div>
@@ -570,11 +570,11 @@ export default function HomePage() {
                   boxShadow: '0 4px 15px rgba(245, 166, 35, 0.35)'
                 }}
               >
-                Explore B.Sc Programs
+                Explore ND Programs
               </Link>
             </div>
 
-            {/* Card 3: Bachelor of Technology (B.Tech) */}
+            {/* Card 3: Professional Certifications */}
             <div 
               className="premium-card" 
               style={{ 
@@ -590,8 +590,8 @@ export default function HomePage() {
               <div>
                 <span style={{ 
                   display: 'inline-block', 
-                  background: '#FEF3C7', 
-                  color: '#B45309', 
+                  background: '#DCFCE7', 
+                  color: '#15803D', 
                   padding: '4px 10px', 
                   borderRadius: '4px', 
                   fontFamily: 'var(--font-mono)', 
@@ -601,25 +601,25 @@ export default function HomePage() {
                   letterSpacing: '0.06em', 
                   marginBottom: '18px' 
                 }}>
-                  TECHNOLOGY PROGRAM
+                  CAREER CERTIFICATIONS
                 </span>
                 <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
-                  Bachelor of Technology (B.Tech)
+                  Professional Certifications
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A professional program designed around building complex API engines, database models, and cloud setups.
+                  Accelerated career programs in DevOps, Data Science, and Full Stack Engineering for industry readiness.
                 </p>
 
                 <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 3 Years
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 6 to 9 Months
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Full Stack Engineering
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> DevOps &amp; Cloud Pipelines
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Direct Incubator Placement
+                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Direct Corporate Placement
                     </li>
                   </ul>
                 </div>
@@ -641,7 +641,7 @@ export default function HomePage() {
                   display: 'block'
                 }}
               >
-                View B.Tech Modules
+                View Certifications
               </Link>
             </div>
           </div>

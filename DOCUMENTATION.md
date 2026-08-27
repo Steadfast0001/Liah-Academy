@@ -98,7 +98,7 @@ d:\Liah Academy\
 │   ├── page.tsx                         # Landing homepage (Hero slider, video showcase, reviews)
 │   ├── degree-programs/                 # Degree catalog, filter pills, syllabus & inquiry modals
 │   │   └── page.tsx
-│   ├── admissions/                      # 3-step application wizard, student portal, calculator
+│   ├── admissions/                      # 3-step application wizard, student portal, tuition schedule
 │   │   └── page.tsx
 │   ├── about/                           # Institutional leadership, partnerships, news highlights
 │   │   └── page.tsx

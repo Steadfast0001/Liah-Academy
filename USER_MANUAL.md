@@ -8,8 +8,8 @@
 ## TABLE OF CONTENTS
 1. [Introduction & Overview](#1-introduction--overview)
 2. [Visitor & Student User Guide](#2-visitor--student-user-guide)
-   - 2.1 [Browsing & Exploring Degree Programs](#21-browsing--exploring-degree-programs)
-   - 2.2 [Tuition Fee & Installment Calculator](#22-tuition-fee--installment-calculator)
+   - 2.1 [Browsing & Exploring Programs](#21-browsing--exploring-programs)
+   - 2.2 [Institutional Tuition & Fee Schedule](#22-institutional-tuition--fee-schedule)
    - 2.3 [Submitting an Online Admission Application](#23-submitting-an-online-admission-application)
    - 2.4 [Accessing the Student Portal & Checking Status](#24-accessing-the-student-portal--checking-status)
    - 2.5 [Paying Tuition & Registration with Mobile Money (MTN & Orange)](#25-paying-tuition--registration-with-mobile-money-mtn--orange)
@@ -48,33 +48,28 @@ Liah Academy is a premier higher institute of technology and corporate software 
 
 ## 2. VISITOR & STUDENT USER GUIDE
 
-### 2.1 Browsing & Exploring Degree Programs
+### 2.1 Browsing & Exploring Programs
 Navigate to **Degree & Programs** (`/degree-programs`) from the top navigation bar or mobile menu.
 
 1. **Curriculum Explorer**:
-   - Filter programs using format chips: **All Programs**, **Full-Time**, **Online**, or **On-Campus**.
+   - Filter programs using department tabs: **All Programs**, **School of Engineering**, **School of Business**, or **Professional Certifications**.
    - Use the **Quick Course Search Bar** to instantly find programs by title, technology stack, or keyword (e.g. `Software`, `Cybersecurity`, `DevOps`, `HND`, `Database`).
    - Click the `X` button to quickly clear your search query.
 2. **Program Cards**:
-   - Each card displays the awarding school, degree type, program duration, tuition fee, and core technology badges.
+   - Each card displays the awarding school, academic level (HND, ND, Certification), duration, tuition fee, and core technology badges.
    - Click **Enroll** to proceed directly to the Admissions Application prefilled with your selected program.
 
 ---
 
-### 2.2 Tuition Fee & Installment Calculator
+### 2.2 Institutional Tuition & Fee Schedule
 Navigate to **Admissions & Portal** (`/admissions`):
 
-1. Scroll to the **Tuition Fee & Installments Calculator**.
-2. **Select Academic Program**: Choose your degree program from the dropdown menu (e.g. *Software Engineering HND*, *DevOps Certification*, etc.).
-3. **Select Study Format**:
-   - **Full-Time On-Campus**: Standard tuition.
-   - **100% Online**: Automatically applies a **15% tuition reduction discount**.
-   - **Part-Time / Evening**: Automatically applies a **10% tuition reduction discount**.
-4. **Choose Payment Schedule**:
-   - **Full Lump-Sum**: Pay annual tuition upfront with zero financing overhead.
-   - **2 Installments**: Split payment into Semester 1 and Semester 2 installments.
-   - **3 Installments**: Pay an initial seat deposit followed by two balanced quarterly payments.
-5. The calculator instantly generates a transparent cost breakdown including net tuition, registration fees, and exact payment milestones in **CFA Francs (XAF)**.
+1. Review the **Institutional Tuition Schedule** for transparent, fixed costs:
+   - **Higher National Diploma (HND)**: `250,000 XAF/year` (2 Academic Years)
+   - **National Diploma (ND)**: `150,000 XAF/year` (1 Academic Year)
+   - **Professional Certifications**: `350,000 XAF` (6 to 9 Months)
+   - **Application & Registration Fee**: `10,000 XAF` (One-time processing fee)
+2. All tuition rates are fixed and straightforward with no hidden charges.
 
 ---
 
@@ -84,25 +79,22 @@ On the `/admissions` page, locate the **3-Step Online Registration Wizard**:
 > **IMPORTANT POLICY**:  
 > All admissions and laboratory workstation reservations are marked complete only after the applicant has completed payment of the registration fee or seat deposit.
 
-#### Step 1: Personal Details
+#### Step 1: Personal Details & Security
 - **Full Legal Name**: Enter your full name as it appears on your National ID or Academic Certificates.
 - **Email Address**: Your primary email for admission notices, portal login, and payment receipts.
+- **Password**: Create a secure password for your student portal access.
 - **Phone Number**: WhatsApp-enabled phone number in international or local format (e.g. `+237 652 154 095` or `652154095`).
-- **Date of Birth & Gender**: Select from the form fields.
-- **Highest Qualification**: (e.g. *GCE Advanced Level (2+ papers)*, *Baccalauréat*, *BSc*, *HND*).
-- Click **Continue to Program Track →**.
+- Click **Continue to Program Selection →**.
 
-#### Step 2: Program Track & Study Preference
-- **Academic Degree Track**: Select your desired course.
-- **Study Format**: (Full-Time On-Campus, 100% Online, Evening/Part-Time).
-- **Intake Cohort**: Select your start date (October Fall Cohort or February Spring Cohort).
-- **Statement of Interest**: Provide a brief statement explaining your career goals in technology.
-- Click **Continue to Review →**.
+#### Step 2: Program Selection
+- **Academic Level**: Select Higher National Diploma (HND), National Diploma (ND), or Professional Certification.
+- **Program Choice**: Select your specific program track.
+- Click **Next: Review & Submit →**.
 
-#### Step 3: Review & Submit
+#### Step 3: Document Uploads & Submission
+- Upload scanned copies of required academic credentials (PDF, PNG, JPG).
 - Confirm all personal and academic details.
-- Agree to the institutional terms of service.
-- Click **Submit Admission Application**.
+- Click **Submit Application & Continue to Payment**.
 - Upon submission, your unique **Student ID (e.g., #2011)** is generated, and a confirmation email is dispatched to your registered address.
 
 ---
