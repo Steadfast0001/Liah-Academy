@@ -313,11 +313,12 @@ export default function DegreeProgramsPage() {
             }}>
               CURRICULUM
             </span>
-            <h1 style={{ fontSize: 'clamp(2.2rem, 4vw, 3rem)', fontWeight: 800, color: '#081F3E', marginBottom: '14px' }}>
-              Degrees &amp; program tracks
-            </h1>
-            <p className="sub-header" style={{ maxWidth: '720px', margin: '0 auto', color: '#475569', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Review academic tracks, modules, and formatting details. Select a curriculum track below to verify duration, tuition, and tech stacks.
+            <p className="page-header-subtitle">
+              Degrees &amp; Programs
+            </p>
+            <h1 className="page-header-title">Curriculum Explorer</h1>
+            <p className="page-header-desc">
+              Review academic programs, modules, and formatting details. Select a curriculum program below to verify duration, tuition, and tech stacks.
             </p>
           </div>
 
@@ -355,7 +356,7 @@ export default function DegreeProgramsPage() {
             </span>
             <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Degree Levels</h3>
             <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              Liah Academy structures programs around three primary national certification tracks:
+              Liah Academy structures programs around three primary national certification levels:
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.92rem', color: '#081F3E' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -442,12 +443,13 @@ export default function DegreeProgramsPage() {
               textTransform: 'uppercase', 
               letterSpacing: '0.06em', 
               marginBottom: '16px' 
+{{ ... }}
             }}>
               FORMAT &amp; LENGTH
             </span>
             <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Length &amp; Format</h3>
             <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
-              Tracks are designed to fit your schedule. Choose from the following study formats:
+              Programs are designed to fit your schedule. Choose from the following study formats:
             </p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.92rem', color: '#081F3E' }}>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -459,12 +461,54 @@ export default function DegreeProgramsPage() {
                 <span><strong>Part-time:</strong> Evenings &amp; weekends (3-4 Years)</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Globe size={18} color="#F5A623" />
-                <span><strong>Online:</strong> Self-paced remote learning</span>
+                <BookOpen size={18} color="#F5A623" />
+                <span><strong>Work-Study:</strong> Industry apprenticeship</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Card 3: Financial Aid & Corporate Grants */}
+          <div 
+            className="premium-card"
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '36px 30px',
+              border: '1px solid rgba(15, 23, 42, 0.08)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.04)'
+            }}
+          >
+            <span style={{ 
+              display: 'inline-block', 
+              background: '#DCFCE7', 
+              color: '#15803D', 
+              padding: '4px 10px', 
+              borderRadius: '4px', 
+              fontFamily: 'var(--font-mono)', 
+              fontSize: '0.72rem', 
+              fontWeight: 800, 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.06em', 
+              marginBottom: '16px' 
+            }}>
+              TUITION SUPPORT
+            </span>
+            <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Tuition &amp; Aid</h3>
+            <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '20px' }}>
+              Education is an investment in your career. We provide flexible financing:
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.92rem', color: '#081F3E' }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Award size={18} color="#10B981" />
+                <span><strong>Merit Scholarships:</strong> Up to 50% tuition waiver</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <MapPin size={18} color="#F5A623" />
-                <span><strong>On-campus:</strong> Standard labs in Buea</span>
+                <CheckCircle2 size={18} color="#10B981" />
+                <span><strong>Corporate Sponsorships:</strong> Fully funded programs</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle2 size={18} color="#10B981" />
+                <span><strong>Installment Plans:</strong> Pay per semester</span>
               </li>
             </ul>
           </div>
@@ -521,7 +565,7 @@ export default function DegreeProgramsPage() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                All Tracks
+                All Programs
               </button>
 
               <button 
@@ -589,7 +633,7 @@ export default function DegreeProgramsPage() {
                 name="degree_course_search_input"
                 aria-label="Quick course search"
                 type="text"
-                placeholder="Search software, fees, track..."
+                placeholder="Search software, fees, programs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -717,7 +761,7 @@ export default function DegreeProgramsPage() {
                     </div>
                   </div>
 
-                  {/* Enroll in Track Action Button */}
+                  {/* Enroll Action Button */}
                   <Link 
                     href={`/admissions?degree=${encodeURIComponent(prog.degree)}&program=${encodeURIComponent(prog.title)}&format=${encodeURIComponent(prog.format)}#apply`}
                     className="btn" 
@@ -738,7 +782,7 @@ export default function DegreeProgramsPage() {
                       transition: 'all 0.2s ease' 
                     }}
                   >
-                    Enroll in Track <ArrowRight size={16} />
+                    Enroll <ArrowRight size={16} />
                   </Link>
                 </div>
               ))

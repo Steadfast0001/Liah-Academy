@@ -30,7 +30,7 @@ const newsArticles = [
     id: 1,
     image: '/assets/images/flyer_engineering.png',
     date: 'August 19, 2026',
-    title: 'Engineering & Technology Programs Catalog (HND & ND Tracks)',
+    title: 'Engineering & Technology Programs Catalog (HND & ND Programs)',
     excerpt: 'Full Academic Syllabus: School of Engineering and Technology. The School of Engineering and Technology at Liah Academy is admitting candidates across full-stack engineering and cloud defense.',
     link: '/degree-programs'
   },
@@ -47,7 +47,7 @@ const newsArticles = [
     image: '/assets/images/flyer_certification.png',
     date: 'August 19, 2026',
     title: 'Liah Academy Certification Programs Admissions Now Open',
-    excerpt: 'Admissions Announcement: Professional IT Certification Tracks. Liah Academy is officially accepting applications for its high-impact IT Certification Programs in DevOps & Data Science.',
+    excerpt: 'Admissions Announcement: Professional IT Certification Programs. Liah Academy is officially accepting applications for its high-impact IT Certification Programs in DevOps & Data Science.',
     link: '/degree-programs'
   }
 ];
@@ -425,7 +425,7 @@ export default function HomePage() {
               Select your degree format
             </h2>
             <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', color: '#475569', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Whether you seek HND certification or specialized professional bachelor degrees, we have a track custom built for you.
+              Whether you seek HND certification or specialized professional bachelor degrees, we have a program custom built for you.
             </p>
           </div>
 
@@ -463,7 +463,7 @@ export default function HomePage() {
                   Higher National Diploma
                 </h3>
                 <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A highly practical two-year track focusing directly on core technical competencies and software operations.
+                  A highly practical two-year program focusing directly on core technical competencies and software operations.
                 </p>
 
                 <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
@@ -570,7 +570,7 @@ export default function HomePage() {
                   boxShadow: '0 4px 15px rgba(245, 166, 35, 0.35)'
                 }}
               >
-                Explore B.Sc Tracks
+                Explore B.Sc Programs
               </Link>
             </div>
 
@@ -601,7 +601,7 @@ export default function HomePage() {
                   letterSpacing: '0.06em', 
                   marginBottom: '18px' 
                 }}>
-                  TECHNOLOGY TRACK
+                  TECHNOLOGY PROGRAM
                 </span>
                 <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
                   Bachelor of Technology (B.Tech)

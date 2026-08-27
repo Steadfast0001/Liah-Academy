@@ -49,10 +49,10 @@ export default function Footer() {
 
           {/* Academic Divisions */}
           <div>
-            <h3 className="footer-col-title">Tech Tracks</h3>
+            <h3 className="footer-col-title">Programs</h3>
             <ul className="footer-links">
               <li><Link href="/degree-programs">Software Engineering (B.Tech)</Link></li>
-              <li><Link href="/degree-programs">Cybersecurity Tracks (B.Sc)</Link></li>
+              <li><Link href="/degree-programs">Cybersecurity Programs (B.Sc)</Link></li>
               <li><Link href="/degree-programs">DevOps & Cloud Pipelines</Link></li>
               <li><Link href="/degree-programs">Data Science & ML Labs</Link></li>
               <li><Link href="/about#partnerships">Corporate Innovations</Link></li>

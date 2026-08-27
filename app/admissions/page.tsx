@@ -217,7 +217,7 @@ function AdmissionsContent() {
     ]
   };
 
-  // Pre-fill from URL parameters (e.g. from "Enroll in Track ->")
+  // Pre-fill from URL parameters (e.g. from "Enroll ->")
   useEffect(() => {
     if (degreeParam) {
       const upper = degreeParam.toUpperCase();
@@ -721,7 +721,7 @@ function AdmissionsContent() {
                 <h4 style={{ color: '#081F3E', marginBottom: '16px', fontSize: '1.1rem' }}>Academic Record</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', fontSize: '0.9rem' }}>
                   <div>
-                    <span style={{ color: '#64748B' }}>Enrolled Track:</span>
+                    <span style={{ color: '#64748B' }}>Enrolled Program:</span>
                     <p style={{ fontWeight: 700, color: '#081F3E', margin: '2px 0 0 0' }}>{student.program_type}</p>
                   </div>
                   <div>
@@ -837,7 +837,7 @@ function AdmissionsContent() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 2 ? '#081F3E' : '#E2E8F0', color: currentStep >= 2 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>2</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 2 ? '#081F3E' : '#64748B' }}>Program Track</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 2 ? '#081F3E' : '#64748B' }}>Program Selection</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 3 ? '#081F3E' : '#E2E8F0', color: currentStep >= 3 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>3</span>
@@ -953,7 +953,7 @@ function AdmissionsContent() {
                         </div>
 
                         <div className="form-group">
-                          <label>Program Track *</label>
+                          <label>Program *</label>
                           <select
                             className="form-input-light"
                             value={programType}

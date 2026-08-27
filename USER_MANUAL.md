@@ -52,12 +52,12 @@ Liah Academy is a premier higher institute of technology and corporate software 
 Navigate to **Degree & Programs** (`/degree-programs`) from the top navigation bar or mobile menu.
 
 1. **Curriculum Explorer**:
-   - Filter programs using format chips: **All Tracks**, **Full-Time**, **Online**, or **On-Campus**.
+   - Filter programs using format chips: **All Programs**, **Full-Time**, **Online**, or **On-Campus**.
    - Use the **Quick Course Search Bar** to instantly find programs by title, technology stack, or keyword (e.g. `Software`, `Cybersecurity`, `DevOps`, `HND`, `Database`).
    - Click the `X` button to quickly clear your search query.
 2. **Program Cards**:
    - Each card displays the awarding school, degree type, program duration, tuition fee, and core technology badges.
-   - Click **Enroll in Track** to proceed directly to the Admissions Application prefilled with your selected track.
+   - Click **Enroll** to proceed directly to the Admissions Application prefilled with your selected program.
 
 ---
 
@@ -65,7 +65,7 @@ Navigate to **Degree & Programs** (`/degree-programs`) from the top navigation b
 Navigate to **Admissions & Portal** (`/admissions`):
 
 1. Scroll to the **Tuition Fee & Installments Calculator**.
-2. **Select Academic Track**: Choose your degree program from the dropdown menu (e.g. *Software Engineering HND*, *DevOps Certification*, etc.).
+2. **Select Academic Program**: Choose your degree program from the dropdown menu (e.g. *Software Engineering HND*, *DevOps Certification*, etc.).
 3. **Select Study Format**:
    - **Full-Time On-Campus**: Standard tuition.
    - **100% Online**: Automatically applies a **15% tuition reduction discount**.
@@ -321,7 +321,7 @@ Inside the **Content & Media** tab:
 > **Answer**: You will receive an immediate confirmation email containing your assigned Student ID. You can also log into `/admissions#portal` or ask the AI Chat assistant anytime.
 
 #### Q4: Can I switch from On-Campus to Online format after admission?
-> **Answer**: Yes. Contact the registrar's office via the Student Portal or email `info@liahacademy.com` to adjust your enrollment track and recalculate your tuition discount.
+> **Answer**: Yes. Contact the registrar's office via the Student Portal or email `info@liahacademy.com` to adjust your enrollment program and recalculate your tuition discount.
 
 ---
 *Liah Academy © 2024–2026. All Rights Reserved. Bakweri Town, Buea, Cameroon.*
