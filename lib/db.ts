@@ -44,19 +44,37 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
         await pool.query('DELETE FROM students WHERE id = ?', [data.id]);
       } else {
         await pool.query(
-          `INSERT INTO students (id, full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, admission_status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO students (id, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
              full_name=VALUES(full_name), email=VALUES(email), phone=VALUES(phone),
              degree_type=VALUES(degree_type), program_type=VALUES(program_type),
-             study_format=VALUES(study_format), document_url=VALUES(document_url),
-             documents=VALUES(documents), payment_status=VALUES(payment_status),
-             admission_status=VALUES(admission_status)`,
+             study_format=VALUES(study_format), cohort=VALUES(cohort),
+             qualification=VALUES(qualification), statement=VALUES(statement),
+             document_url=VALUES(document_url), documents=VALUES(documents),
+             payment_status=VALUES(payment_status), admission_status=VALUES(admission_status)`,
           [
             data.id, data.full_name, data.email, data.password, data.phone || '',
             data.degree_type || 'HND', data.program_type || '', data.study_format || 'oncampus',
-            data.document_url || '', JSON.stringify(data.documents || []),
-            data.payment_status || 'Pending', data.admission_status || 'Under Review',
+            data.cohort || 'Fall 2024 / Spring 2025', data.qualification || 'GCE Advanced Level',
+            data.statement || '', data.document_url || '', JSON.stringify(data.documents || []),
+            data.payment_status || 'Pending', data.admission_status || 'Pending Review',
+            data.created_at ? new Date(data.created_at) : new Date()
+          ]
+        );
+      }
+    } else if (table === 'payments') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM payments WHERE reference = ?', [data.reference]);
+      } else {
+        await pool.query(
+          `INSERT INTO payments (reference, student_id, amount, currency, operator, phone, status, description, external_reference, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE status=VALUES(status), operator=VALUES(operator), updated_at=NOW()`,
+          [
+            data.reference, data.student_id || null, data.amount || 0, data.currency || 'XAF',
+            data.operator || 'MTN / Orange', data.phone || '', data.status || 'PENDING',
+            data.description || 'Tuition / Registration Payment', data.external_reference || '',
             data.created_at ? new Date(data.created_at) : new Date()
           ]
         );
