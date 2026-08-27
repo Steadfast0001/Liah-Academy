@@ -44,21 +44,24 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
         await pool.query('DELETE FROM students WHERE id = ?', [data.id]);
       } else {
         await pool.query(
-          `INSERT INTO students (id, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO students (id, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, payment_proof_url, payment_transaction_id, payment_amount, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
              full_name=VALUES(full_name), email=VALUES(email), phone=VALUES(phone),
              degree_type=VALUES(degree_type), program_type=VALUES(program_type),
              study_format=VALUES(study_format), cohort=VALUES(cohort),
              qualification=VALUES(qualification), statement=VALUES(statement),
              document_url=VALUES(document_url), documents=VALUES(documents),
-             payment_status=VALUES(payment_status), admission_status=VALUES(admission_status)`,
+             payment_status=VALUES(payment_status), admission_status=VALUES(admission_status),
+             payment_proof_url=VALUES(payment_proof_url), payment_transaction_id=VALUES(payment_transaction_id),
+             payment_amount=VALUES(payment_amount)`,
           [
             data.id, data.full_name, data.email, data.password, data.phone || '',
             data.degree_type || 'HND', data.program_type || '', data.study_format || 'oncampus',
             data.cohort || 'Fall 2024 / Spring 2025', data.qualification || 'GCE Advanced Level',
             data.statement || '', data.document_url || '', JSON.stringify(data.documents || []),
             data.payment_status || 'Pending', data.admission_status || 'Pending Review',
+            data.payment_proof_url || '', data.payment_transaction_id || '', Number(data.payment_amount || 0),
             data.created_at ? new Date(data.created_at) : new Date()
           ]
         );
@@ -68,13 +71,19 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
         await pool.query('DELETE FROM payments WHERE reference = ?', [data.reference]);
       } else {
         await pool.query(
-          `INSERT INTO payments (reference, student_id, amount, currency, operator, phone, status, description, external_reference, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE status=VALUES(status), operator=VALUES(operator), updated_at=NOW()`,
+          `INSERT INTO payments (reference, student_id, amount, currency, operator, phone, status, description, proof_url, transaction_id, verified_by, verified_at, external_reference, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             status=VALUES(status), operator=VALUES(operator), amount=VALUES(amount),
+             proof_url=VALUES(proof_url), transaction_id=VALUES(transaction_id),
+             verified_by=VALUES(verified_by), verified_at=VALUES(verified_at),
+             updated_at=NOW()`,
           [
-            data.reference, data.student_id || null, data.amount || 0, data.currency || 'XAF',
+            data.reference, data.student_id ? Number(data.student_id) : null, Number(data.amount || 0), data.currency || 'XAF',
             data.operator || 'MTN / Orange', data.phone || '', data.status || 'PENDING',
-            data.description || 'Tuition / Registration Payment', data.external_reference || '',
+            data.description || 'Tuition / Registration Payment', data.proof_url || '', data.transaction_id || '',
+            data.verified_by || null, data.verified_at ? new Date(data.verified_at) : null,
+            data.external_reference || '',
             data.created_at ? new Date(data.created_at) : new Date()
           ]
         );
@@ -207,10 +216,37 @@ export interface Student {
   degree_type: string;
   program_type: string;
   study_format: string;
+  cohort?: string;
+  qualification?: string;
+  statement?: string;
   documents?: DocumentItem[];
   document_url?: string;
-  payment_status: 'Pending' | 'Paid';
-  admission_status: 'Under Review' | 'Approved' | 'Rejected';
+  payment_status: 'Pending' | 'Pending Verification' | 'Paid' | 'Failed' | 'Rejected';
+  admission_status: 'Under Review' | 'Pending Review' | 'Approved' | 'Rejected';
+  payment_proof_url?: string;
+  payment_transaction_id?: string;
+  payment_amount?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Payment {
+  id?: number;
+  reference: string;
+  student_id: number;
+  student_name?: string;
+  student_email?: string;
+  amount: number;
+  currency: string;
+  operator: string; // 'MTN Mobile Money' | 'Orange Money' | 'Manual MoMo Transfer' | 'Campay'
+  phone: string;
+  status: 'PENDING' | 'PENDING_VERIFICATION' | 'APPROVED' | 'PAID' | 'FAILED' | 'REJECTED';
+  description: string;
+  proof_url?: string;
+  transaction_id?: string;
+  verified_by?: string;
+  verified_at?: string;
+  external_reference?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -294,6 +330,7 @@ export interface EmailLog {
 
 export interface Schema {
   students: Student[];
+  payments: Payment[];
   reviews: Review[];
   inquiries: Inquiry[];
   courses: Course[];
@@ -332,6 +369,25 @@ const initialData: Schema = {
       document_url: '/assets/docs/gce_results.pdf',
       payment_status: 'Paid',
       admission_status: 'Approved',
+      created_at: new Date().toISOString()
+    }
+  ],
+  payments: [
+    {
+      id: 1,
+      reference: 'PAY-INIT-1001',
+      student_id: 1001,
+      student_name: 'Steddy Lyonga',
+      student_email: 'steddy@liahacademy.org',
+      amount: 50000,
+      currency: 'XAF',
+      operator: 'MTN Mobile Money',
+      phone: '+237 670 112 233',
+      status: 'APPROVED',
+      description: 'Seat Reservation Deposit #1001',
+      transaction_id: 'MP260820.1001.MOMO',
+      verified_by: 'Registrar Office',
+      verified_at: new Date().toISOString(),
       created_at: new Date().toISOString()
     }
   ],
@@ -554,6 +610,7 @@ export function readDb(): Schema {
     
     let modified = false;
     if (!parsed.students) { parsed.students = initialData.students; modified = true; }
+    if (!parsed.payments) { parsed.payments = initialData.payments; modified = true; }
     if (!parsed.reviews) { parsed.reviews = initialData.reviews; modified = true; }
     if (!parsed.inquiries) { parsed.inquiries = initialData.inquiries; modified = true; }
     if (!parsed.courses) { parsed.courses = initialData.courses; modified = true; }
@@ -665,6 +722,101 @@ export const adminStore = {
     writeDb(store, true);
     syncToMySQL('students', 'delete', { id });
     return store.students.length < initialLen;
+  },
+
+  // Payments & Proof Verification
+  getPayments: (): Payment[] => {
+    const store = readDb();
+    return [...(store.payments || [])].reverse();
+  },
+
+  getPaymentByReference: (ref: string): Payment | undefined => {
+    const store = readDb();
+    return (store.payments || []).find(p => p.reference === ref);
+  },
+
+  recordPaymentProof: (paymentData: {
+    student_id: number;
+    amount: number;
+    operator?: string;
+    phone?: string;
+    transaction_id?: string;
+    proof_url: string;
+    description?: string;
+  }): { payment: Payment; student: Student | null } => {
+    const store = readDb();
+    const student = store.students.find(s => s.id === Number(paymentData.student_id));
+    
+    const reference = `PAY-PROOF-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newPayment: Payment = {
+      id: (store.payments && store.payments.length ? Math.max(...store.payments.map(p => p.id || 0)) : 0) + 1,
+      reference,
+      student_id: Number(paymentData.student_id),
+      student_name: student?.full_name || 'Applicant',
+      student_email: student?.email || '',
+      amount: Number(paymentData.amount),
+      currency: 'XAF',
+      operator: paymentData.operator || 'MTN Mobile Money',
+      phone: paymentData.phone || student?.phone || '670265493',
+      status: 'PENDING_VERIFICATION',
+      description: paymentData.description || `Mobile Money Proof #${paymentData.student_id}`,
+      proof_url: paymentData.proof_url,
+      transaction_id: paymentData.transaction_id || '',
+      created_at: new Date().toISOString()
+    };
+
+    if (!store.payments) store.payments = [];
+    store.payments.unshift(newPayment);
+
+    if (student) {
+      student.payment_status = 'Pending Verification';
+      student.payment_proof_url = paymentData.proof_url;
+      student.payment_transaction_id = paymentData.transaction_id || '';
+      student.payment_amount = Number(paymentData.amount);
+      student.updated_at = new Date().toISOString();
+      syncToMySQL('students', 'update', student);
+    }
+
+    writeDb(store, true);
+    syncToMySQL('payments', 'insert', newPayment);
+
+    return { payment: newPayment, student: student || null };
+  },
+
+  verifyPayment: (
+    referenceOrId: string | number,
+    status: 'APPROVED' | 'PAID' | 'REJECTED' | 'FAILED',
+    verified_by?: string
+  ): { payment: Payment | null; student: Student | null } => {
+    const store = readDb();
+    if (!store.payments) store.payments = [];
+    
+    const payment = store.payments.find(p => p.reference === String(referenceOrId) || p.id === Number(referenceOrId));
+    if (!payment) return { payment: null, student: null };
+
+    payment.status = status as any;
+    payment.verified_by = verified_by || 'Admin';
+    payment.verified_at = new Date().toISOString();
+    payment.updated_at = new Date().toISOString();
+
+    const student = store.students.find(s => s.id === payment.student_id);
+    if (student) {
+      if (status === 'APPROVED' || status === 'PAID') {
+        student.payment_status = 'Paid';
+        if (student.admission_status !== 'Rejected') {
+          student.admission_status = 'Approved';
+        }
+      } else if (status === 'REJECTED' || status === 'FAILED') {
+        student.payment_status = 'Rejected';
+      }
+      student.updated_at = new Date().toISOString();
+      syncToMySQL('students', 'update', student);
+    }
+
+    writeDb(store, true);
+    syncToMySQL('payments', 'update', payment);
+
+    return { payment, student: student || null };
   },
 
   // Inquiries
@@ -857,6 +1009,13 @@ export const db = {
         String(s.id).includes(q)
       );
     }
+  },
+
+  payments: {
+    all: () => readDb().payments || [],
+    findById: (id: number) => (readDb().payments || []).find(p => p.id === id),
+    findByStudentId: (studentId: number | string) => (readDb().payments || []).filter(p => p.student_id === parseInt(String(studentId))),
+    count: () => (readDb().payments || []).length
   },
 
   courses: {

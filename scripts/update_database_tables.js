@@ -49,7 +49,10 @@ async function updateDatabaseTables() {
       { name: 'qualification', type: "VARCHAR(100) DEFAULT 'GCE Advanced Level'" },
       { name: 'statement', type: 'TEXT' },
       { name: 'payment_status', type: "VARCHAR(50) DEFAULT 'Pending'" },
-      { name: 'admission_status', type: "VARCHAR(50) DEFAULT 'Pending Review'" }
+      { name: 'admission_status', type: "VARCHAR(50) DEFAULT 'Pending Review'" },
+      { name: 'payment_proof_url', type: 'LONGTEXT' },
+      { name: 'payment_transaction_id', type: 'VARCHAR(255)' },
+      { name: 'payment_amount', type: 'INT DEFAULT 0' }
     ];
 
     for (const col of studentColumns) {
@@ -62,7 +65,7 @@ async function updateDatabaseTables() {
         } catch {}
       }
     }
-    console.log('   ✓ students table upgraded with modern admission and payment fields.');
+    console.log('   ✓ students table upgraded with modern admission and payment proof fields.');
 
     // 2. Create / Update courses table
     console.log('2. Upgrading [courses] table...');
@@ -103,6 +106,10 @@ async function updateDatabaseTables() {
         phone VARCHAR(50),
         status VARCHAR(50) DEFAULT 'PENDING',
         description VARCHAR(255),
+        proof_url LONGTEXT,
+        transaction_id VARCHAR(255),
+        verified_by VARCHAR(255),
+        verified_at DATETIME,
         external_reference VARCHAR(255),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -112,7 +119,11 @@ async function updateDatabaseTables() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
     try { await conn.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS description VARCHAR(255)'); } catch {}
-    console.log('   ✓ payments table upgraded for Campay USSD reconciliation.');
+    try { await conn.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS proof_url LONGTEXT'); } catch {}
+    try { await conn.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(255)'); } catch {}
+    try { await conn.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS verified_by VARCHAR(255)'); } catch {}
+    try { await conn.query('ALTER TABLE payments ADD COLUMN IF NOT EXISTS verified_at DATETIME'); } catch {}
+    console.log('   ✓ payments table upgraded for Mobile Money manual & automated proof verification.');
 
     // 4. Create / Update inquiries table
     console.log('4. Upgrading [inquiries] table...');

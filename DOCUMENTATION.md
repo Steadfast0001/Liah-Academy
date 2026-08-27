@@ -141,23 +141,25 @@ d:\Liah Academy\
 
 ### 4.1 Relational Database Schema (MySQL)
 
-When connected to MySQL/MariaDB (`liah_db`), the system initializes and operates the following table structures:
-
-```sql
 -- 1. Students / Admissions Table
 CREATE TABLE IF NOT EXISTS students (
   id INT AUTO_INCREMENT PRIMARY KEY,
   fullname VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
   phone VARCHAR(50) NOT NULL,
   degree VARCHAR(100) NOT NULL,
   program VARCHAR(255) NOT NULL,
   format VARCHAR(50) DEFAULT 'oncampus',
-  cohort VARCHAR(100) DEFAULT 'Fall 2024 / Spring 2025',
+  cohort VARCHAR(100) DEFAULT 'Fall 2026 / Spring 2027',
   qualification VARCHAR(100) DEFAULT 'GCE Advanced Level',
   statement TEXT,
   admission_status ENUM('Pending Review', 'Approved', 'Rejected', 'Enrolled') DEFAULT 'Pending Review',
-  payment_status ENUM('Unpaid', 'Deposit Paid', 'Paid', 'Fully Paid') DEFAULT 'Unpaid',
+  payment_status ENUM('Pending', 'Pending Verification', 'Paid', 'Failed', 'Rejected') DEFAULT 'Pending',
+  payment_amount DECIMAL(12,2) DEFAULT 0.00,
+  payment_proof_url TEXT,
+  payment_transaction_id VARCHAR(255),
+  document_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -168,9 +170,9 @@ CREATE TABLE IF NOT EXISTS inquiries (
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(50),
-  program_interest VARCHAR(255),
+  subject VARCHAR(255),
   message TEXT NOT NULL,
-  status ENUM('New', 'In Progress', 'Resolved') DEFAULT 'New',
+  status ENUM('unread', 'read', 'archived') DEFAULT 'unread',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -186,8 +188,8 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Financial Transactions Table
-CREATE TABLE IF NOT EXISTS transactions (
+-- 4. Financial & Mobile Money Transactions Table
+CREATE TABLE IF NOT EXISTS payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   reference VARCHAR(255) NOT NULL UNIQUE,
   student_id INT,
@@ -195,47 +197,54 @@ CREATE TABLE IF NOT EXISTS transactions (
   currency VARCHAR(10) DEFAULT 'XAF',
   phone_number VARCHAR(50) NOT NULL,
   operator VARCHAR(50),
-  status ENUM('PENDING', 'SUCCESSFUL', 'FAILED') DEFAULT 'PENDING',
+  status ENUM('PENDING', 'PENDING_VERIFICATION', 'APPROVED', 'PAID', 'FAILED', 'REJECTED') DEFAULT 'PENDING',
   description VARCHAR(255),
+  proof_url TEXT,
+  transaction_id VARCHAR(255),
+  verified_by VARCHAR(255),
+  verified_at DATETIME,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
 );
-```
 
 ### 4.2 JSON Dual-Layer Fallback Mechanism
 If the MySQL server is temporarily offline or undergoing migration, the system automatically falls back to `data/liah_academy_store.json`. All read/write transactions are locked and written atomically to prevent data corruption.
 
 ---
 
-## 5. PAYMENT GATEWAY ARCHITECTURE (CAMPAY MOBILE MONEY)
+## 5. PAYMENT ARCHITECTURE: DIRECT MOBILE MONEY (670265493) & PROOF VERIFICATION
 
 ```
-[ User Phone ]                  [ Liah Web App ]                    [ Campay Gateway ]
-      |                                |                                   |
-      | 1. Select Fee & Phone No       |                                   |
-      +------------------------------->| 2. POST /api/payments/collect     |
-      |                                +---------------------------------->|
-      |                                | 3. USSD Push Request Initialized  |
-      | 4. Screen Prompt (Enter PIN)   |<----------------------------------+
-      |<===============================+                                   |
-      |                                |                                   |
-      | 5. Enter 4-digit MoMo PIN      |                                   |
-      +------------------------------------------------------------------->|
-      |                                |                                   |
-      |                                | 6. GET /api/payments/status       |
-      |                                +---------------------------------->|
-      |                                | 7. HTTP 200 SUCCESSFUL            |
-      |                                |<----------------------------------+
-      | 8. Digital Receipt Generated   |                                   |
-      |<-------------------------------+                                   |
+[ Student / Applicant ]              [ Liah Portal ]                   [ Admin Verification Studio ]
+      |                                    |                                        |
+      | 1. Fill Admission Form             |                                        |
+      +----------------------------------->|                                        |
+      |                                    |                                        |
+      | 2. Follow Dial Directives          |                                        |
+      |    • MTN: *126# -> 670265493       |                                        |
+      |    • Orange: #150# -> 670265493    |                                        |
+      +------------------------------------+                                        |
+      |                                    |                                        |
+      | 3. Upload Payment Screenshot       |                                        |
+      +----------------------------------->| 4. POST /api/payments/upload-proof     |
+      |                                    |    Status: 'Pending Verification'      |
+      |                                    +--------------------------------------->|
+      |                                    |                                        | 5. Review Screenshot Dossier
+      |                                    |                                        |    & Validate Bank/MoMo Funds
+      |                                    |    6. PUT /api/admin/payments          |
+      |                                    |<---------------------------------------+
+      |                                    |    Status: 'Paid' & 'Approved'         |
+      | 7. Admission Approved & Verified   |                                        |
+      |<-----------------------------------+                                        |
 ```
 
-### 5.1 USSD Payment Collection Flow
-1. **Client Request**: Client issues a `POST` request to `/api/payments/campay/collect` containing `{ amount, phoneNumber, description, studentId }`.
-2. **Gateway Authorization**: The backend uses the permanent Campay API token (`CAMPAY_PERMANENT_ACCESS_TOKEN`) or performs an OAuth token exchange to authenticate with `https://demo.campay.net/api/` or `https://campay.net/api/`.
-3. **Dispatch**: Campay dispatches a USSD trigger to the user's telecom provider (MTN Cameroon or Orange Cameroon).
-4. **Push Prompt**: The subscriber's handset displays the native PIN authorization dialog.
+### 5.1 Step-by-Step Payment & USSD Directives
+1. **Target Account**: **`670 265 493`** (Liah Academy Official Account).
+2. **MTN MoMo Directive**: Dial `*126#` ➔ Transfer money (1) ➔ To MTN number (1) ➔ Enter `670265493` ➔ Enter Amount ➔ Enter Ref (`LIAH-<StudentID>`) ➔ Authorize with PIN.
+3. **Orange Money Directive**: Dial `#150#` ➔ Transfer money (1) ➔ To Orange number (1) ➔ Enter `670265493` ➔ Enter Amount ➔ Authorize with PIN.
+4. **Proof Upload**: Student takes a screenshot of the transaction SMS / app screen and submits via `/api/payments/upload-proof`.
+5. **Administrative Clearance**: The Admin verifies the proof with 1-click on `/admin`, which updates student records in real time and approves admission.
 
 ### 5.2 Real-Time Polling & Webhook Handling
 - **Active Polling**: The frontend initiates polling against `GET /api/payments/campay/status?reference={ref}` every 3,000ms.

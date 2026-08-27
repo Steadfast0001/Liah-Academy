@@ -7,7 +7,7 @@ import {
   Calculator, UserCheck, ShieldCheck, CreditCard, 
   CheckCircle, FileText, Lock, ArrowRight, ArrowLeft, 
   LogIn, UserPlus, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
-  UploadCloud, FileCheck, Trash2, Paperclip, Smartphone, Loader2
+  UploadCloud, FileCheck, Trash2, Paperclip, Smartphone, Loader2, Copy, Image as ImageIcon
 } from 'lucide-react';
 
 interface DocRequirement {
@@ -24,74 +24,67 @@ const docRequirementsByDegree: Record<string, DocRequirement[]> = {
       id: 'gce_al',
       label: 'GCE Advanced Level Certificate / Results Slip',
       required: true,
-      hint: 'Minimum 2 A-Level passes in relevant subjects (PDF, PNG, JPG)',
+      hint: 'Scanned original GCE A-Level slip showing minimum of 2 papers passed.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'gce_ol',
-      label: 'GCE Ordinary Level / High School Transcripts',
+      label: 'GCE Ordinary Level Certificate',
       required: true,
-      hint: 'Certified copy of O-Level results slip (minimum 4 papers including English/Maths)',
+      hint: 'Scanned GCE O-Level slip with at least 4 passes including English & Mathematics.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
-      id: 'national_id',
-      label: 'National ID Card / Passport / Birth Certificate',
+      id: 'birth_cert',
+      label: 'Birth Certificate Copy',
       required: true,
-      hint: 'Clear front & back scan of identity document (PDF, PNG, JPG)',
+      hint: 'Clear photocopy or scan of official municipal birth certificate.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
-      id: 'motivation_letter',
-      label: 'Statement of Purpose / Motivation Letter',
+      id: 'id_card',
+      label: 'National Identity Card (CNI) or Passport',
       required: false,
-      hint: 'Brief 1-page letter outlining your career goals in tech/business (PDF, DOCX)',
-      accept: '.pdf,.doc,.docx'
+      hint: 'Valid national ID card or passport data page.',
+      accept: '.pdf,.png,.jpg,.jpeg'
     }
   ],
   ND: [
     {
       id: 'gce_ol',
-      label: 'GCE Ordinary Level / BEPC / Probatoire Certificate',
+      label: 'GCE Ordinary Level / CAP / Probatoire Certificate',
       required: true,
-      hint: 'Official pass slip or secondary school diploma (PDF, PNG, JPG)',
+      hint: 'Scanned GCE O-Level or technical equivalent certificate.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
-      id: 'national_id',
-      label: 'National ID Card / Birth Certificate',
+      id: 'birth_cert',
+      label: 'Birth Certificate Copy',
       required: true,
-      hint: 'Valid government ID or birth certificate (PDF, PNG, JPG)',
+      hint: 'Clear photocopy or scan of official municipal birth certificate.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
-      id: 'school_records',
-      label: 'Previous Secondary School Report Cards',
+      id: 'id_card',
+      label: 'National Identity Card (CNI) or School ID',
       required: false,
-      hint: 'Academic report transcripts (PDF, PNG, JPG)',
+      hint: 'Valid ID card or academic badge.',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
   ],
   Certification: [
     {
-      id: 'resume',
-      label: 'Curriculum Vitae (CV) / Professional Resume',
+      id: 'highest_cert',
+      label: 'Highest Academic / Professional Credential',
       required: true,
-      hint: 'Summary of background, technical skills, or employment history (PDF, DOCX)',
-      accept: '.pdf,.doc,.docx'
-    },
-    {
-      id: 'national_id',
-      label: 'National ID Card / Passport',
-      required: true,
-      hint: 'Government identification document (PDF, PNG, JPG)',
+      hint: 'GCE A/L, HND, BSc, or relevant work certificate.',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
-      id: 'prior_certs',
-      label: 'Prior Diplomas or Relevant Certifications',
-      required: false,
-      hint: 'Higher education diplomas or technical certifications (PDF, PNG, JPG)',
+      id: 'id_card',
+      label: 'National ID Card or Passport',
+      required: true,
+      hint: 'Valid identification document.',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
   ]
@@ -102,19 +95,18 @@ function AdmissionsContent() {
   const degreeParam = searchParams.get('degree');
   const programParam = searchParams.get('program');
 
-  // Form Mode: 'register' | 'login' | 'dashboard'
+  // Application Form State
   const [activeTab, setActiveTab] = useState<'register' | 'login'>('register');
-  const [currentStep, setCurrentStep] = useState<number>(1);
-
-  // Registration Form State
+  const [currentStep, setCurrentStep] = useState(1);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
-  const [degreeType, setDegreeType] = useState('HND');
+  const [degreeType, setDegreeType] = useState<'HND' | 'ND' | 'Certification'>('HND');
   const [programType, setProgramType] = useState('Software Engineering HND');
   const [studyFormat, setStudyFormat] = useState('oncampus');
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, { fileName: string; size: string; label: string }>>({});
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, { fileName: string; size: string; label: string; url?: string }>>({});
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
   const [prefilledMessage, setPrefilledMessage] = useState<string | null>(null);
@@ -128,16 +120,19 @@ function AdmissionsContent() {
   // Logged in Student Session State
   const [student, setStudent] = useState<any>(null);
 
-  // Campay Checkout Modal
+  // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
-  const [payPhone, setPayPhone] = useState('');
+  const [payMethod, setPayMethod] = useState<'MTN' | 'ORANGE'>('MTN');
+  const [payAmountOption, setPayAmountOption] = useState<number | 'custom'>(50000);
+  const [payCustomAmount, setPayCustomAmount] = useState<string>('');
+  const [paySenderPhone, setPaySenderPhone] = useState<string>('');
+  const [payTransactionId, setPayTransactionId] = useState<string>('');
+  const [payScreenshotFile, setPayScreenshotFile] = useState<File | null>(null);
+  const [payScreenshotPreview, setPayScreenshotPreview] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
-  const [payReference, setPayReference] = useState<string | null>(null);
-  const [payStatusMessage, setPayStatusMessage] = useState<string>('');
-  const [payOperator, setPayOperator] = useState<string>('');
   const [payError, setPayError] = useState<string>('');
-  const [payPollActive, setPayPollActive] = useState<boolean>(false);
+  const [copiedNumber, setCopiedNumber] = useState(false);
 
   // Complete programs mapping
   const programOptions: Record<string, string[]> = {
@@ -307,82 +302,91 @@ function AdmissionsContent() {
     }
   };
 
-  const handleCampayPayment = async (e: React.FormEvent) => {
+  const handleCopyNumber = () => {
+    navigator.clipboard.writeText('670265493');
+    setCopiedNumber(true);
+    setTimeout(() => setCopiedNumber(false), 2500);
+  };
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPayScreenshotFile(file);
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        setPayScreenshotPreview(uploadEvent.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProofSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPayLoading(true);
     setPayError('');
-    setPayStatusMessage('');
-    setPayReference(null);
 
-    const phoneNumber = payPhone || student?.phone;
-    if (!phoneNumber) {
-      setPayError('Please enter your Mobile Money phone number.');
+    const effectiveAmount = payAmountOption === 'custom' 
+      ? parseInt(payCustomAmount, 10) 
+      : payAmountOption;
+
+    if (!effectiveAmount || isNaN(effectiveAmount) || effectiveAmount <= 0) {
+      setPayError('Please enter or select a valid payment amount.');
+      setPayLoading(false);
+      return;
+    }
+
+    if (!payScreenshotPreview && !payScreenshotFile) {
+      setPayError('Please attach a screenshot or photo of your Mobile Money transaction confirmation.');
       setPayLoading(false);
       return;
     }
 
     try {
-      const res = await fetch('/api/payments/campay/collect', {
+      const formData = new FormData();
+      formData.append('student_id', String(student?.id || '0'));
+      formData.append('amount', String(effectiveAmount));
+      formData.append('operator', payMethod === 'MTN' ? 'MTN Mobile Money' : 'Orange Money');
+      formData.append('phone', paySenderPhone || student?.phone || '670265493');
+      formData.append('transaction_id', payTransactionId);
+      formData.append('description', `${payMethod} Payment of ${effectiveAmount.toLocaleString()} XAF for #${student?.id}`);
+
+      if (payScreenshotFile) {
+        formData.append('screenshot', payScreenshotFile);
+      } else if (payScreenshotPreview) {
+        formData.append('proof_url', payScreenshotPreview);
+      }
+
+      const res = await fetch('/api/payments/upload-proof', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: phoneNumber,
-          amount: 50000,
-          studentId: student?.id,
-          description: `Liah Academy Deposit #${student?.id || ''}`
-        })
+        body: formData
       });
 
       const data = await res.json();
       setPayLoading(false);
 
-      if (data.success && data.reference) {
-        setPayReference(data.reference);
-        setPayOperator(data.operator || 'MTN / Orange');
-        setPayStatusMessage(data.message || `USSD payment prompt dispatched to ${phoneNumber}. Please check your phone and enter your PIN.`);
-        setPayPollActive(true);
-
-        // Start polling Campay transaction status every 3 seconds
-        const pollInterval = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`/api/payments/campay/status?reference=${data.reference}&studentId=${student?.id || ''}`);
-            const statusData = await statusRes.json();
-
-            if (statusData.status === 'SUCCESSFUL') {
-              clearInterval(pollInterval);
-              setPayPollActive(false);
-              setPaySuccess(true);
-              if (student) {
-                setStudent({ ...student, payment_status: 'Paid', admission_status: 'Approved' });
-              }
-              setTimeout(() => {
-                setShowCheckout(false);
-                setPaySuccess(false);
-                setPayReference(null);
-                setPayStatusMessage('');
-              }, 3500);
-            } else if (statusData.status === 'FAILED') {
-              clearInterval(pollInterval);
-              setPayPollActive(false);
-              setPayError(statusData.message || 'Payment request failed or was cancelled.');
-            }
-          } catch {
-            // Ignore temporary network glitch during single poll
-          }
-        }, 3000);
-
-        // Auto-timeout polling after 2.5 minutes
+      if (data.success) {
+        setPaySuccess(true);
+        if (student) {
+          setStudent({
+            ...student,
+            payment_status: 'Pending Verification',
+            payment_amount: effectiveAmount,
+            payment_proof_url: data.data?.payment?.proof_url || payScreenshotPreview,
+            payment_transaction_id: payTransactionId
+          });
+        }
         setTimeout(() => {
-          clearInterval(pollInterval);
-          setPayPollActive(false);
-        }, 150000);
-
+          setShowCheckout(false);
+          setPaySuccess(false);
+          setPayScreenshotFile(null);
+          setPayScreenshotPreview(null);
+        }, 4000);
       } else {
-        setPayError(data.message || 'Failed to initiate Campay Mobile Money payment.');
+        setPayError(data.message || 'Failed to submit proof of payment.');
       }
     } catch {
       setPayLoading(false);
-      setPayError('Connection error contacting Campay gateway. Please try again.');
+      setPayError('Connection error uploading payment proof. Please try again.');
     }
   };
 
@@ -603,11 +607,11 @@ function AdmissionsContent() {
                       borderRadius: '4px', 
                       fontSize: '0.85rem', 
                       fontWeight: 700,
-                      background: student.admission_status === 'Approved' ? 'rgba(16,185,129,0.15)' : 'rgba(245,166,35,0.15)',
-                      color: student.admission_status === 'Approved' ? '#10B981' : '#B45309'
+                      background: student.admission_status === 'Approved' ? 'rgba(16,185,129,0.15)' : student.admission_status === 'Rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(245,166,35,0.15)',
+                      color: student.admission_status === 'Approved' ? '#10B981' : student.admission_status === 'Rejected' ? '#DC2626' : '#B45309'
                     }}
                   >
-                    {student.admission_status}
+                    {student.admission_status || 'Pending Review'}
                   </span>
                 </div>
 
@@ -619,14 +623,35 @@ function AdmissionsContent() {
                       borderRadius: '4px', 
                       fontSize: '0.85rem', 
                       fontWeight: 700,
-                      background: student.payment_status === 'Paid' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: student.payment_status === 'Paid' ? '#10B981' : '#DC2626'
+                      background: student.payment_status === 'Paid' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : student.payment_status === 'Pending Verification'
+                        ? 'rgba(37,99,235,0.15)'
+                        : 'rgba(239,68,68,0.15)',
+                      color: student.payment_status === 'Paid' 
+                        ? '#10B981' 
+                        : student.payment_status === 'Pending Verification'
+                        ? '#2563EB'
+                        : '#DC2626'
                     }}
                   >
-                    {student.payment_status}
+                    {student.payment_status === 'Pending Verification' ? '⏳ Verification Pending' : student.payment_status || 'Pending'}
                   </span>
                 </div>
               </div>
+
+              {/* Payment Proof Notification if Pending Verification */}
+              {student.payment_status === 'Pending Verification' && (
+                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '16px', borderRadius: '10px', marginBottom: '24px', color: '#1E40AF', fontSize: '0.9rem', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <ShieldCheck size={22} color="#2563EB" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.95rem' }}>Payment Proof Under Review</strong>
+                    <p style={{ margin: 0, lineHeight: '1.5', color: '#1E3A8A' }}>
+                      Your payment proof of <strong>{(student.payment_amount || 50000).toLocaleString()} XAF</strong> has been successfully uploaded and is undergoing verification by the Liah Academy Finance Office. Your enrollment status will automatically update to <strong>Approved</strong> upon approval.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Student Details Card */}
               <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '10px', marginBottom: '30px' }}>
@@ -654,11 +679,12 @@ function AdmissionsContent() {
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 {student.payment_status !== 'Paid' && (
-                  <button onClick={() => setShowCheckout(true)} className="btn btn-primary">
-                    <CreditCard size={18} /> Pay Semester Deposit (MoMo)
+                  <button onClick={() => setShowCheckout(true)} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <CreditCard size={18} /> 
+                    {student.payment_status === 'Pending Verification' ? 'Upload Updated Payment Proof' : 'Pay via Mobile Money (670265493)'}
                   </button>
                 )}
-                <a href="/assets/images/flyer_engineering.png" download="Liah_Prospectus.png" className="btn btn-secondary" style={{ color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)' }}>
+                <a href="/assets/images/flyer_engineering.png" download="Liah_Prospectus.png" className="btn btn-secondary" style={{ color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                   <Download size={18} /> Download Program Syllabus
                 </a>
               </div>
@@ -853,7 +879,7 @@ function AdmissionsContent() {
                             className="form-input-light"
                             value={degreeType}
                             onChange={(e) => {
-                              const deg = e.target.value;
+                              const deg = e.target.value as 'HND' | 'ND' | 'Certification';
                               setDegreeType(deg);
                               setProgramType(programOptions[deg]?.[0] || '');
                             }}
@@ -1103,7 +1129,7 @@ function AdmissionsContent() {
           )}
         </section>
 
-        {/* 3. CAMPAY / MOMO CHECKOUT MODAL */}
+        {/* 3. DIRECT MOBILE MONEY PAYMENT & PROOF UPLOAD MODAL */}
         {showCheckout && student && (
           <div 
             style={{
@@ -1118,129 +1144,435 @@ function AdmissionsContent() {
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 9999,
-              padding: '20px'
+              padding: '16px'
             }}
           >
-            <div className="premium-card" style={{ maxWidth: '480px', width: '100%', padding: '32px' }}>
+            <div 
+              className="premium-card" 
+              style={{ 
+                maxWidth: '560px', 
+                width: '100%', 
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                padding: '30px 26px',
+                position: 'relative'
+              }}
+            >
+              {/* Dismiss Button */}
+              <button 
+                onClick={() => setShowCheckout(false)}
+                style={{
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: 'rgba(15,23,42,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748B'
+                }}
+              >
+                <Trash2 size={16} style={{ display: 'none' }} />
+                ✕
+              </button>
+
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <span className="course-badge" style={{ background: 'rgba(245,166,35,0.15)', color: '#F5A623' }}>
-                  Campay Payment Gateway
+                <span className="course-badge" style={{ background: 'rgba(245,166,35,0.15)', color: '#B45309' }}>
+                  Mobile Money Direct Transfer
                 </span>
-                <h3 style={{ color: '#081F3E', marginTop: '8px', fontSize: '1.4rem' }}>
-                  Complete Admission Deposit
+                <h3 style={{ color: '#081F3E', marginTop: '8px', fontSize: '1.35rem', fontWeight: 800 }}>
+                  Tuition &amp; Fee Payment Directives
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: '#64748B' }}>
-                  Enter your MTN or Orange Mobile Money phone number to confirm your student enrollment seat.
+                <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '4px 0 0 0' }}>
+                  Follow the dialing directives to transfer payment to our official account, then upload your transaction screenshot for instant verification.
                 </p>
               </div>
 
               {payError && (
-                <div style={{ background: 'rgba(239,68,68,0.1)', color: '#DC2626', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <AlertCircle size={18} />
+                <div style={{ background: 'rgba(239,68,68,0.1)', color: '#DC2626', padding: '12px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertCircle size={18} style={{ flexShrink: 0 }} />
                   <span>{payError}</span>
                 </div>
               )}
 
               {paySuccess ? (
-                <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                  <CheckCircle size={54} color="#10B981" style={{ margin: '0 auto 12px auto' }} />
-                  <h4 style={{ color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>Payment Confirmed &amp; Verified!</h4>
-                  <p style={{ color: '#059669', fontSize: '0.92rem', fontWeight: 600, marginTop: '4px' }}>
-                    Welcome to Liah Academy! Your enrollment and lab seat are now fully secured.
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <CheckCircle size={56} color="#10B981" style={{ margin: '0 auto 14px auto' }} />
+                  <h4 style={{ color: '#081F3E', fontSize: '1.35rem', fontWeight: 800 }}>Proof of Payment Submitted!</h4>
+                  <p style={{ color: '#059669', fontSize: '0.92rem', fontWeight: 600, marginTop: '6px', lineHeight: '1.5' }}>
+                    Thank you! Your payment proof for Application <strong>#LIAH-{student.id}</strong> has been logged. Our administration is verifying your transaction.
                   </p>
-                </div>
-              ) : payPollActive ? (
-                <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(245,166,35,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-                    <Smartphone size={32} color="#F5A623" />
-                  </div>
-                  <h4 style={{ color: '#081F3E', fontSize: '1.2rem', marginBottom: '8px' }}>
-                    USSD Prompt Dispatched!
-                  </h4>
-                  <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '18px' }}>
-                    Please check your phone (<strong>{payPhone || student?.phone}</strong>) and authorize the prompt by entering your <strong>Mobile Money PIN</strong>.
-                  </p>
-                  
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '10px 18px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '0.85rem', color: '#64748B' }}>
-                    <Loader2 size={16} className="animate-spin" color="#081F3E" />
-                    <span>Awaiting PIN clearance from network operator...</span>
-                  </div>
-
-                  <div style={{ marginTop: '24px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPayPollActive(false);
-                        setPayReference(null);
-                      }}
-                      className="btn btn-secondary"
-                      style={{ padding: '8px 16px', fontSize: '0.82rem', color: '#64748B' }}
-                    >
-                      Cancel / Change Phone Number
-                    </button>
+                  <div style={{ marginTop: '16px', background: '#F8FAFC', padding: '12px', borderRadius: '8px', fontSize: '0.82rem', color: '#64748B' }}>
+                    Redirecting to your student dashboard...
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleCampayPayment}>
-                  <div className="form-group">
-                    <label htmlFor="campay_checkout_phone">Mobile Money Phone Number (MTN / Orange) *</label>
-                    <input
-                      id="campay_checkout_phone"
-                      name="campay_phone"
-                      type="tel"
-                      className="form-input-light"
-                      required
-                      placeholder="e.g. 670 123 456"
-                      value={payPhone || student?.phone || ''}
-                      onChange={(e) => setPayPhone(e.target.value)}
-                    />
+                <form onSubmit={handleProofSubmit}>
+                  
+                  {/* Official Account Banner */}
+                  <div style={{ 
+                    background: 'linear-gradient(135deg, #081F3E 0%, #0F3A75 100%)', 
+                    borderRadius: '12px', 
+                    padding: '16px 20px', 
+                    color: '#FFFFFF',
+                    marginBottom: '20px',
+                    boxShadow: '0 4px 15px rgba(8,31,62,0.15)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#F5A623', fontWeight: 700 }}>
+                          Official Recipient Account
+                        </span>
+                        <div style={{ fontSize: '1.45rem', fontWeight: 900, letterSpacing: '0.04em', margin: '2px 0', fontFamily: 'var(--font-mono)' }}>
+                          670 265 493
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#CBD5E1' }}>
+                          Account Name: <strong>Liah Academy / Tech Division</strong>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleCopyNumber}
+                        style={{
+                          background: copiedNumber ? '#10B981' : 'rgba(255,255,255,0.15)',
+                          border: '1px solid rgba(255,255,255,0.3)',
+                          color: '#FFFFFF',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {copiedNumber ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{copiedNumber ? 'Copied!' : 'Copy Number'}</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={{ background: '#F8FAFC', padding: '14px', borderRadius: '8px', fontSize: '0.86rem', color: '#475569', marginBottom: '20px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span>Fee Item:</span>
-                      <strong style={{ color: '#081F3E' }}>Seat Reservation Deposit</strong>
+                  {/* 1. Payment Amount Preset Selection */}
+                  <div style={{ marginBottom: '18px' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '8px' }}>
+                      Select Payment Item / Amount:
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPayAmountOption(10000)}
+                        style={{
+                          background: payAmountOption === 10000 ? '#081F3E' : '#F8FAFC',
+                          color: payAmountOption === 10000 ? '#FFFFFF' : '#081F3E',
+                          border: payAmountOption === 10000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        10,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Application Fee</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPayAmountOption(50000)}
+                        style={{
+                          background: payAmountOption === 50000 ? '#081F3E' : '#F8FAFC',
+                          color: payAmountOption === 50000 ? '#FFFFFF' : '#081F3E',
+                          border: payAmountOption === 50000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        50,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Seat Deposit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPayAmountOption(125000)}
+                        style={{
+                          background: payAmountOption === 125000 ? '#081F3E' : '#F8FAFC',
+                          color: payAmountOption === 125000 ? '#FFFFFF' : '#081F3E',
+                          border: payAmountOption === 125000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        125,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>HND Semester 1</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPayAmountOption('custom')}
+                        style={{
+                          background: payAmountOption === 'custom' ? '#081F3E' : '#F8FAFC',
+                          color: payAmountOption === 'custom' ? '#FFFFFF' : '#081F3E',
+                          border: payAmountOption === 'custom' ? '2px solid #081F3E' : '1px solid #E2E8F0',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        Custom Amount <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Enter other amount</span>
+                      </button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Amount Due:</span>
-                      <strong style={{ color: '#081F3E', fontSize: '1.05rem' }}>50,000 XAF</strong>
+
+                    {payAmountOption === 'custom' && (
+                      <div style={{ marginTop: '10px' }}>
+                        <input
+                          type="number"
+                          placeholder="e.g. 75000"
+                          value={payCustomAmount}
+                          onChange={(e) => setPayCustomAmount(e.target.value)}
+                          className="form-input-light"
+                          style={{ width: '100%', padding: '10px 14px' }}
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Directives Tab Switcher (MTN vs Orange) */}
+                  <div style={{ marginBottom: '18px' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPayMethod('MTN')}
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: payMethod === 'MTN' ? '2px solid #F59E0B' : '1px solid #E2E8F0',
+                          background: payMethod === 'MTN' ? '#FEF3C7' : '#FFFFFF',
+                          color: payMethod === 'MTN' ? '#92400E' : '#64748B',
+                          fontWeight: 800,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Smartphone size={16} /> MTN Mobile Money (*126#)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPayMethod('ORANGE')}
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: payMethod === 'ORANGE' ? '2px solid #EA580C' : '1px solid #E2E8F0',
+                          background: payMethod === 'ORANGE' ? '#FFEDD5' : '#FFFFFF',
+                          color: payMethod === 'ORANGE' ? '#9A3412' : '#64748B',
+                          fontWeight: 800,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Smartphone size={16} /> Orange Money (#150#)
+                      </button>
+                    </div>
+
+                    {/* Step-by-Step Instructions Box */}
+                    <div style={{ 
+                      background: payMethod === 'MTN' ? '#FFFBEB' : '#FFF7ED', 
+                      border: payMethod === 'MTN' ? '1px solid #FDE68A' : '1px solid #FED7AA', 
+                      borderRadius: '10px', 
+                      padding: '14px 16px',
+                      fontSize: '0.84rem',
+                      lineHeight: '1.6',
+                      color: '#081F3E'
+                    }}>
+                      <div style={{ fontWeight: 800, marginBottom: '6px', color: payMethod === 'MTN' ? '#B45309' : '#C2410C', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>Dial Directives for {payMethod === 'MTN' ? 'MTN MoMo' : 'Orange Money'}:</span>
+                      </div>
+
+                      {payMethod === 'MTN' ? (
+                        <ol style={{ paddingLeft: '18px', margin: 0 }}>
+                          <li>Dial <strong>*126#</strong> on your mobile phone.</li>
+                          <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To MTN number)</strong>.</li>
+                          <li>Enter recipient number: <strong>670265493</strong>.</li>
+                          <li>Enter amount: <strong>{(payAmountOption === 'custom' ? payCustomAmount : payAmountOption) || 50000} XAF</strong>.</li>
+                          <li>Enter reason / reference: <strong>LIAH-{student?.id || 'ID'}</strong>.</li>
+                          <li>Enter your <strong>MoMo PIN</strong> to authorize the transfer.</li>
+                        </ol>
+                      ) : (
+                        <ol style={{ paddingLeft: '18px', margin: 0 }}>
+                          <li>Dial <strong>#150#</strong> on your mobile phone.</li>
+                          <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To Orange number)</strong>.</li>
+                          <li>Enter recipient number: <strong>670265493</strong>.</li>
+                          <li>Enter amount: <strong>{(payAmountOption === 'custom' ? payCustomAmount : payAmountOption) || 50000} XAF</strong>.</li>
+                          <li>Enter your <strong>Orange Money PIN</strong> to authorize the transfer.</li>
+                        </ol>
+                      )}
                     </div>
                   </div>
 
+                  {/* 3. Upload Screenshot & Details */}
+                  <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
+                    <h5 style={{ color: '#081F3E', margin: '0 0 10px 0', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <UploadCloud size={16} color="#081F3E" /> Upload Payment Screenshot / Receipt *
+                    </h5>
+
+                    {/* Screenshot File Input Area */}
+                    <div style={{ marginBottom: '12px' }}>
+                      <label 
+                        htmlFor="payment_proof_upload"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '16px',
+                          border: '2px dashed rgba(15,23,42,0.2)',
+                          borderRadius: '8px',
+                          background: '#FFFFFF',
+                          cursor: 'pointer',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <ImageIcon size={24} color="#64748B" />
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E' }}>
+                          {payScreenshotFile ? payScreenshotFile.name : 'Click to select transaction screenshot (PNG, JPG, PDF)'}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                          Take a screenshot of the confirmation SMS or MoMo receipt app screen
+                        </span>
+                        <input
+                          id="payment_proof_upload"
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp,.pdf"
+                          onChange={handleScreenshotChange}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Live Preview Thumbnail if attached */}
+                    {payScreenshotPreview && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFFFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', marginBottom: '12px' }}>
+                        {payScreenshotPreview.startsWith('data:image') ? (
+                          <img src={payScreenshotPreview} alt="Proof preview" style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '4px' }} />
+                        ) : (
+                          <FileCheck size={28} color="#10B981" />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#081F3E', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {payScreenshotFile?.name || 'Payment_Proof_Screenshot'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>Ready to verify</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPayScreenshotFile(null);
+                            setPayScreenshotPreview(null);
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Optional Transaction ID & Phone */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#64748B', marginBottom: '4px' }}>
+                          Transaction ID / Ref (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. MP260827.1234"
+                          value={payTransactionId}
+                          onChange={(e) => setPayTransactionId(e.target.value)}
+                          className="form-input-light"
+                          style={{ width: '100%', padding: '8px 10px', fontSize: '0.82rem' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#64748B', marginBottom: '4px' }}>
+                          Sender Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          placeholder="e.g. 670 123 456"
+                          value={paySenderPhone || student?.phone || ''}
+                          onChange={(e) => setPaySenderPhone(e.target.value)}
+                          className="form-input-light"
+                          style={{ width: '100%', padding: '8px 10px', fontSize: '0.82rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submission Action Buttons */}
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       type="button"
                       onClick={() => setShowCheckout(false)}
                       className="btn btn-secondary"
-                      style={{ flex: 1, color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)' }}
+                      style={{ flex: 1, color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', padding: '12px' }}
                     >
                       Pay Later
                     </button>
+                    
                     <button
                       type="submit"
                       disabled={payLoading}
                       className="btn btn-primary"
-                      style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
                     >
                       {payLoading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          <span>Contacting Campay...</span>
+                          <span>Uploading Proof...</span>
                         </>
                       ) : (
                         <>
-                          <CreditCard size={16} />
-                          <span>Pay with Mobile Money</span>
+                          <UploadCloud size={16} />
+                          <span>Submit Proof for Verification</span>
                         </>
                       )}
                     </button>
                   </div>
+
                 </form>
               )}
             </div>
           </div>
         )}
-
       </div>
     </main>
   );

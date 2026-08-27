@@ -117,37 +117,51 @@ Admitted and prospective students can log into their dossier at any time:
 
 Liah Academy features direct, end-to-end integration with the **Campay Mobile Money Gateway** for real-time payments across Cameroon.
 
-#### Payment Methods Supported:
-- **MTN Mobile Money (MoMo)**
-- **Orange Money (OM)**
+#### Official Institution Payment Account:
+- **Recipient Number**: **`670 265 493`** (Liah Academy Official)
+- **Account Name**: **Liah Academy / Tech Division**
 
-#### Steps to Complete Mobile Money Payment:
-1. Open the payment checkout modal on the **Admissions Portal** or inside the **AI Chat Assistant**.
-2. Select or enter the payment amount:
-   - **10,000 XAF** — Non-refundable Application & Registration Fee.
-   - **50,000 XAF** — Seat Reservation Deposit.
-   - **125,000 XAF** — Semester 1 Installment (HND).
-   - **75,000 XAF** — Semester 1 Installment (National Diploma).
-   - **Custom Amount** — Enter any custom balance.
-3. Enter your active Cameroon Mobile Money phone number (e.g. `677123456` or `699123456`).
-4. Click **Pay with Mobile Money**.
-5. **Phone Prompt (USSD)**:
-   - A secure USSD payment authorization push notification will appear on your phone screen within 3 to 10 seconds.
-   - **MTN MoMo**: Enter your 4-digit or 5-digit MoMo PIN to authorize.
-   - **Orange Money**: Enter your secret Orange Money PIN or dial `#150#` if prompted.
-6. The system automatically polls the payment status in real-time. Once authorized, the screen transitions to a green **Payment Successful** confirmation.
+#### Step-by-Step Payment Directives:
+1. **Choose Your Network Operator**:
+   - **MTN Mobile Money (MoMo)**:
+     1. Dial `*126#` on your mobile phone.
+     2. Select `1 (Transfer money)` ➔ `1 (To MTN number)`.
+     3. Enter recipient number: **`670265493`**.
+     4. Enter amount (e.g. `50,000 XAF` deposit, `10,000 XAF` application fee, or `125,000 XAF` semester tuition).
+     5. Enter reason/reference: `LIAH-<YourStudentID>`.
+     6. Enter your secret **MoMo PIN** to confirm transfer.
+   - **Orange Money (OM)**:
+     1. Dial `#150#` on your mobile phone.
+     2. Select `1 (Transfer money)` ➔ `1 (To Orange number)`.
+     3. Enter recipient number: **`670265493`**.
+     4. Enter amount.
+     5. Enter your secret **Orange Money PIN** to confirm transfer.
+
+2. **Take a Screenshot / Photo of the Confirmation**:
+   - Take a clear screenshot of your SMS transaction confirmation message or app receipt showing the transaction ID and amount.
+
+3. **Upload Proof of Payment**:
+   - On the **Admissions Portal** or **Student Dashboard**, open the **Payment Directives & Proof Upload** window.
+   - Attach your screenshot file (`.png`, `.jpg`, `.jpeg`, or `.pdf`).
+   - Enter your Transaction Reference ID and Sender Phone number.
+   - Click **Submit Proof of Payment for Verification**.
+
+4. **Administrative Verification & Admission Approval**:
+   - Your student portal instantly updates to `⏳ Verification Pending`.
+   - The Liah Academy Finance and Admissions team reviews the screenshot dossier in the Master Admin Studio and validates the funds.
+   - Upon administrative approval, your status automatically switches to **`✓ Paid`** and **`✓ Admission Approved`**.
 
 ---
 
 ### 2.6 Downloading & Verifying Digital Receipts
-Immediately upon successful Mobile Money clearance:
-- The system generates an official **Digital Payment Receipt** containing:
-  - **Transaction Reference ID** (Campay Reference)
+Immediately upon administrative payment verification:
+- The system generates an official **Digital Payment Receipt & Acceptance Confirmation** containing:
+  - **Transaction Reference ID**
   - **Student Name & ID**
   - **Amount Paid (XAF)**
   - **Payment Operator** (MTN MoMo or Orange Money)
-  - **Timestamp & Digital Verification Stamp**
-- A copy of this receipt is recorded in the institutional database and dispatched to your email.
+  - **Admin Verifier Timestamp**
+- A copy is stored in the database and accessible anytime via the Student Portal.
 
 ---
 

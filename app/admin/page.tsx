@@ -9,7 +9,7 @@ import {
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
-  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff
+  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck
 } from 'lucide-react';
 
 interface Application {
@@ -20,8 +20,11 @@ interface Application {
   degree_type: string;
   program_type: string;
   study_format: string;
-  admission_status: 'Under Review' | 'Approved' | 'Rejected';
-  payment_status: 'Pending' | 'Paid';
+  admission_status: 'Under Review' | 'Pending Review' | 'Approved' | 'Rejected';
+  payment_status: 'Pending' | 'Pending Verification' | 'Paid' | 'Failed' | 'Rejected';
+  payment_proof_url?: string;
+  payment_transaction_id?: string;
+  payment_amount?: number;
   document_url?: string;
   documents?: { slotId?: string; label?: string; fileName?: string; size?: string; url?: string }[];
   created_at: string;
@@ -143,6 +146,9 @@ export default function AdminDashboardPage() {
   const [newMediaTitle, setNewMediaTitle] = useState('');
   const [newMediaCategory, setNewMediaCategory] = useState('Workshops');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+
+  // Payment Screenshot Proof Modal Preview State
+  const [previewProofItem, setPreviewProofItem] = useState<Application | null>(null);
 
   // Authentication & Restriction States
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -360,6 +366,40 @@ export default function AdminDashboardPage() {
       }
     } catch {
       showNotification('Error updating payment status.', 'error');
+    }
+  };
+
+  const verifyPaymentDirectly = async (id: number, status: 'Paid' | 'Rejected') => {
+    try {
+      const res = await fetch('/api/admin/applications', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ 
+          id, 
+          payment_status: status, 
+          admission_status: status === 'Paid' ? 'Approved' : undefined 
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Payment for Application #${id} marked as ${status}.`);
+        setApplications(prev => prev.map(a => a.id === id ? { 
+          ...a, 
+          payment_status: status as any,
+          admission_status: status === 'Paid' ? 'Approved' : a.admission_status
+        } : a));
+        if (selectedApp && selectedApp.id === id) {
+          setSelectedApp(prev => prev ? {
+            ...prev,
+            payment_status: status as any,
+            admission_status: status === 'Paid' ? 'Approved' : prev.admission_status
+          } : null);
+        }
+        setPreviewProofItem(null);
+      }
+    } catch {
+      showNotification('Error updating payment verification status.', 'error');
     }
   };
 
@@ -1574,7 +1614,7 @@ export default function AdminDashboardPage() {
                           </td>
 
                           <td style={{ padding: '16px 20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
                               <span style={{ 
                                 padding: '4px 10px',
                                 borderRadius: '16px',
@@ -1583,14 +1623,31 @@ export default function AdminDashboardPage() {
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '5px',
-                                background: app.payment_status === 'Paid' ? '#ECFDF5' : '#FFFBEB',
-                                color: app.payment_status === 'Paid' ? '#059669' : '#D97706',
-                                border: app.payment_status === 'Paid' ? '1px solid #A7F3D0' : '1px solid #FDE68A'
+                                background: app.payment_status === 'Paid' 
+                                  ? '#ECFDF5' 
+                                  : app.payment_status === 'Pending Verification'
+                                  ? '#EFF6FF'
+                                  : '#FFFBEB',
+                                color: app.payment_status === 'Paid' 
+                                  ? '#059669' 
+                                  : app.payment_status === 'Pending Verification'
+                                  ? '#2563EB'
+                                  : '#D97706',
+                                border: app.payment_status === 'Paid' 
+                                  ? '1px solid #A7F3D0' 
+                                  : app.payment_status === 'Pending Verification'
+                                  ? '1px solid #BFDBFE'
+                                  : '1px solid #FDE68A'
                               }}>
                                 {app.payment_status === 'Paid' ? (
                                   <>
                                     <CheckCircle size={13} color="#059669" />
-                                    <span>✓ Paid (50k XAF)</span>
+                                    <span>✓ Paid ({(app.payment_amount || 50000).toLocaleString()} XAF)</span>
+                                  </>
+                                ) : app.payment_status === 'Pending Verification' ? (
+                                  <>
+                                    <Clock size={13} color="#2563EB" />
+                                    <span>⏳ Proof Submitted</span>
                                   </>
                                 ) : (
                                   <>
@@ -1599,23 +1656,48 @@ export default function AdminDashboardPage() {
                                   </>
                                 )}
                               </span>
-                              
-                              <button
-                                onClick={() => togglePaymentStatus(app.id, app.payment_status)}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#64748B',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 600,
-                                  cursor: 'pointer',
-                                  textDecoration: 'underline',
-                                  padding: 0
-                                }}
-                                title="Click to manually toggle payment status"
-                              >
-                                {app.payment_status === 'Paid' ? 'Reset to Unpaid' : 'Mark as Paid'}
-                              </button>
+
+                              {/* Action buttons based on payment proof presence */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                {app.payment_proof_url && (
+                                  <button
+                                    onClick={() => setPreviewProofItem(app)}
+                                    style={{
+                                      border: '1px solid #BFDBFE',
+                                      background: '#EFF6FF',
+                                      color: '#1D4ED8',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="View uploaded MoMo transaction receipt screenshot"
+                                  >
+                                    <ImageIcon size={12} /> View Screenshot
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => togglePaymentStatus(app.id, app.payment_status)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#64748B',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                    padding: 0
+                                  }}
+                                  title="Click to manually toggle payment status"
+                                >
+                                  {app.payment_status === 'Paid' ? 'Reset to Unpaid' : 'Mark as Paid'}
+                                </button>
+                              </div>
                             </div>
                           </td>
 
@@ -1786,41 +1868,148 @@ export default function AdminDashboardPage() {
                         {selectedApp.admission_status}
                       </span>
                     </div>
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-                      <span style={{ color: '#64748B' }}>Tuition Deposit (50k XAF):</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ 
-                          fontWeight: 800, 
-                          fontSize: '0.82rem',
-                          color: selectedApp.payment_status === 'Paid' ? '#059669' : '#D97706',
-                          background: selectedApp.payment_status === 'Paid' ? '#ECFDF5' : '#FFFBEB',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          border: selectedApp.payment_status === 'Paid' ? '1px solid #A7F3D0' : '1px solid #FDE68A'
-                        }}>
-                          {selectedApp.payment_status === 'Paid' ? '✓ 50,000 XAF Paid' : '⏳ Deposit Pending'}
-                        </span>
+                      <span style={{ color: '#64748B' }}>Payment Status:</span>
+                      <span style={{ 
+                        fontWeight: 800, 
+                        fontSize: '0.82rem',
+                        color: selectedApp.payment_status === 'Paid' ? '#059669' : selectedApp.payment_status === 'Pending Verification' ? '#2563EB' : '#D97706',
+                        background: selectedApp.payment_status === 'Paid' ? '#ECFDF5' : selectedApp.payment_status === 'Pending Verification' ? '#EFF6FF' : '#FFFBEB',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        border: selectedApp.payment_status === 'Paid' ? '1px solid #A7F3D0' : selectedApp.payment_status === 'Pending Verification' ? '1px solid #BFDBFE' : '1px solid #FDE68A'
+                      }}>
+                        {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || 50000).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Dedicated Mobile Money Payment Proof Card */}
+                  <div style={{ marginTop: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.88rem', color: '#081F3E', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        💳 Mobile Money Proof of Payment
+                      </h4>
+                      {selectedApp.payment_proof_url && (
                         <button
                           type="button"
-                          onClick={() => {
-                            togglePaymentStatus(selectedApp.id, selectedApp.payment_status);
-                            setSelectedApp(prev => prev ? { ...prev, payment_status: prev.payment_status === 'Paid' ? 'Pending' : 'Paid' } : null);
-                          }}
+                          onClick={() => setPreviewProofItem(selectedApp)}
                           style={{
-                            border: '1px solid #CBD5E1',
-                            background: '#F8FAFC',
-                            color: '#081F3E',
+                            background: '#081F3E',
+                            color: '#FFFFFF',
+                            border: 'none',
                             borderRadius: '4px',
-                            padding: '3px 8px',
+                            padding: '4px 8px',
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}
                         >
-                          {selectedApp.payment_status === 'Paid' ? 'Reset to Unpaid' : 'Mark as Paid'}
+                          <Eye size={12} /> Expand Proof
                         </button>
-                      </div>
+                      )}
                     </div>
+
+                    {selectedApp.payment_proof_url ? (
+                      <div>
+                        <div 
+                          onClick={() => setPreviewProofItem(selectedApp)}
+                          style={{ 
+                            cursor: 'pointer',
+                            background: '#FFFFFF',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            marginBottom: '10px',
+                            maxHeight: '160px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {selectedApp.payment_proof_url.startsWith('data:image') || selectedApp.payment_proof_url.endsWith('.png') || selectedApp.payment_proof_url.endsWith('.jpg') || selectedApp.payment_proof_url.endsWith('.jpeg') ? (
+                            <img 
+                              src={selectedApp.payment_proof_url} 
+                              alt="Payment Screenshot" 
+                              style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
+                            />
+                          ) : (
+                            <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+                              <FileCheck size={32} color="#10B981" style={{ margin: '0 auto 8px auto' }} />
+                              <span style={{ fontSize: '0.82rem', display: 'block', fontWeight: 700 }}>Attached Document Proof</span>
+                              <span style={{ fontSize: '0.75rem' }}>Click to view file</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', marginBottom: '12px' }}>
+                          <div>
+                            <span style={{ color: '#64748B' }}>Amount:</span>
+                            <strong style={{ display: 'block', color: '#081F3E' }}>{(selectedApp.payment_amount || 50000).toLocaleString()} XAF</strong>
+                          </div>
+                          <div>
+                            <span style={{ color: '#64748B' }}>Transaction ID:</span>
+                            <strong style={{ display: 'block', color: '#081F3E', fontFamily: 'var(--font-mono)' }}>{selectedApp.payment_transaction_id || 'Not specified'}</strong>
+                          </div>
+                        </div>
+
+                        {/* Direct Approval / Rejection Buttons */}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => verifyPaymentDirectly(selectedApp.id, 'Paid')}
+                            style={{
+                              flex: 1,
+                              background: '#10B981',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '8px 12px',
+                              fontWeight: 800,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <Check size={14} /> Approve Payment
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => verifyPaymentDirectly(selectedApp.id, 'Rejected')}
+                            style={{
+                              flex: 1,
+                              background: '#EF4444',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '8px 12px',
+                              fontWeight: 800,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <X size={14} /> Reject Proof
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ background: '#FFFFFF', padding: '12px', borderRadius: '6px', border: '1px dashed #CBD5E1', textAlign: 'center', color: '#94A3B8', fontSize: '0.82rem' }}>
+                        No proof of payment uploaded yet by applicant.
+                      </div>
+                    )}
                   </div>
 
                   {/* Uploaded Documents List */}
@@ -2680,6 +2869,191 @@ export default function AdminDashboardPage() {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* 4. PAYMENT PROOF SCREENSHOT REVIEW & ZOOM MODAL */}
+        {previewProofItem && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(4, 16, 33, 0.88)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '16px'
+            }}
+          >
+            <div
+              className="premium-card"
+              style={{
+                maxWidth: '680px',
+                width: '100%',
+                maxHeight: '94vh',
+                overflowY: 'auto',
+                padding: '28px 24px',
+                position: 'relative',
+                background: '#FFFFFF'
+              }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setPreviewProofItem(null)}
+                style={{
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: 'rgba(15,23,42,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748B',
+                  fontSize: '1rem',
+                  fontWeight: 700
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ marginBottom: '18px' }}>
+                <span className="course-badge" style={{ background: 'rgba(37,99,235,0.12)', color: '#2563EB' }}>
+                  Finance &amp; Admissions Verification
+                </span>
+                <h3 style={{ color: '#081F3E', marginTop: '6px', fontSize: '1.3rem', fontWeight: 800 }}>
+                  Mobile Money Payment Proof Dossier
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Applicant: <strong>{previewProofItem.full_name}</strong> &bull; Application ID: <strong>#LIAH-{previewProofItem.id}</strong>
+                </p>
+              </div>
+
+              {/* High-Resolution Screenshot Image Box */}
+              <div 
+                style={{
+                  background: '#0F172A',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '18px',
+                  maxHeight: '440px',
+                  overflow: 'hidden'
+                }}
+              >
+                {previewProofItem.payment_proof_url?.startsWith('data:image') || 
+                 previewProofItem.payment_proof_url?.endsWith('.png') || 
+                 previewProofItem.payment_proof_url?.endsWith('.jpg') || 
+                 previewProofItem.payment_proof_url?.endsWith('.jpeg') || 
+                 previewProofItem.payment_proof_url?.endsWith('.webp') ? (
+                  <img
+                    src={previewProofItem.payment_proof_url}
+                    alt="Uploaded Payment Receipt"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'contain',
+                      borderRadius: '6px'
+                    }}
+                  />
+                ) : (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#FFFFFF' }}>
+                    <FileCheck size={48} color="#10B981" style={{ margin: '0 auto 12px auto' }} />
+                    <p style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 700 }}>Attached Document File</p>
+                    {previewProofItem.payment_proof_url && (
+                      <a
+                        href={previewProofItem.payment_proof_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+                      >
+                        <ExternalLink size={14} /> Open Document in New Tab
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Transaction Metadata Grid */}
+              <div style={{ background: '#F8FAFC', padding: '14px 16px', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', fontSize: '0.84rem' }}>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Claimed Amount</span>
+                  <strong style={{ color: '#081F3E', fontSize: '1.05rem' }}>
+                    {(previewProofItem.payment_amount || 50000).toLocaleString()} XAF
+                  </strong>
+                </div>
+
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Transaction Reference</span>
+                  <strong style={{ color: '#081F3E', fontFamily: 'var(--font-mono)' }}>
+                    {previewProofItem.payment_transaction_id || 'Not specified'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Target Account</span>
+                  <strong style={{ color: '#081F3E' }}>670 265 493 (Official)</strong>
+                </div>
+
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Current Status</span>
+                  <span style={{ 
+                    display: 'inline-block', 
+                    padding: '2px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: 800,
+                    background: previewProofItem.payment_status === 'Paid' ? '#ECFDF5' : '#EFF6FF',
+                    color: previewProofItem.payment_status === 'Paid' ? '#059669' : '#2563EB'
+                  }}>
+                    {previewProofItem.payment_status || 'Pending Verification'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewProofItem(null)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', padding: '12px' }}
+                >
+                  Close Preview
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => verifyPaymentDirectly(previewProofItem.id, 'Rejected')}
+                  className="btn btn-secondary"
+                  style={{ flex: 1.2, color: '#DC2626', borderColor: 'rgba(239,68,68,0.3)', background: '#FEF2F2', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 800 }}
+                >
+                  <X size={16} /> Reject Proof
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => verifyPaymentDirectly(previewProofItem.id, 'Paid')}
+                  className="btn btn-primary"
+                  style={{ flex: 1.8, background: '#10B981', borderColor: '#10B981', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 800 }}
+                >
+                  <CheckCircle size={16} /> Approve Payment (50k)
+                </button>
+              </div>
+
             </div>
           </div>
         )}

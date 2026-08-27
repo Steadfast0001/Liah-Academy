@@ -48,6 +48,19 @@ export async function PUT(request: Request) {
 
     const updated = adminStore.updateStudentStatus(id, nextAdmission, payment_status);
 
+    // If marked Paid or Rejected, also update corresponding payment proof record
+    if (payment_status) {
+      const payments = adminStore.getPayments().filter(p => p.student_id === Number(id));
+      if (payments.length > 0) {
+        const latestPayment = payments[0];
+        if (payment_status === 'Paid' && latestPayment.status !== 'APPROVED') {
+          adminStore.verifyPayment(latestPayment.reference, 'APPROVED', 'Admin Office');
+        } else if (payment_status === 'Rejected' && latestPayment.status !== 'REJECTED') {
+          adminStore.verifyPayment(latestPayment.reference, 'REJECTED', 'Admin Office');
+        }
+      }
+    }
+
     // If status changed to Approved or Rejected, trigger decision email notification
     if (
       notify_applicant !== false && 
