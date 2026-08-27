@@ -36,10 +36,10 @@ const newsArticles = [
   },
   {
     id: 2,
-    image: '/assets/images/flyer_business.jpg',
+    image: '/assets/images/flyer_engineering.png',
     date: 'August 19, 2026',
-    title: 'Launching the School of Business and Management HND Programs',
-    excerpt: 'National HND Syllabus: Business & Management Department. Liah Academy\'s School of Business and Management has opened admissions for the 2-Year technical diploma cohort.',
+    title: 'Advanced Cybersecurity & Cloud Defense HND Cohort Launched',
+    excerpt: 'Ministry-Accredited Technical Diploma: School of Engineering & Technology. Liah Academy has opened admissions for specialized tracks in Ethical Hacking, Cloud Defense, and Network Architecture.',
     link: '/degree-programs'
   },
   {

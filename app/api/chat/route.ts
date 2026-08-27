@@ -103,13 +103,13 @@ You can pay your tuition directly in this chat using Mobile Money!`,
         actionType: 'tuition_action'
       },
       {
-        keywords: ['course', 'program', 'track', 'degree', 'major', 'study', 'learn', 'teach', 'hnd', 'nd', 'certification', 'software', 'marketing', 'accounting', 'devops', 'network', 'cybersecurity', 'data science'],
-        response: `We offer cutting-edge industry-standard programs:
-• **School of Engineering & Technology**: Software Engineering (HND), Cybersecurity & Cloud Defense (HND), Computer Engineering (ND), Web & Graphics Design.
-• **School of Business & Management**: Accounting, Marketing, Human Resource Management, Management.
-• **Certification Programs**: Data Science & Machine Learning (9 mos), DevOps & Cloud Specialist (9 mos), Industrial Web Design (6 mos).
+        keywords: ['course', 'program', 'track', 'degree', 'major', 'study', 'learn', 'teach', 'hnd', 'nd', 'certification', 'software', 'devops', 'network', 'cybersecurity', 'data science'],
+        response: `We offer cutting-edge industry-standard technical programs:
+• **Higher National Diplomas (HND - 2 Years)**: Software Engineering, Cybersecurity & Cloud Defense, Network and Maintenance, Web & Graphics Design, Digital Marketing & E-Commerce.
+• **National Diplomas (ND - 1 Year)**: Computer Engineering, Information & Communication Tech (ICT), Web Design, Computerized Accounting, Graphics Design & Printing, Basic Computer.
+• **Professional Certifications**: Data Science & Machine Learning (9 mos), DevOps & Cloud Specialist (9 mos), Industrial Web Design (6 mos), Digital Marketing & SEO (6 mos).
 
-All programs feature 100% lab-based projects and direct corporate integration!`,
+All programs feature 100% lab-based projects and direct corporate incubation!`,
         actionType: 'programs_action'
       },
       {

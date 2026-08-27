@@ -9,89 +9,100 @@ import {
 } from 'lucide-react';
 
 const programsData = [
-  // School of Business
+  // School of Engineering & Technology (HND & ND)
   {
     id: 1,
-    school: 'SCHOOL OF BUSINESS',
-    title: 'Human Resource Management HND',
-    desc: 'Organize staffing plans, manage staff files, employee relations, recruitment and Cameroonian labor code compliance.',
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Software Engineering HND',
+    desc: 'Learn full-stack programming, backend frameworks, software design patterns, and enterprise database operations.',
     degree: 'HND',
     duration: '2 Years',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['Recruitment', 'Labor Law', 'Employee Relations'],
-    featured: false
+    tags: ['Web Dev', 'Python', 'JavaScript', 'Algorithms', 'SQL', 'React'],
+    featured: true
   },
   {
     id: 2,
-    school: 'SCHOOL OF BUSINESS',
-    title: 'Digital Marketing HND',
-    desc: 'Promote projects using content optimization, digital network channels, SEO, and analytic funnels.',
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Cybersecurity & Cloud Defense HND',
+    desc: 'Network defense architectures, ethical penetration testing, vulnerability assessment, Linux server hardening, and cloud security.',
     degree: 'HND',
     duration: '2 Years',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['SEO', 'Social Media Ads', 'Content Strategy'],
-    featured: false
+    tags: ['Ethical Hacking', 'Linux', 'Firewalls', 'Cloud Security', 'SIEM'],
+    featured: true
   },
   {
     id: 3,
-    school: 'SCHOOL OF BUSINESS',
-    title: 'Marketing HND',
-    desc: 'Create promotion plans, conduct target audience surveys, direct sales pipelines, and position brands.',
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Network and Maintenance HND',
+    desc: 'Audit network topologies, manage systems security, configure routing protocols, and handle hardware diagnostics.',
     degree: 'HND',
     duration: '2 Years',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['Sales Strategy', 'Brand Management', 'Market Research'],
+    tags: ['Linux Admin', 'Cisco Networking', 'PC Maintenance', 'Security'],
     featured: false
   },
   {
     id: 4,
-    school: 'SCHOOL OF BUSINESS',
-    title: 'Management HND',
-    desc: 'Formulate company strategies, manage administrative operations, lead workflows, and optimize teams.',
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Web and Graphics Design HND',
+    desc: 'Acquire skills in creating user interfaces, design tools, modern UI/UX layouts, branding assets, and frontend programming.',
     degree: 'HND',
     duration: '2 Years',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['Business Strategy', 'Operations', 'Leadership', 'HR'],
+    tags: ['UI/UX', 'Figma', 'Photoshop', 'HTML/CSS', 'Next.js'],
     featured: false
   },
   {
     id: 5,
-    school: 'SCHOOL OF BUSINESS',
-    title: 'Accounting HND',
-    desc: 'Prepare financial ledger accounts, compute tax, conduct cost analysis, and learn corporate audit processes.',
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Digital Marketing and E-Commerce HND',
+    desc: 'Build online shops, optimize payment methods, run digital campaigns, and scale automated conversion funnels.',
     degree: 'HND',
     duration: '2 Years',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '250,000 FRS',
-    tags: ['Financial Accounting', 'Cost Accounting', 'Auditing'],
-    featured: true
+    tags: ['SEO', 'Social Media', 'Google Ads', 'WooCommerce'],
+    featured: false
   },
-
-  // School of Engineering / Technology
   {
     id: 6,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Computerized Accounting ND',
-    desc: 'Apply accounting theories using digital bookkeeping platforms, spreadsheets, and reporting systems.',
+    title: 'Computer Engineering ND',
+    desc: 'Hardware architectures, computer electronics, circuit diagnostics, component repair, and microprocessor programming.',
     degree: 'ND',
     duration: '1 Year',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '150,000 FRS',
-    tags: ['QuickBooks', 'Excel', 'Financial Records', 'Accounting'],
+    tags: ['Hardware Architecture', 'Electronics', 'Microprocessors', 'Repair'],
     featured: false
   },
   {
     id: 7,
+    school: 'SCHOOL OF ENGINEERING',
+    title: 'Information & Communication Tech ND',
+    desc: 'Database systems, basic web technologies, local networking infrastructure, and IT technical user support.',
+    degree: 'ND',
+    duration: '1 Year',
+    format: 'oncampus',
+    studyFormat: 'Oncampus',
+    tuition: '150,000 FRS',
+    tags: ['Database Systems', 'Web Tech', 'Networking', 'IT Support'],
+    featured: false
+  },
+  {
+    id: 8,
     school: 'SCHOOL OF ENGINEERING',
     title: 'Web Design ND',
     desc: 'Foundational website markup, styling, scripting, and mobile-friendly responsive user interfaces.',
@@ -104,87 +115,48 @@ const programsData = [
     featured: false
   },
   {
-    id: 8,
-    school: 'SCHOOL OF ENGINEERING',
-    title: 'Information & Communication Tech ND',
-    desc: 'Database systems, basic web technologies, local networking infrastructure, and IT technical support.',
-    degree: 'ND',
-    duration: '1 Year',
-    format: 'oncampus',
-    studyFormat: 'Oncampus',
-    tuition: '150,000 FRS',
-    tags: ['Database Systems', 'Web Tech', 'Networking', 'IT Support'],
-    featured: false
-  },
-  {
     id: 9,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Computer Engineering ND',
-    desc: 'Hardware architectures, computer electronics, circuit diagnostics, and microprocessor programming.',
+    title: 'Computerized Accounting ND',
+    desc: 'Apply financial computing theories using digital bookkeeping platforms, spreadsheets, and reporting systems.',
     degree: 'ND',
     duration: '1 Year',
     format: 'oncampus',
     studyFormat: 'Oncampus',
     tuition: '150,000 FRS',
-    tags: ['Hardware Architecture', 'Electronics', 'Microprocessors'],
+    tags: ['QuickBooks', 'Excel', 'Financial Records', 'Accounting'],
     featured: false
   },
   {
     id: 10,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Network and Maintenance HND',
-    desc: 'Audit network topologies, manage systems security, configure routing, and handle hardware diagnostics.',
-    degree: 'HND',
-    duration: '2 Years',
+    title: 'Graphics Design and Printing ND',
+    desc: 'Visual communication, Adobe design suite, typography, prepress output, digital printing, and brand collateral creation.',
+    degree: 'ND',
+    duration: '1 Year',
     format: 'oncampus',
     studyFormat: 'Oncampus',
-    tuition: '250,000 FRS',
-    tags: ['Linux Admin', 'Cisco Networking', 'PC Maintenance', 'Security'],
-    featured: true
+    tuition: '150,000 FRS',
+    tags: ['Photoshop', 'Illustrator', 'Printing', 'Typography'],
+    featured: false
   },
   {
     id: 11,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Digital Marketing and E-Commerce HND',
-    desc: 'Build online shops, optimize payment methods, run digital campaigns, and scale conversion funnels.',
-    degree: 'HND',
-    duration: '2 Years',
+    title: 'Basic Computer ND',
+    desc: 'Office productivity software, operating systems navigation, internet protocols, typing speed, and foundational digital literacy.',
+    degree: 'ND',
+    duration: '1 Year',
     format: 'oncampus',
     studyFormat: 'Oncampus',
-    tuition: '250,000 FRS',
-    tags: ['SEO', 'Social Media', 'Google Ads', 'WooCommerce'],
-    featured: false
-  },
-  {
-    id: 12,
-    school: 'SCHOOL OF ENGINEERING',
-    title: 'Web and Graphics Design HND',
-    desc: 'Acquire skills in creating user interfaces, design tools, graphics layouts, and frontend programming.',
-    degree: 'HND',
-    duration: '2 Years',
-    format: 'oncampus',
-    studyFormat: 'Oncampus',
-    tuition: '250,000 FRS',
-    tags: ['UI/UX', 'Figma', 'Photoshop', 'HTML/CSS', 'Next.js'],
-    featured: false
-  },
-  {
-    id: 13,
-    school: 'SCHOOL OF ENGINEERING',
-    title: 'Software Engineering HND',
-    desc: 'Learn programming, backend frameworks, software design patterns, and database operations.',
-    degree: 'HND',
-    duration: '2 Years',
-    format: 'oncampus',
-    studyFormat: 'Oncampus',
-    tuition: '250,000 FRS',
-    tags: ['Web Dev', 'Python', 'JavaScript', 'Algorithms', 'SQL'],
+    tuition: '150,000 FRS',
+    tags: ['Office 365', 'Windows', 'Internet', 'Typing'],
     featured: false
   },
 
   // Professional Certifications
   {
-    id: 14,
+    id: 12,
     school: 'CERTIFICATION',
     title: 'Digital Marketing and SEO',
     desc: 'Drive traffic, run ads, perform keyword audits, and manage campaigns across social media channels.',
@@ -197,7 +169,7 @@ const programsData = [
     featured: false
   },
   {
-    id: 15,
+    id: 13,
     school: 'CERTIFICATION',
     title: 'Industrial Web Design',
     desc: 'Build fully responsive corporate websites, frontend layouts, animations, and modern CMS architectures.',
@@ -210,7 +182,7 @@ const programsData = [
     featured: false
   },
   {
-    id: 16,
+    id: 14,
     school: 'CERTIFICATION',
     title: 'DevOps Certification',
     desc: 'Acquire skills in containerization, pipeline automation, cloud setups, and Infrastructure as Code.',
@@ -223,7 +195,7 @@ const programsData = [
     featured: false
   },
   {
-    id: 17,
+    id: 15,
     school: 'CERTIFICATION',
     title: 'Data Science Certification',
     desc: 'Master Python, machine learning models, database queries, and data visualization tools to analyze data.',
@@ -245,7 +217,6 @@ export default function DegreeProgramsPage() {
     const matchesSchool = 
       selectedSchool === 'all' || 
       (selectedSchool === 'ENGINEERING' && prog.school === 'SCHOOL OF ENGINEERING') ||
-      (selectedSchool === 'BUSINESS' && prog.school === 'SCHOOL OF BUSINESS') ||
       (selectedSchool === 'CERTIFICATION' && prog.school === 'CERTIFICATION');
 
     const matchesSearch =
@@ -527,25 +498,7 @@ export default function DegreeProgramsPage() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                School of Engineering
-              </button>
-
-              <button 
-                onClick={() => setSelectedSchool('BUSINESS')}
-                style={{
-                  background: selectedSchool === 'BUSINESS' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
-                  color: selectedSchool === 'BUSINESS' ? '#FFFFFF' : '#081F3E',
-                  border: selectedSchool === 'BUSINESS' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                School of Business
+                School of Engineering &amp; Technology
               </button>
 
               <button 

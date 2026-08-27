@@ -30,7 +30,7 @@ Combining intensive hands-on lab practicals with corporate software engineering 
 ## ✨ Core Platform Capabilities
 
 ### 🎓 1. Academic Pathways & Curriculum Explorer
-- **Accredited Higher National Diplomas (HND)**: Software Engineering, Network & Security, Database Systems, Human Resource Management, Accounting & Finance.
+- **Accredited Higher National Diplomas (HND)**: Software Engineering, Cybersecurity & Cloud Defense, Network and Maintenance, Web & Graphics Design, Digital Marketing & E-Commerce.
 - **National Diplomas (ND) & Professional Certifications**: Full-Stack Web Development, Cloud DevOps Engineering, Mobile App Development, Cybersecurity Operations.
 - **Interactive Course Search**: Instant search with department filter tabs and quick clear controls.
 

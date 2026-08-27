@@ -21,11 +21,11 @@ const newsArticles = [
   },
   {
     id: 2,
-    title: 'Launching the School of Business and Management HND Programs',
+    title: 'Advanced Cybersecurity & Cloud Defense HND Cohort Launched',
     date: 'August 19, 2026',
-    category: 'School of Business',
-    image: '/assets/images/flyer_business.jpg',
-    desc: 'Professional diploma tracks in Accounting, Management, Marketing, and Human Resource Management now open.',
+    category: 'Engineering & Tech',
+    image: '/assets/images/flyer_engineering.png',
+    desc: 'Specialized diploma training in Ethical Hacking, Linux Server Hardening, and Cloud Defense now accepting applicants.',
     link: '/degree-programs'
   },
   {

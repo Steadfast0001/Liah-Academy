@@ -2271,7 +2271,7 @@ export default function AdminDashboardPage() {
               <div>
                 <h2 style={{ color: '#081F3E', margin: '0 0 4px 0' }}>Academic Programs &amp; Course Tracks</h2>
                 <p style={{ color: '#64748B', margin: 0, fontSize: '0.92rem' }}>
-                  Manage diploma tracks, tuition fees, durations, and syllabi across the School of Engineering and School of Business.
+                  Manage diploma tracks, tuition fees, durations, and syllabi across the School of Engineering &amp; Technology and Professional Certifications.
                 </p>
               </div>
               <button 

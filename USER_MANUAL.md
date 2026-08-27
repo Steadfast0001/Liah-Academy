@@ -52,7 +52,7 @@ Liah Academy is a premier higher institute of technology and corporate software 
 Navigate to **Degree & Programs** (`/degree-programs`) from the top navigation bar or mobile menu.
 
 1. **Curriculum Explorer**:
-   - Filter programs using department tabs: **All Programs**, **School of Engineering**, **School of Business**, or **Professional Certifications**.
+   - Filter programs using department tabs: **All Programs**, **School of Engineering & Technology**, or **Professional Certifications**.
    - Use the **Quick Course Search Bar** to instantly find programs by title, technology stack, or keyword (e.g. `Software`, `Cybersecurity`, `DevOps`, `HND`, `Database`).
    - Click the `X` button to quickly clear your search query.
 2. **Program Cards**:

@@ -521,12 +521,12 @@ const initialData: Schema = {
     },
     {
       id: 2,
-      title: 'Launching the School of Business and Management HND Programs',
-      category: 'School of Business',
+      title: 'Advanced Cybersecurity & Cloud Defense HND Cohort Launched',
+      category: 'Engineering & Tech',
       date: 'August 19, 2026',
-      image: '/assets/images/flyer_business.jpg',
-      excerpt: 'Professional diploma tracks in Accounting, Management, Marketing, and Human Resource Management now open.',
-      content: 'Expanding higher education pathways with industry-vetted business curricula.',
+      image: '/assets/images/flyer_engineering.png',
+      excerpt: 'Specialized diploma training in Ethical Hacking, Linux Server Hardening, and Cloud Defense now accepting applicants.',
+      content: 'Hands-on training in security operations, threat hunting, and modern cloud infrastructure defense.',
       created_at: new Date().toISOString()
     },
     {

@@ -137,16 +137,11 @@ function AdmissionsContent() {
   // Complete programs mapping
   const programOptions: Record<string, string[]> = {
     HND: [
-      'Human Resource Management HND',
-      'Digital Marketing HND',
-      'Marketing HND',
-      'Management HND',
-      'Accounting HND',
-      'Network and Maintenance HND',
-      'Digital Marketing and E-Commerce HND',
-      'Web and Graphics Design HND',
       'Software Engineering HND',
-      'Cybersecurity & Cloud Defense HND'
+      'Cybersecurity & Cloud Defense HND',
+      'Network and Maintenance HND',
+      'Web and Graphics Design HND',
+      'Digital Marketing and E-Commerce HND'
     ],
     ND: [
       'Computerized Accounting ND',
