@@ -3,8 +3,8 @@ import crypto from 'crypto';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@liahacademy.com';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'LiahAdmin2026!#';
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'liah_admin_master_secret_key_buea_2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.ADMIN_PIN || '2024';
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'liah_admin_master_session_secret_buea';
 
 export interface AdminUser {
   username: string;
@@ -25,11 +25,8 @@ export function validateAdminCredentials(identifier: string, pass: string): bool
                     cleanId === ADMIN_USERNAME.toLowerCase() || 
                     cleanId === 'info@liahacademy.org';
 
-  // Allow standard admin password or configured env password or fallback
   const passMatches = cleanPass === ADMIN_PASSWORD || 
-                      cleanPass === 'LiahAdmin2026!#' || 
-                      cleanPass === 'admin1234' || 
-                      cleanPass === 'liah2026';
+                      (process.env.ADMIN_PIN && cleanPass === process.env.ADMIN_PIN);
 
   return idMatches && passMatches;
 }

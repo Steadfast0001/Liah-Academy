@@ -13,17 +13,29 @@
 # Production build artifacts
 /build
 
-# Environment variables
+# Environment variables & secrets
 .env
 .env.local
 .env*.local
+.env.production
+.env.staging
 
-# Debug
+# Private Applicant Data, Logs & Backups
+/data/backups/
+/data/email_notifications.log
+/data/*.log
+/data/*.tmp*
+/data/liah_academy_store.json
+
+# Debug Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
-# OS Files
+# OS & Temporary Files
 .DS_Store
 *.pem
+*.key
 Thumbs.db
+.qodo/

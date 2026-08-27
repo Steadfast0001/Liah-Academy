@@ -1,0 +1,30 @@
+{
+  "students": [],
+  "inquiries": [],
+  "reviews": [
+    {
+      "id": 1,
+      "name": "Arrey Bate",
+      "role": "Software Engineer & Alum",
+      "rating": 5,
+      "comment": "Liah Academy's hands-on lab approach completely transformed my software engineering skills in Buea.",
+      "created_at": "2026-08-20T10:00:00.000Z"
+    }
+  ],
+  "courses": [],
+  "news": [],
+  "media": [],
+  "settings": {
+    "admin_email": "info@liahacademy.com",
+    "site_title": "Liah Academy",
+    "contact_phone": "+237 652 154 095",
+    "address": "Bakweri Town, Buea, Southwest Region, Cameroon",
+    "admissions_open": true
+  },
+  "email_logs": [],
+  "_metadata": {
+    "version": "2.2.0",
+    "last_updated": "2026-08-27T12:00:00.000Z",
+    "total_writes": 0
+  }
+}
