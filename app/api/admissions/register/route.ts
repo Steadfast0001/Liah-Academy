@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sendApplicationSignals } from '@/lib/email';
+import { hashPassword } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
@@ -24,6 +25,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // Hash password with cryptographic PBKDF2 SHA-512 before database storage
+    const hashedPassword = hashPassword(password);
     const docPayload = documents ? (typeof documents === 'string' ? documents : JSON.stringify(documents)) : (document_url || '');
 
     const insert = db.prepare(`
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
     const result = insert.run(
       fullname,
       email,
-      password,
+      hashedPassword,
       phone,
       degree_type || 'HND',
       program_type || 'Software Engineering HND',
