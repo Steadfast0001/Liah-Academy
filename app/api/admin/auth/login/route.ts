@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, email, password } = body;
-    const identifier = email || username;
+    const identifier = body.identifier || body.email || body.username;
+    const password = body.password || body.pin || body.pass;
 
     if (!identifier || !password) {
       return NextResponse.json(
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = validateAdminCredentials(identifier, password);
+    const isValid = validateAdminCredentials(String(identifier), String(password));
     if (!isValid) {
       return NextResponse.json(
         { success: false, message: 'Invalid administrator credentials. Access denied.' },

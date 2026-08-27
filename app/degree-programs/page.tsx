@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   GraduationCap, Settings, Clock, Search, X,
-  Code, Shield, Calendar, MapPin, Globe, ArrowRight, Mail
+  Code, Shield, Calendar, MapPin, Globe, ArrowRight, Mail,
+  BookOpen, Award, CheckCircle2
 } from 'lucide-react';
 
 const programsData = [
@@ -443,7 +444,6 @@ export default function DegreeProgramsPage() {
               textTransform: 'uppercase', 
               letterSpacing: '0.06em', 
               marginBottom: '16px' 
-{{ ... }}
             }}>
               FORMAT &amp; LENGTH
             </span>
