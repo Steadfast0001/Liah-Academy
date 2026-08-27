@@ -724,6 +724,41 @@ export const adminStore = {
     return store.students.length < initialLen;
   },
 
+  deleteStudents: (ids: (number | string)[]): { success: boolean; deletedCount: number; deletedIds: number[] } => {
+    const store = readDb();
+    const idSet = new Set(ids.map(id => parseInt(String(id))));
+    const initialLen = store.students.length;
+    const toDelete = store.students.filter(s => idSet.has(s.id));
+    store.students = store.students.filter(s => !idSet.has(s.id));
+    writeDb(store, true);
+    toDelete.forEach(s => syncToMySQL('students', 'delete', { id: s.id }));
+    return {
+      success: true,
+      deletedCount: initialLen - store.students.length,
+      deletedIds: toDelete.map(s => s.id)
+    };
+  },
+
+  deleteStudentsByFilter: (filter: { admission_status?: string; payment_status?: string }): { success: boolean; deletedCount: number; deletedIds: number[] } => {
+    const store = readDb();
+    const initialLen = store.students.length;
+    const toDelete = store.students.filter(s => {
+      let match = true;
+      if (filter.admission_status && s.admission_status !== filter.admission_status) match = false;
+      if (filter.payment_status && s.payment_status !== filter.payment_status) match = false;
+      return match;
+    });
+    const idSet = new Set(toDelete.map(s => s.id));
+    store.students = store.students.filter(s => !idSet.has(s.id));
+    writeDb(store, true);
+    toDelete.forEach(s => syncToMySQL('students', 'delete', { id: s.id }));
+    return {
+      success: true,
+      deletedCount: initialLen - store.students.length,
+      deletedIds: toDelete.map(s => s.id)
+    };
+  },
+
   // Payments & Proof Verification
   getPayments: (): Payment[] => {
     const store = readDb();

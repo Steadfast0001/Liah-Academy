@@ -103,12 +103,60 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const idStr = searchParams.get('id');
-    if (!idStr) {
-      return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
+    const idsStr = searchParams.get('ids');
+    const filterParam = searchParams.get('filter');
+
+    // Handle body payload if provided
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Empty body is valid for query string parameters
     }
 
-    adminStore.deleteStudent(parseInt(idStr));
-    return NextResponse.json({ success: true, message: `Application #${idStr} removed.` });
+    const targetIds = body.ids || (idsStr ? idsStr.split(',').map((s: string) => s.trim()).filter(Boolean) : null);
+    const targetFilter = body.filter || filterParam;
+
+    if (targetFilter === 'rejected') {
+      const res = adminStore.deleteStudentsByFilter({ admission_status: 'Rejected' });
+      return NextResponse.json({
+        success: true,
+        message: `Purged ${res.deletedCount} rejected applicants.`,
+        deletedCount: res.deletedCount,
+        deletedIds: res.deletedIds
+      });
+    }
+
+    if (targetFilter === 'unpaid') {
+      const res = adminStore.deleteStudentsByFilter({ payment_status: 'Pending' });
+      return NextResponse.json({
+        success: true,
+        message: `Purged ${res.deletedCount} unpaid applicants.`,
+        deletedCount: res.deletedCount,
+        deletedIds: res.deletedIds
+      });
+    }
+
+    if (Array.isArray(targetIds) && targetIds.length > 0) {
+      const res = adminStore.deleteStudents(targetIds);
+      return NextResponse.json({
+        success: true,
+        message: `Successfully deleted ${res.deletedCount} selected applicants.`,
+        deletedCount: res.deletedCount,
+        deletedIds: res.deletedIds
+      });
+    }
+
+    if (idStr) {
+      const success = adminStore.deleteStudent(parseInt(idStr));
+      return NextResponse.json({
+        success,
+        message: `Application #${idStr} removed.`,
+        deletedCount: success ? 1 : 0
+      });
+    }
+
+    return NextResponse.json({ success: false, message: 'Application ID, IDs list, or filter criterion is required.' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

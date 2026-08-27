@@ -114,8 +114,16 @@ export default function AdminDashboardPage() {
   // Filter & Search States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'Under Review' | 'Approved' | 'Rejected'>('ALL');
-  const [paymentFilter, setPaymentFilter] = useState<'ALL' | 'Paid' | 'Pending'>('ALL');
+  const [paymentFilter, setPaymentFilter] = useState<'ALL' | 'Paid' | 'Pending Verification' | 'Pending'>('ALL');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+
+  // Multi-Selection & Bulk Deletion States
+  const [selectedAppIds, setSelectedAppIds] = useState<number[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  // Document & Payment Proof Preview Modal States
+  const [previewProofItem, setPreviewProofItem] = useState<Application | null>(null);
+  const [previewDocItem, setPreviewDocItem] = useState<{ title: string; url: string; fileName: string; studentName: string } | null>(null);
 
   // Modal Dialog States
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -124,7 +132,7 @@ export default function AdminDashboardPage() {
     title: '',
     degree_type: 'HND',
     program_type: 'Software Engineering',
-    duration: '3 Years',
+    duration: '2 Years',
     tuition_fee: 250000,
     description: '',
     modules: '',
@@ -146,9 +154,6 @@ export default function AdminDashboardPage() {
   const [newMediaTitle, setNewMediaTitle] = useState('');
   const [newMediaCategory, setNewMediaCategory] = useState('Workshops');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-
-  // Payment Screenshot Proof Modal Preview State
-  const [previewProofItem, setPreviewProofItem] = useState<Application | null>(null);
 
   // Authentication & Restriction States
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -419,6 +424,128 @@ export default function AdminDashboardPage() {
       }
     } catch {
       showNotification('Error deleting application.', 'error');
+    }
+  };
+
+  // Bulk Selection and Group Actions
+  const toggleSelectAll = () => {
+    if (selectedAppIds.length === filteredApps.length && filteredApps.length > 0) {
+      setSelectedAppIds([]);
+    } else {
+      setSelectedAppIds(filteredApps.map(a => a.id));
+    }
+  };
+
+  const toggleSelectApp = (id: number) => {
+    setSelectedAppIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const deleteSelectedApplicants = async () => {
+    if (selectedAppIds.length === 0) return;
+    if (!confirm(`⚠️ PERMANENT ACTION: Are you sure you want to delete all ${selectedAppIds.length} selected applicant(s)?`)) return;
+    
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/applications', {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ ids: selectedAppIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const count = data.deletedCount || selectedAppIds.length;
+        showNotification(`Successfully deleted ${count} applicant(s).`);
+        setApplications(prev => prev.filter(a => !selectedAppIds.includes(a.id)));
+        setSelectedAppIds([]);
+        if (selectedApp && selectedAppIds.includes(selectedApp.id)) setSelectedApp(null);
+      } else {
+        showNotification(data.message || 'Bulk delete failed', 'error');
+      }
+    } catch {
+      showNotification('Error executing bulk deletion.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const purgeByFilter = async (filterType: 'rejected' | 'unpaid') => {
+    const matchingCount = applications.filter(a => 
+      filterType === 'rejected' 
+        ? a.admission_status === 'Rejected' 
+        : a.payment_status === 'Pending'
+    ).length;
+
+    if (matchingCount === 0) {
+      showNotification(`No ${filterType} applicants found in the database.`, 'error');
+      return;
+    }
+
+    if (!confirm(`⚠️ CRITICAL GROUP PURGE:\nAre you sure you want to permanently delete ALL ${matchingCount} ${filterType.toUpperCase()} applicants from the database? This cannot be undone.`)) {
+      return;
+    }
+
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/applications?filter=${filterType}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Purge complete: ${data.deletedCount} ${filterType} applicant(s) removed.`);
+        setApplications(prev => prev.filter(a => 
+          filterType === 'rejected' ? a.admission_status !== 'Rejected' : a.payment_status !== 'Pending'
+        ));
+        setSelectedAppIds(prev => prev.filter(id => {
+          const app = applications.find(a => a.id === id);
+          return filterType === 'rejected' ? app?.admission_status !== 'Rejected' : app?.payment_status !== 'Pending';
+        }));
+        if (selectedApp && (
+          (filterType === 'rejected' && selectedApp.admission_status === 'Rejected') ||
+          (filterType === 'unpaid' && selectedApp.payment_status === 'Pending')
+        )) {
+          setSelectedApp(null);
+        }
+      } else {
+        showNotification(data.message || 'Purge failed', 'error');
+      }
+    } catch {
+      showNotification('Error executing group purge.', 'error');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const batchUpdateStatus = async (newStatus: 'Approved' | 'Rejected') => {
+    if (selectedAppIds.length === 0) return;
+    if (!confirm(`Mark ${selectedAppIds.length} selected applicant(s) as ${newStatus}?`)) return;
+
+    setBulkActionLoading(true);
+    try {
+      let updatedCount = 0;
+      for (const id of selectedAppIds) {
+        const res = await fetch('/api/admin/applications', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          credentials: 'include',
+          body: JSON.stringify({ id, admission_status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) updatedCount++;
+      }
+      showNotification(`Batch update complete: ${updatedCount} applicant(s) marked as ${newStatus}.`);
+      setApplications(prev => prev.map(a => 
+        selectedAppIds.includes(a.id) ? { ...a, admission_status: newStatus } : a
+      ));
+      setSelectedAppIds([]);
+    } catch {
+      showNotification('Error performing batch status update.', 'error');
+    } finally {
+      setBulkActionLoading(false);
     }
   };
 
@@ -753,10 +880,29 @@ export default function AdminDashboardPage() {
       app.program_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(app.id).includes(searchQuery);
 
-    const matchesStatus = statusFilter === 'ALL' ? true : app.admission_status === statusFilter;
-    const matchesPayment = paymentFilter === 'ALL' ? true : app.payment_status === paymentFilter;
+    const matchesStatus = statusFilter === 'ALL' 
+      ? true 
+      : statusFilter === 'Under Review' 
+      ? (app.admission_status === 'Under Review' || app.admission_status === 'Pending Review') 
+      : app.admission_status === statusFilter;
+
+    const matchesPayment = paymentFilter === 'ALL' 
+      ? true 
+      : paymentFilter === 'Pending Verification' 
+      ? (app.payment_status === 'Pending Verification' || Boolean(app.payment_proof_url))
+      : app.payment_status === paymentFilter;
+
     return matchesSearch && matchesStatus && matchesPayment;
   });
+
+  // Dynamic counts for quick filter buttons and group purges
+  const totalAppsCount = applications.length;
+  const underReviewCount = applications.filter(a => a.admission_status === 'Under Review' || a.admission_status === 'Pending Review').length;
+  const approvedCount = applications.filter(a => a.admission_status === 'Approved').length;
+  const rejectedCount = applications.filter(a => a.admission_status === 'Rejected').length;
+  const paidCount = applications.filter(a => a.payment_status === 'Paid').length;
+  const proofPendingCount = applications.filter(a => a.payment_status === 'Pending Verification' || Boolean(a.payment_proof_url)).length;
+  const unpaidCount = applications.filter(a => a.payment_status === 'Pending').length;
 
   // 1. Loading state during auth check
   if (isAuthenticated === null) {
@@ -1441,14 +1587,18 @@ export default function AdminDashboardPage() {
         {/* ======================================================== */}
         {/* TAB 2: APPLICATIONS & ADMISSIONS MANAGEMENT */}
         {/* ======================================================== */}
+        {/* ======================================================== */}
+        {/* TAB 1: APPLICATIONS & ADMISSIONS ROSTER */}
+        {/* ======================================================== */}
         {activeTab === 'applications' && (
           <div>
+            {/* Filter & Actions Bar */}
             <div 
               className="premium-card" 
               style={{ 
                 padding: '20px 24px', 
                 background: '#FFFFFF', 
-                marginBottom: '24px',
+                marginBottom: '16px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -1479,48 +1629,138 @@ export default function AdminDashboardPage() {
                 />
               </div>
 
-              {/* Status & Payment Filter Pills */}
+              {/* Status & Payment Filter Pills with Live Counts */}
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '4px', background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
-                  {(['ALL', 'Under Review', 'Approved', 'Rejected'] as const).map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => setStatusFilter(st)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        border: 'none',
-                        background: statusFilter === st ? '#081F3E' : 'transparent',
-                        color: statusFilter === st ? '#F5A623' : '#64748B'
-                      }}
-                    >
-                      {st}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => setStatusFilter('ALL')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: statusFilter === 'ALL' ? '#081F3E' : 'transparent',
+                      color: statusFilter === 'ALL' ? '#F5A623' : '#64748B'
+                    }}
+                  >
+                    All ({totalAppsCount})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Under Review')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: statusFilter === 'Under Review' ? '#081F3E' : 'transparent',
+                      color: statusFilter === 'Under Review' ? '#F5A623' : '#64748B'
+                    }}
+                  >
+                    Review ({underReviewCount})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Approved')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: statusFilter === 'Approved' ? '#059669' : 'transparent',
+                      color: statusFilter === 'Approved' ? '#FFFFFF' : '#64748B'
+                    }}
+                  >
+                    ✓ Approved ({approvedCount})
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter('Rejected')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: statusFilter === 'Rejected' ? '#DC2626' : 'transparent',
+                      color: statusFilter === 'Rejected' ? '#FFFFFF' : '#64748B'
+                    }}
+                  >
+                    ✕ Rejected ({rejectedCount})
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '4px', background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
-                  {(['ALL', 'Paid', 'Pending'] as const).map((pt) => (
-                    <button
-                      key={pt}
-                      onClick={() => setPaymentFilter(pt)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        border: 'none',
-                        background: paymentFilter === pt ? '#059669' : 'transparent',
-                        color: paymentFilter === pt ? '#FFFFFF' : '#64748B'
-                      }}
-                    >
-                      {pt === 'ALL' ? 'All Payments' : pt === 'Paid' ? '💳 Paid Only' : '⏳ Pending Only'}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => setPaymentFilter('ALL')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: paymentFilter === 'ALL' ? '#081F3E' : 'transparent',
+                      color: paymentFilter === 'ALL' ? '#F5A623' : '#64748B'
+                    }}
+                  >
+                    All Payments
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentFilter('Paid')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: paymentFilter === 'Paid' ? '#059669' : 'transparent',
+                      color: paymentFilter === 'Paid' ? '#FFFFFF' : '#64748B'
+                    }}
+                  >
+                    💳 Paid ({paidCount})
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentFilter('Pending Verification')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: paymentFilter === 'Pending Verification' ? '#2563EB' : 'transparent',
+                      color: paymentFilter === 'Pending Verification' ? '#FFFFFF' : '#64748B'
+                    }}
+                  >
+                    ⏳ Proofs ({proofPendingCount})
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentFilter('Pending')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: paymentFilter === 'Pending' ? '#D97706' : 'transparent',
+                      color: paymentFilter === 'Pending' ? '#FFFFFF' : '#64748B'
+                    }}
+                  >
+                    ⏳ Unpaid ({unpaidCount})
+                  </button>
                 </div>
 
                 <button
@@ -1532,6 +1772,165 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </div>
+
+            {/* Quick Group Purge & Actions Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+              {/* Group Purge Short-cuts */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Quick Purge:</span>
+                
+                <button
+                  onClick={() => purgeByFilter('rejected')}
+                  disabled={bulkActionLoading || rejectedCount === 0}
+                  style={{
+                    background: rejectedCount > 0 ? '#FEF2F2' : '#F1F5F9',
+                    color: rejectedCount > 0 ? '#DC2626' : '#94A3B8',
+                    border: rejectedCount > 0 ? '1px solid #FECACA' : '1px solid #E2E8F0',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: rejectedCount > 0 ? 'pointer' : 'not-allowed',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                  title="Purge all rejected applicants from database"
+                >
+                  <Trash2 size={13} /> Delete All Rejected ({rejectedCount})
+                </button>
+
+                <button
+                  onClick={() => purgeByFilter('unpaid')}
+                  disabled={bulkActionLoading || unpaidCount === 0}
+                  style={{
+                    background: unpaidCount > 0 ? '#FFFBEB' : '#F1F5F9',
+                    color: unpaidCount > 0 ? '#D97706' : '#94A3B8',
+                    border: unpaidCount > 0 ? '1px solid #FDE68A' : '1px solid #E2E8F0',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: unpaidCount > 0 ? 'pointer' : 'not-allowed',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                  title="Purge all unpaid applications from database"
+                >
+                  <Trash2 size={13} /> Delete All Unpaid ({unpaidCount})
+                </button>
+              </div>
+
+              {/* Selection Summary */}
+              <div style={{ fontSize: '0.84rem', color: '#64748B' }}>
+                Showing <strong>{filteredApps.length}</strong> of <strong>{applications.length}</strong> applicants
+              </div>
+            </div>
+
+            {/* Sticky Bulk Actions Bar (Active when 1 or more items selected) */}
+            {selectedAppIds.length > 0 && (
+              <div 
+                style={{ 
+                  background: '#081F3E', 
+                  color: '#FFFFFF', 
+                  padding: '12px 20px', 
+                  borderRadius: '10px', 
+                  marginBottom: '16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  boxShadow: '0 8px 24px rgba(8,31,62,0.25)',
+                  animation: 'fadeIn 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ background: '#F5A623', color: '#081F3E', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '0.8rem' }}>
+                    {selectedAppIds.length} Selected
+                  </span>
+                  <span style={{ fontSize: '0.88rem' }}>of {filteredApps.length} filtered records</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    onClick={() => batchUpdateStatus('Approved')}
+                    disabled={bulkActionLoading}
+                    style={{
+                      background: '#10B981',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <Check size={14} /> Batch Approve ({selectedAppIds.length})
+                  </button>
+
+                  <button
+                    onClick={() => batchUpdateStatus('Rejected')}
+                    disabled={bulkActionLoading}
+                    style={{
+                      background: '#EF4444',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <X size={14} /> Batch Reject ({selectedAppIds.length})
+                  </button>
+
+                  <button
+                    onClick={deleteSelectedApplicants}
+                    disabled={bulkActionLoading}
+                    style={{
+                      background: '#DC2626',
+                      color: '#FFFFFF',
+                      border: '1px solid #B91C1C',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <Trash2 size={14} /> Delete Selected ({selectedAppIds.length})
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedAppIds([])}
+                    style={{
+                      background: 'transparent',
+                      color: '#94A3B8',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Applications Table */}
             <div 
@@ -1547,243 +1946,357 @@ export default function AdminDashboardPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC', borderBottom: '1px solid rgba(15,23,42,0.08)', color: '#64748B', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      <th style={{ padding: '16px 20px' }}>ID &amp; Student</th>
-                      <th style={{ padding: '16px 20px' }}>Program Track</th>
-                      <th style={{ padding: '16px 20px' }}>Format</th>
-                      <th style={{ padding: '16px 20px' }}>Admission Status</th>
-                      <th style={{ padding: '16px 20px' }}>Deposit (50k XAF)</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right' }}>Actions &amp; Decision</th>
+                      <th style={{ padding: '16px 14px', width: '40px', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedAppIds.length === filteredApps.length && filteredApps.length > 0}
+                          onChange={toggleSelectAll}
+                          aria-label="Select all filtered applicants"
+                          style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#081F3E' }}
+                        />
+                      </th>
+                      <th style={{ padding: '16px 16px' }}>ID &amp; Student</th>
+                      <th style={{ padding: '16px 16px' }}>Program Track</th>
+                      <th style={{ padding: '16px 16px' }}>📁 Submitted Credentials</th>
+                      <th style={{ padding: '16px 16px' }}>Admission Status</th>
+                      <th style={{ padding: '16px 16px' }}>Deposit &amp; Proof</th>
+                      <th style={{ padding: '16px 16px', textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredApps.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>
                           No applications match your filter criteria.
                         </td>
                       </tr>
                     ) : (
-                      filteredApps.map((app) => (
-                        <tr 
-                          key={app.id}
-                          style={{ 
-                            borderBottom: '1px solid rgba(15,23,42,0.05)',
-                            transition: 'background 0.15s ease'
-                          }}
-                        >
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.95rem' }}>
-                              {app.full_name}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                              {app.email} &bull; {app.phone || 'No phone'}
-                            </div>
-                            <span style={{ fontSize: '0.72rem', color: '#B45309', fontFamily: 'var(--font-mono)' }}>
-                              #{app.id}
-                            </span>
-                          </td>
+                      filteredApps.map((app) => {
+                        const isSelected = selectedAppIds.includes(app.id);
+                        const docCount = (app.documents && app.documents.length) || (app.document_url ? 1 : 0);
 
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ fontWeight: 700, color: '#081F3E' }}>{app.program_type}</div>
-                            <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                              {app.degree_type}
-                            </span>
-                          </td>
+                        return (
+                          <tr 
+                            key={app.id}
+                            style={{ 
+                              borderBottom: '1px solid rgba(15,23,42,0.05)',
+                              background: isSelected ? 'rgba(245, 166, 35, 0.06)' : 'transparent',
+                              transition: 'background 0.15s ease'
+                            }}
+                          >
+                            {/* Row Checkbox */}
+                            <td style={{ padding: '16px 14px', textAlign: 'center' }}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleSelectApp(app.id)}
+                                aria-label={`Select applicant #${app.id}`}
+                                style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#081F3E' }}
+                              />
+                            </td>
 
-                          <td style={{ padding: '16px 20px', textTransform: 'capitalize', color: '#64748B' }}>
-                            {app.study_format}
-                          </td>
+                            {/* Student Profile */}
+                            <td style={{ padding: '16px 16px' }}>
+                              <div style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.95rem' }}>
+                                {app.full_name}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                                {app.email} &bull; {app.phone || 'No phone'}
+                              </div>
+                              <span style={{ fontSize: '0.72rem', color: '#B45309', fontFamily: 'var(--font-mono)' }}>
+                                #{app.id}
+                              </span>
+                            </td>
 
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{ 
-                              padding: '5px 12px',
-                              borderRadius: '20px',
-                              fontSize: '0.8rem',
-                              fontWeight: 800,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              background: app.admission_status === 'Approved' ? '#ECFDF5' : app.admission_status === 'Rejected' ? '#FEF2F2' : '#FEF3C7',
-                              color: app.admission_status === 'Approved' ? '#059669' : app.admission_status === 'Rejected' ? '#DC2626' : '#B45309'
-                            }}>
-                              {app.admission_status === 'Approved' && <CheckCircle size={14} />}
-                              {app.admission_status === 'Rejected' && <XCircle size={14} />}
-                              {app.admission_status === 'Under Review' && <Clock size={14} />}
-                              {app.admission_status}
-                            </span>
-                          </td>
+                            {/* Program Track */}
+                            <td style={{ padding: '16px 16px' }}>
+                              <div style={{ fontWeight: 700, color: '#081F3E', fontSize: '0.88rem' }}>{app.program_type}</div>
+                              <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                {app.degree_type}
+                              </span>
+                            </td>
 
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+                            {/* Submitted Enrolment Documents */}
+                            <td style={{ padding: '16px 16px' }}>
+                              {docCount > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                                  <span style={{ 
+                                    background: '#ECFDF5', 
+                                    color: '#059669', 
+                                    padding: '3px 8px', 
+                                    borderRadius: '4px', 
+                                    fontSize: '0.76rem', 
+                                    fontWeight: 700,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <FileCheck size={12} /> {docCount} Credential(s)
+                                  </span>
+
+                                  {app.documents && app.documents.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const firstDoc = app.documents?.[0];
+                                        if (firstDoc) {
+                                          setPreviewDocItem({
+                                            title: firstDoc.label || 'Enrolment Credential',
+                                            url: firstDoc.url || firstDoc.fileName || '',
+                                            fileName: firstDoc.fileName || 'document.pdf',
+                                            studentName: app.full_name
+                                          });
+                                        }
+                                      }}
+                                      style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#2563EB',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        textDecoration: 'underline'
+                                      }}
+                                    >
+                                      <Eye size={12} /> Inspect Files
+                                    </button>
+                                  ) : app.document_url ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setPreviewDocItem({
+                                          title: 'Enrolment Credential',
+                                          url: app.document_url || '',
+                                          fileName: app.document_url || 'document.pdf',
+                                          studentName: app.full_name
+                                        });
+                                      }}
+                                      style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#2563EB',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        textDecoration: 'underline'
+                                      }}
+                                    >
+                                      <Eye size={12} /> View File
+                                    </button>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <span style={{ color: '#94A3B8', fontSize: '0.78rem', fontStyle: 'italic' }}>
+                                  No docs attached
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Admission Status */}
+                            <td style={{ padding: '16px 16px' }}>
                               <span style={{ 
-                                padding: '4px 10px',
-                                borderRadius: '16px',
+                                padding: '5px 12px',
+                                borderRadius: '20px',
                                 fontSize: '0.78rem',
                                 fontWeight: 800,
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '5px',
-                                background: app.payment_status === 'Paid' 
-                                  ? '#ECFDF5' 
-                                  : app.payment_status === 'Pending Verification'
-                                  ? '#EFF6FF'
-                                  : '#FFFBEB',
-                                color: app.payment_status === 'Paid' 
-                                  ? '#059669' 
-                                  : app.payment_status === 'Pending Verification'
-                                  ? '#2563EB'
-                                  : '#D97706',
-                                border: app.payment_status === 'Paid' 
-                                  ? '1px solid #A7F3D0' 
-                                  : app.payment_status === 'Pending Verification'
-                                  ? '1px solid #BFDBFE'
-                                  : '1px solid #FDE68A'
+                                gap: '6px',
+                                background: app.admission_status === 'Approved' ? '#ECFDF5' : app.admission_status === 'Rejected' ? '#FEF2F2' : '#FEF3C7',
+                                color: app.admission_status === 'Approved' ? '#059669' : app.admission_status === 'Rejected' ? '#DC2626' : '#B45309'
                               }}>
-                                {app.payment_status === 'Paid' ? (
-                                  <>
-                                    <CheckCircle size={13} color="#059669" />
-                                    <span>✓ Paid ({(app.payment_amount || 50000).toLocaleString()} XAF)</span>
-                                  </>
-                                ) : app.payment_status === 'Pending Verification' ? (
-                                  <>
-                                    <Clock size={13} color="#2563EB" />
-                                    <span>⏳ Proof Submitted</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Clock size={13} color="#D97706" />
-                                    <span>⏳ Unpaid</span>
-                                  </>
-                                )}
+                                {app.admission_status === 'Approved' && <CheckCircle size={13} />}
+                                {app.admission_status === 'Rejected' && <XCircle size={13} />}
+                                {(app.admission_status === 'Under Review' || app.admission_status === 'Pending Review') && <Clock size={13} />}
+                                {app.admission_status}
                               </span>
+                            </td>
 
-                              {/* Action buttons based on payment proof presence */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                {app.payment_proof_url && (
+                            {/* Deposit & Proof Screenshot */}
+                            <td style={{ padding: '16px 16px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+                                <span style={{ 
+                                  padding: '4px 10px',
+                                  borderRadius: '16px',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 800,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  background: app.payment_status === 'Paid' 
+                                    ? '#ECFDF5' 
+                                    : (app.payment_status === 'Pending Verification' || app.payment_proof_url)
+                                    ? '#EFF6FF'
+                                    : '#FFFBEB',
+                                  color: app.payment_status === 'Paid' 
+                                    ? '#059669' 
+                                    : (app.payment_status === 'Pending Verification' || app.payment_proof_url)
+                                    ? '#2563EB'
+                                    : '#D97706',
+                                  border: app.payment_status === 'Paid' 
+                                    ? '1px solid #A7F3D0' 
+                                    : (app.payment_status === 'Pending Verification' || app.payment_proof_url)
+                                    ? '1px solid #BFDBFE'
+                                    : '1px solid #FDE68A'
+                                }}>
+                                  {app.payment_status === 'Paid' ? (
+                                    <>
+                                      <CheckCircle size={13} color="#059669" />
+                                      <span>✓ Paid ({(app.payment_amount || 50000).toLocaleString()} XAF)</span>
+                                    </>
+                                  ) : (app.payment_status === 'Pending Verification' || app.payment_proof_url) ? (
+                                    <>
+                                      <Clock size={13} color="#2563EB" />
+                                      <span>⏳ Proof Submitted</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Clock size={13} color="#D97706" />
+                                      <span>⏳ Unpaid</span>
+                                    </>
+                                  )}
+                                </span>
+
+                                {/* Proof Screenshot Preview Button */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  {app.payment_proof_url && (
+                                    <button
+                                      onClick={() => setPreviewProofItem(app)}
+                                      style={{
+                                        border: '1px solid #BFDBFE',
+                                        background: '#EFF6FF',
+                                        color: '#1D4ED8',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        padding: '3px 8px',
+                                        borderRadius: '4px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}
+                                      title="Review and zoom uploaded MoMo transaction screenshot"
+                                    >
+                                      <ImageIcon size={12} /> View Screenshot
+                                    </button>
+                                  )}
+
                                   <button
-                                    onClick={() => setPreviewProofItem(app)}
+                                    onClick={() => togglePaymentStatus(app.id, app.payment_status)}
                                     style={{
-                                      border: '1px solid #BFDBFE',
-                                      background: '#EFF6FF',
-                                      color: '#1D4ED8',
-                                      fontSize: '0.74rem',
-                                      fontWeight: 700,
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#64748B',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 600,
                                       cursor: 'pointer',
-                                      padding: '2px 8px',
-                                      borderRadius: '4px',
+                                      textDecoration: 'underline',
+                                      padding: 0
+                                    }}
+                                    title="Manually toggle payment status"
+                                  >
+                                    {app.payment_status === 'Paid' ? 'Reset to Unpaid' : 'Mark as Paid'}
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Actions Column */}
+                            <td style={{ padding: '16px 16px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', alignItems: 'center' }}>
+                                {app.admission_status !== 'Approved' && (
+                                  <button
+                                    onClick={() => updateAppStatus(app.id, 'Approved')}
+                                    disabled={actionLoading}
+                                    style={{
+                                      background: '#10B981',
+                                      color: '#FFFFFF',
+                                      border: 'none',
+                                      padding: '6px 10px',
+                                      borderRadius: '6px',
+                                      fontWeight: 700,
+                                      fontSize: '0.76rem',
+                                      cursor: 'pointer',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '4px'
                                     }}
-                                    title="View uploaded MoMo transaction receipt screenshot"
+                                    title="Approve applicant"
                                   >
-                                    <ImageIcon size={12} /> View Screenshot
+                                    <Check size={13} />
+                                  </button>
+                                )}
+
+                                {app.admission_status !== 'Rejected' && (
+                                  <button
+                                    onClick={() => updateAppStatus(app.id, 'Rejected')}
+                                    disabled={actionLoading}
+                                    style={{
+                                      background: '#EF4444',
+                                      color: '#FFFFFF',
+                                      border: 'none',
+                                      padding: '6px 10px',
+                                      borderRadius: '6px',
+                                      fontWeight: 700,
+                                      fontSize: '0.76rem',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Reject applicant"
+                                  >
+                                    <X size={13} />
                                   </button>
                                 )}
 
                                 <button
-                                  onClick={() => togglePaymentStatus(app.id, app.payment_status)}
+                                  onClick={() => setSelectedApp(app)}
                                   style={{
+                                    background: '#081F3E',
+                                    color: '#FFFFFF',
                                     border: 'none',
-                                    background: 'transparent',
-                                    color: '#64748B',
-                                    fontSize: '0.72rem',
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
                                     fontWeight: 600,
+                                    fontSize: '0.76rem',
                                     cursor: 'pointer',
-                                    textDecoration: 'underline',
-                                    padding: 0
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                                   }}
-                                  title="Click to manually toggle payment status"
+                                  title="Inspect full student dossier and all files"
                                 >
-                                  {app.payment_status === 'Paid' ? 'Reset to Unpaid' : 'Mark as Paid'}
+                                  <Eye size={13} /> Dossier
+                                </button>
+
+                                <button
+                                  onClick={() => deleteApplication(app.id)}
+                                  style={{
+                                    background: '#FEE2E2',
+                                    color: '#DC2626',
+                                    border: '1px solid #FECACA',
+                                    padding: '6px 8px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Delete single record"
+                                >
+                                  <Trash2 size={13} />
                                 </button>
                               </div>
-                            </div>
-                          </td>
-
-                          <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                              {app.admission_status !== 'Approved' && (
-                                <button
-                                  onClick={() => updateAppStatus(app.id, 'Approved')}
-                                  disabled={actionLoading}
-                                  style={{
-                                    background: '#10B981',
-                                    color: '#FFFFFF',
-                                    border: 'none',
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                  }}
-                                  title="Approve applicant and dispatch acceptance email"
-                                >
-                                  <Check size={14} /> Approve
-                                </button>
-                              )}
-
-                              {app.admission_status !== 'Rejected' && (
-                                <button
-                                  onClick={() => updateAppStatus(app.id, 'Rejected')}
-                                  disabled={actionLoading}
-                                  style={{
-                                    background: '#EF4444',
-                                    color: '#FFFFFF',
-                                    border: 'none',
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                  }}
-                                  title="Reject applicant and dispatch status email"
-                                >
-                                  <X size={14} /> Reject
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => setSelectedApp(app)}
-                                style={{
-                                  background: '#081F3E',
-                                  color: '#FFFFFF',
-                                  border: 'none',
-                                  padding: '6px 10px',
-                                  borderRadius: '6px',
-                                  fontWeight: 600,
-                                  fontSize: '0.78rem',
-                                  cursor: 'pointer'
-                                }}
-                                title="View applicant dossier"
-                              >
-                                <Eye size={14} />
-                              </button>
-
-                              <button
-                                onClick={() => deleteApplication(app.id)}
-                                style={{
-                                  background: '#F1F5F9',
-                                  color: '#DC2626',
-                                  border: 'none',
-                                  padding: '6px 10px',
-                                  borderRadius: '6px',
-                                  cursor: 'pointer'
-                                }}
-                                title="Delete record"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -2014,30 +2527,131 @@ export default function AdminDashboardPage() {
 
                   {/* Uploaded Documents List */}
                   <div style={{ marginTop: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '0.88rem', color: '#081F3E', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      📁 Submitted Credentials &amp; Documents
-                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.88rem', color: '#081F3E', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        📁 Submitted Credentials &amp; Documents
+                      </h4>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>
+                        {(selectedApp.documents && selectedApp.documents.length) || (selectedApp.document_url ? 1 : 0)} File(s)
+                      </span>
+                    </div>
+
                     {selectedApp.documents && selectedApp.documents.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {selectedApp.documents.map((doc, idx) => (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.84rem' }}>
-                            <div>
-                              <strong style={{ color: '#081F3E', display: 'block' }}>{doc.label || `Document #${idx + 1}`}</strong>
-                              <span style={{ color: '#64748B', fontSize: '0.78rem' }}>{doc.fileName} {doc.size ? `(${doc.size})` : ''}</span>
+                          <div 
+                            key={idx} 
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between', 
+                              background: '#FFFFFF', 
+                              padding: '10px 14px', 
+                              borderRadius: '8px', 
+                              border: '1px solid #E2E8F0', 
+                              fontSize: '0.84rem' 
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0, marginRight: '10px' }}>
+                              <strong style={{ color: '#081F3E', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {doc.label || `Document #${idx + 1}`}
+                              </strong>
+                              <span style={{ color: '#64748B', fontSize: '0.78rem' }}>
+                                {doc.fileName} {doc.size ? `(${doc.size})` : ''}
+                              </span>
                             </div>
-                            <span style={{ background: '#ECFDF5', color: '#059669', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
-                              Attached
-                            </span>
+
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewDocItem({
+                                    title: doc.label || `Document #${idx + 1}`,
+                                    url: doc.url || doc.fileName || '',
+                                    fileName: doc.fileName || 'document.pdf',
+                                    studentName: selectedApp.full_name
+                                  });
+                                }}
+                                style={{
+                                  background: '#081F3E',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '5px 10px',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                                title="Inspect document preview"
+                              >
+                                <Eye size={12} /> View File
+                              </button>
+
+                              {doc.url && (
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  download={doc.fileName}
+                                  style={{
+                                    background: '#F1F5F9',
+                                    color: '#081F3E',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '6px',
+                                    padding: '5px 8px',
+                                    fontSize: '0.76rem',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Download / Open external file"
+                                >
+                                  <Download size={12} />
+                                </a>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : selectedApp.document_url ? (
-                      <div style={{ background: '#FFFFFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.84rem', color: '#081F3E' }}>
-                        <strong>Attached File:</strong> {selectedApp.document_url}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.84rem' }}>
+                        <div>
+                          <strong style={{ color: '#081F3E', display: 'block' }}>Primary Uploaded Document</strong>
+                          <span style={{ color: '#64748B', fontSize: '0.78rem' }}>{selectedApp.document_url}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewDocItem({
+                              title: 'Primary Uploaded Document',
+                              url: selectedApp.document_url || '',
+                              fileName: selectedApp.document_url || 'document.pdf',
+                              studentName: selectedApp.full_name
+                            });
+                          }}
+                          style={{
+                            background: '#081F3E',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Eye size={12} /> View File
+                        </button>
                       </div>
                     ) : (
-                      <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.82rem', fontStyle: 'italic' }}>
-                        No physical files attached yet.
+                      <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.82rem', fontStyle: 'italic', textAlign: 'center', padding: '12px' }}>
+                        No physical files attached yet by applicant.
                       </p>
                     )}
                   </div>
@@ -3051,6 +3665,158 @@ export default function AdminDashboardPage() {
                   style={{ flex: 1.8, background: '#10B981', borderColor: '#10B981', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 800 }}
                 >
                   <CheckCircle size={16} /> Approve Payment (50k)
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Document Preview Modal */}
+        {previewDocItem && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(8,31,62,0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10001,
+              backdropFilter: 'blur(5px)',
+              padding: '20px'
+            }}
+          >
+            <div 
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                maxWidth: '680px',
+                width: '100%',
+                padding: '28px',
+                boxShadow: '0 25px 70px rgba(0,0,0,0.35)',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                position: 'relative'
+              }}
+            >
+              {/* Close Icon Button */}
+              <button 
+                type="button"
+                onClick={() => setPreviewDocItem(null)}
+                aria-label="Close document preview"
+                style={{
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748B',
+                  fontSize: '1rem',
+                  fontWeight: 700
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ marginBottom: '18px' }}>
+                <span className="course-badge" style={{ background: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+                  📁 Verified Enrolment Credential
+                </span>
+                <h3 style={{ color: '#081F3E', marginTop: '6px', fontSize: '1.3rem', fontWeight: 800 }}>
+                  {previewDocItem.title}
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Applicant: <strong>{previewDocItem.studentName}</strong> &bull; File: <code>{previewDocItem.fileName}</code>
+                </p>
+              </div>
+
+              {/* Document Rendering Frame */}
+              <div 
+                style={{
+                  background: '#0F172A',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '18px',
+                  minHeight: '280px',
+                  maxHeight: '480px',
+                  overflow: 'hidden'
+                }}
+              >
+                {previewDocItem.url && (previewDocItem.url.startsWith('data:image') || 
+                 previewDocItem.url.endsWith('.png') || 
+                 previewDocItem.url.endsWith('.jpg') || 
+                 previewDocItem.url.endsWith('.jpeg') || 
+                 previewDocItem.url.endsWith('.webp')) ? (
+                  <img
+                    src={previewDocItem.url}
+                    alt={previewDocItem.title}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '440px',
+                      objectFit: 'contain',
+                      borderRadius: '6px'
+                    }}
+                  />
+                ) : (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#FFFFFF' }}>
+                    <FileText size={52} color="#F5A623" style={{ margin: '0 auto 12px auto' }} />
+                    <p style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 700 }}>
+                      {previewDocItem.fileName}
+                    </p>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '0.84rem', color: '#94A3B8' }}>
+                      Official credential document attached to student application record.
+                    </p>
+                    {previewDocItem.url && (
+                      <a
+                        href={previewDocItem.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ padding: '9px 18px', fontSize: '0.85rem' }}
+                      >
+                        <ExternalLink size={15} /> Open Full Document in New Tab
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                {previewDocItem.url ? (
+                  <a
+                    href={previewDocItem.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    download={previewDocItem.fileName}
+                    className="btn btn-secondary"
+                    style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+                  >
+                    <Download size={15} /> Download Document
+                  </a>
+                ) : <div />}
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewDocItem(null)}
+                  className="btn btn-primary"
+                  style={{ padding: '10px 24px', fontSize: '0.88rem' }}
+                >
+                  Close Document
                 </button>
               </div>
 
