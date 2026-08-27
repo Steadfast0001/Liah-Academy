@@ -81,3 +81,8 @@
 [2026-08-25T15:21:08.516Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "🚨 [New Application] #6542: Dr. Diagnostic Test - Software Engineering HND"
 [2026-08-25T15:21:08.632Z] [LOGGED] TO: partner@techcorp.com | TYPE: inquiry_submitted | SUBJECT: "Inquiry Received: System Check Inquiry - Liah Academy"
 [2026-08-25T15:21:08.666Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "📬 [Direct Inquiry] System Check Inquiry (from Corporate Partner Audit)"
+[2026-08-26T11:15:53.906Z] [LOGGED] TO: steddy@liahacademy.org | TYPE: application_approved | SUBJECT: "🎉 Offer of Admission #1001 - Liah Academy"
+[2026-08-27T11:13:33.216Z] [LOGGED] TO: student.audit.1787829212750@liahacademy.com | TYPE: application_submitted | SUBJECT: "Application Confirmation #2011 - Liah Academy"
+[2026-08-27T11:13:33.240Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "🚨 [New Application] #2011: Dr. Diagnostic Test - Software Engineering HND"
+[2026-08-27T11:13:33.401Z] [LOGGED] TO: partner@techcorp.com | TYPE: inquiry_submitted | SUBJECT: "Inquiry Received: System Check Inquiry - Liah Academy"
+[2026-08-27T11:13:33.458Z] [LOGGED] TO: info@liahacademy.com | TYPE: admin_alert | SUBJECT: "📬 [Direct Inquiry] System Check Inquiry (from Corporate Partner Audit)"

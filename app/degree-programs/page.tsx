@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  GraduationCap, Settings, Clock, Search, 
+  GraduationCap, Settings, Clock, Search, X,
   Code, Shield, Calendar, MapPin, Globe, ArrowRight, Mail
 } from 'lucide-react';
 
@@ -485,45 +485,57 @@ export default function DegreeProgramsPage() {
               flexWrap: 'wrap', 
               gap: '16px', 
               background: '#FFFFFF', 
-              padding: '16px 24px', 
-              borderRadius: '12px', 
+              padding: '16px 20px', 
+              borderRadius: '16px', 
               border: '1px solid rgba(15,23,42,0.08)', 
-              boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
               marginBottom: '36px' 
             }}
           >
-            {/* Filter Buttons */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#081F3E', marginRight: '6px' }}>Format:</span>
+            {/* Filter Buttons Horizontal Swipable Pill Bar */}
+            <div 
+              className="no-scrollbar"
+              style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                alignItems: 'center', 
+                overflowX: 'auto',
+                maxWidth: '100%',
+                paddingBottom: '4px'
+              }}
+            >
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#081F3E', marginRight: '4px', whiteSpace: 'nowrap' }}>Format:</span>
               
               <button 
                 onClick={() => setSelectedFormat('all')}
                 style={{
-                  background: selectedFormat === 'all' ? '#081F3E' : 'transparent',
-                  color: selectedFormat === 'all' ? '#FFFFFF' : '#B45309',
-                  border: selectedFormat === 'all' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.4)',
-                  padding: '6px 14px',
+                  background: selectedFormat === 'all' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedFormat === 'all' ? '#FFFFFF' : '#081F3E',
+                  border: selectedFormat === 'all' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  padding: '6px 16px',
                   borderRadius: '20px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
               >
-                All Formats
+                All Tracks
               </button>
 
               <button 
                 onClick={() => setSelectedFormat('fulltime')}
                 style={{
-                  background: selectedFormat === 'fulltime' ? '#081F3E' : 'transparent',
-                  color: selectedFormat === 'fulltime' ? '#FFFFFF' : '#B45309',
-                  border: selectedFormat === 'fulltime' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.4)',
-                  padding: '6px 14px',
+                  background: selectedFormat === 'fulltime' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedFormat === 'fulltime' ? '#FFFFFF' : '#081F3E',
+                  border: selectedFormat === 'fulltime' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  padding: '6px 16px',
                   borderRadius: '20px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -533,14 +545,15 @@ export default function DegreeProgramsPage() {
               <button 
                 onClick={() => setSelectedFormat('online')}
                 style={{
-                  background: selectedFormat === 'online' ? '#081F3E' : 'transparent',
-                  color: selectedFormat === 'online' ? '#FFFFFF' : '#B45309',
-                  border: selectedFormat === 'online' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.4)',
-                  padding: '6px 14px',
+                  background: selectedFormat === 'online' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedFormat === 'online' ? '#FFFFFF' : '#081F3E',
+                  border: selectedFormat === 'online' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  padding: '6px 16px',
                   borderRadius: '20px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -550,14 +563,15 @@ export default function DegreeProgramsPage() {
               <button 
                 onClick={() => setSelectedFormat('oncampus')}
                 style={{
-                  background: selectedFormat === 'oncampus' ? '#081F3E' : 'transparent',
-                  color: selectedFormat === 'oncampus' ? '#FFFFFF' : '#B45309',
-                  border: selectedFormat === 'oncampus' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.4)',
-                  padding: '6px 14px',
+                  background: selectedFormat === 'oncampus' ? '#081F3E' : 'rgba(245, 166, 35, 0.08)',
+                  color: selectedFormat === 'oncampus' ? '#FFFFFF' : '#081F3E',
+                  border: selectedFormat === 'oncampus' ? '1px solid #081F3E' : '1px solid rgba(245, 166, 35, 0.3)',
+                  padding: '6px 16px',
                   borderRadius: '20px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -565,8 +579,8 @@ export default function DegreeProgramsPage() {
               </button>
             </div>
 
-            {/* Quick Course Search */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '240px' }}>
+            {/* Quick Course Search with Clear Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '220px', flexGrow: 1, maxWidth: '340px', position: 'relative' }}>
               <label htmlFor="degree_course_search_input" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <Search size={16} color="#94A3B8" />
               </label>
@@ -575,13 +589,13 @@ export default function DegreeProgramsPage() {
                 name="degree_course_search_input"
                 aria-label="Quick course search"
                 type="text"
-                placeholder="Quick course search..."
+                placeholder="Search software, fees, track..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   border: 'none',
                   borderBottom: '1px solid rgba(15,23,42,0.15)',
-                  padding: '6px 10px',
+                  padding: '6px 24px 6px 8px',
                   fontSize: '14px',
                   outline: 'none',
                   background: 'transparent',
@@ -589,6 +603,23 @@ export default function DegreeProgramsPage() {
                   color: '#081F3E'
                 }}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    background: 'none',
+                    border: 'none',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 

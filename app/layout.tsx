@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
+import BackToTop from '@/components/BackToTop';
 
 export const metadata: Metadata = {
   title: 'Liah Academy | Forge Your Future in Technology',
@@ -32,6 +33,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <ChatWidget />
+        <BackToTop />
       </body>
     </html>
   );

@@ -329,7 +329,72 @@ export default function StudentExperiencePage() {
           </div>
         </section>
 
-        {/* 4. CTA BANNER */}
+        {/* 4. FREQUENTLY ASKED QUESTIONS (ACCORDION) */}
+        <section 
+          style={{ 
+            marginBottom: '80px', 
+            background: '#FFFFFF', 
+            border: '1px solid rgba(15,23,42,0.08)', 
+            borderRadius: '20px', 
+            padding: '50px 36px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.03)'
+          }}
+        >
+          <div className="section-header" style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span className="course-badge">Common Questions</span>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#081F3E' }}>Frequently Asked Questions</h2>
+            <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', color: '#64748B' }}>
+              Find instant answers to common questions about admissions, lab facilities, internships, and student life in Buea.
+            </p>
+          </div>
+
+          <div style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {[
+              {
+                q: 'What are the computer lab and workstation specifications?',
+                a: 'Our campus is equipped with dual-boot Linux & Windows workstations, high-speed fiber-optic Wi-Fi, modern multi-monitor dev setups, and automatic power generator backup to guarantee 100% uninterrupted coding sessions.'
+              },
+              {
+                q: 'How does the guaranteed corporate software internship work?',
+                a: 'Every enrolled student undergoes a structured internship in our Corporate Software Development & IT Services Division. Students build real client applications alongside senior software architects and graduate with verifiable industry work experience.'
+              },
+              {
+                q: 'Does Liah Academy assist with student accommodation in Buea?',
+                a: 'Yes! Our Student Affairs office directly assists all admitted students in securing clean, secure, and affordable hostels and private student apartments within 2–5 minutes walking distance of campus in Bakweri Town, Buea.'
+              },
+              {
+                q: 'Can I study Online or Part-Time while working a job?',
+                a: 'Absolutely. We offer 100% Online formats (with a 15% tuition discount) and Evening/Weekend Part-Time cohorts (with a 10% discount) designed for working professionals and remote students across Cameroon.'
+              },
+              {
+                q: 'Can I pay my tuition in installments via Mobile Money?',
+                a: 'Yes! We support flexible 2 or 3 installment payment plans. You can pay seamlessly via MTN or Orange Mobile Money directly on the Admissions portal or inside our AI Chat assistant.'
+              }
+            ].map((faq, idx) => (
+              <details
+                key={idx}
+                style={{
+                  background: '#F8FAFC',
+                  border: '1px solid rgba(15, 23, 42, 0.08)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <summary style={{ fontWeight: 700, color: '#081F3E', fontSize: '1rem', outline: 'none', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{faq.q}</span>
+                  <span style={{ color: '#F5A623', fontSize: '1.2rem', fontWeight: 800, marginLeft: '12px' }}>+</span>
+                </summary>
+                <p style={{ marginTop: '12px', color: '#475569', fontSize: '0.92rem', lineHeight: '1.65', borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '12px' }}>
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. CTA BANNER */}
         <section 
           style={{
             background: 'linear-gradient(135deg, #081F3E 0%, #0F3260 100%)',

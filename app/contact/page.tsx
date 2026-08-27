@@ -84,8 +84,28 @@ export default function ContactPage() {
                     <Phone size={20} />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Telephone Lines</h4>
-                    <p style={{ fontSize: '14px', color: '#64748B' }}>+237 652 154 095 / +237 699 526 607</p>
+                    <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Telephone &amp; WhatsApp</h4>
+                    <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>+237 652 154 095 / +237 699 526 607</p>
+                    <a
+                      href="https://wa.me/237652154095?text=Hello%20Liah%20Academy%20Admissions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 14px',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        borderRadius: '6px',
+                        color: '#059669',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      <Phone size={14} /> Chat on WhatsApp
+                    </a>
                   </div>
                 </li>
 

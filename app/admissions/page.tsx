@@ -466,7 +466,7 @@ function AdmissionsContent() {
         <section 
           style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', 
             gap: '30px', 
             marginBottom: '60px',
             alignItems: 'stretch'
@@ -830,7 +830,7 @@ function AdmissionsContent() {
                   </div>
 
                   {/* Step indicators */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 1 ? '#081F3E' : '#E2E8F0', color: currentStep >= 1 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>1</span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 1 ? '#081F3E' : '#64748B' }}>Personal Details</span>
