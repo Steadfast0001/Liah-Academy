@@ -190,6 +190,23 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
           data.created_at ? new Date(data.created_at) : new Date()
         ]
       );
+    } else if (table === 'admins') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM admins WHERE id = ?', [data.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO admins (id, full_name, email, password, role, created_at, last_login)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             full_name=VALUES(full_name), email=VALUES(email), password=VALUES(password),
+             role=VALUES(role), last_login=VALUES(last_login)`,
+          [
+            data.id, data.full_name, data.email, data.password, data.role,
+            data.created_at ? new Date(data.created_at) : new Date(),
+            data.last_login ? new Date(data.last_login) : null
+          ]
+        );
+      }
     }
     isMySQLLive = true;
   } catch (err) {
@@ -328,6 +345,16 @@ export interface EmailLog {
   created_at: string;
 }
 
+export interface AdminUser {
+  id: number;
+  full_name: string;
+  email: string;
+  password: string;
+  role: 'SuperAdmin' | 'Admin';
+  created_at: string;
+  last_login?: string;
+}
+
 export interface Schema {
   students: Student[];
   payments: Payment[];
@@ -338,6 +365,7 @@ export interface Schema {
   media: MediaItem[];
   settings: SiteSettings;
   email_logs: EmailLog[];
+  admins: AdminUser[];
   _metadata?: {
     version: string;
     last_updated: string;
@@ -562,6 +590,7 @@ const initialData: Schema = {
     instagram_url: 'https://www.instagram.com/p/DZ7omcLtYKT/'
   },
   email_logs: [],
+  admins: [],
   _metadata: {
     version: '2.2.0',
     last_updated: new Date().toISOString(),
@@ -618,6 +647,7 @@ export function readDb(): Schema {
     if (!parsed.media) { parsed.media = initialData.media; modified = true; }
     if (!parsed.settings) { parsed.settings = initialData.settings; modified = true; }
     if (!parsed.email_logs) { parsed.email_logs = []; modified = true; }
+    if (!parsed.admins) { parsed.admins = []; modified = true; }
     if (!parsed._metadata) {
       parsed._metadata = { version: '2.2.0', last_updated: new Date().toISOString(), total_writes: 0 };
       modified = true;
@@ -980,6 +1010,63 @@ export const adminStore = {
     writeDb(store, true);
     syncToMySQL('settings', 'update', store.settings);
     return store.settings;
+  },
+
+  // Admin User Management
+  getAdmins: (): AdminUser[] => {
+    const store = readDb();
+    return [...(store.admins || [])].map(a => ({ ...a, password: '••••••••' }));
+  },
+
+  getAdminByEmail: (email: string): AdminUser | undefined => {
+    const store = readDb();
+    return (store.admins || []).find(a => a.email.toLowerCase() === (email || '').toLowerCase().trim());
+  },
+
+  addAdmin: (adminData: { full_name: string; email: string; password: string; role: 'SuperAdmin' | 'Admin' }): AdminUser => {
+    const store = readDb();
+    if (!store.admins) store.admins = [];
+    const newId = (store.admins.length ? Math.max(...store.admins.map(a => a.id)) : 0) + 1;
+    const newAdmin: AdminUser = {
+      id: newId,
+      full_name: adminData.full_name,
+      email: adminData.email.toLowerCase().trim(),
+      password: adminData.password,
+      role: adminData.role || 'Admin',
+      created_at: new Date().toISOString()
+    };
+    store.admins.push(newAdmin);
+    writeDb(store, true);
+    syncToMySQL('admins', 'insert', newAdmin);
+    return newAdmin;
+  },
+
+  updateAdmin: (id: number, updates: Partial<AdminUser>): AdminUser | null => {
+    const store = readDb();
+    if (!store.admins) return null;
+    const admin = store.admins.find(a => a.id === id);
+    if (!admin) return null;
+    if (updates.full_name) admin.full_name = updates.full_name;
+    if (updates.email) admin.email = updates.email.toLowerCase().trim();
+    if (updates.password) admin.password = updates.password;
+    if (updates.role) admin.role = updates.role;
+    if (updates.last_login) admin.last_login = updates.last_login;
+    writeDb(store, true);
+    syncToMySQL('admins', 'update', admin);
+    return admin;
+  },
+
+  deleteAdmin: (id: number): boolean => {
+    const store = readDb();
+    if (!store.admins) return false;
+    const initialLen = store.admins.length;
+    store.admins = store.admins.filter(a => a.id !== id);
+    if (store.admins.length < initialLen) {
+      writeDb(store, true);
+      syncToMySQL('admins', 'delete', { id });
+      return true;
+    }
+    return false;
   },
 
   // Email Logs

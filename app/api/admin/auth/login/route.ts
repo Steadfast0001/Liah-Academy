@@ -16,34 +16,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = validateAdminCredentials(String(identifier), String(password));
-    if (!isValid) {
+    const admin = validateAdminCredentials(String(identifier), String(password));
+    if (!admin) {
       return NextResponse.json(
         { success: false, message: 'Invalid administrator credentials. Access denied.' },
         { status: 401 }
       );
     }
 
-    const token = generateAdminToken(identifier);
+    const token = generateAdminToken(admin.email, admin.role);
 
     const response = NextResponse.json({
       success: true,
       message: 'Administrator authentication verified.',
       token,
       admin: {
-        email: identifier,
-        role: 'SuperAdmin',
+        email: admin.email,
+        full_name: admin.full_name,
+        role: admin.role,
+        source: admin.source,
         authenticated_at: new Date().toISOString()
       }
     });
 
-    // Set secure HTTP-only cookie
     response.cookies.set('liah_admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      maxAge: 7 * 24 * 60 * 60
     });
 
     return response;

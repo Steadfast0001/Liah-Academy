@@ -163,6 +163,16 @@ export default function AdminDashboardPage() {
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Current Admin Identity
+  const [currentAdmin, setCurrentAdmin] = useState<{ email: string; full_name: string; role: string; source?: string } | null>(null);
+
+  // Admin Team Management States
+  const [adminUsers, setAdminUsers] = useState<{ id: number; full_name: string; email: string; role: string; created_at: string; last_login?: string; is_master?: boolean }[]>([]);
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [newAdminForm, setNewAdminForm] = useState({ full_name: '', email: '', password: '', role: 'Admin' as 'Admin' | 'SuperAdmin' });
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+
+
   const getAuthHeaders = (explicitToken?: string) => {
     const token = explicitToken || (typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '');
     return {
@@ -181,6 +191,18 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.authenticated) {
         setIsAuthenticated(true);
+        // Extract admin identity from stored token (format: email:role:timestamp:hmac in base64)
+        if (storedToken) {
+          try {
+            const decoded = atob(storedToken);
+            const parts = decoded.split(':');
+            if (parts.length >= 4) {
+              setCurrentAdmin({ email: parts[0], full_name: data.admin?.full_name || 'Administrator', role: parts[1] as any, source: 'env' });
+            } else if (parts.length >= 3) {
+              setCurrentAdmin({ email: parts[0], full_name: 'Master Administrator', role: 'SuperAdmin', source: 'env' });
+            }
+          } catch {}
+        }
         loadDashboardData(storedToken || '');
       } else {
         setIsAuthenticated(false);
@@ -214,6 +236,9 @@ export default function AdminDashboardPage() {
           localStorage.setItem('liah_admin_token', data.token);
         }
         setIsAuthenticated(true);
+        if (data.admin) {
+          setCurrentAdmin({ email: data.admin.email, full_name: data.admin.full_name || 'Administrator', role: data.admin.role || 'SuperAdmin', source: data.admin.source });
+        }
         showNotification('Administrator authenticated. Welcome to Master Studio.');
         loadDashboardData(data.token);
       } else {
@@ -243,13 +268,14 @@ export default function AdminDashboardPage() {
     setLoading(true);
     const headers = getAuthHeaders(explicitToken);
     try {
-      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes] = await Promise.all([
+      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes] = await Promise.all([
         fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/inquiries', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/media', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/content', { headers, credentials: 'include' }).then(r => r.json()),
-        fetch('/api/admin/emails', { headers, credentials: 'include' }).then(r => r.json())
+        fetch('/api/admin/emails', { headers, credentials: 'include' }).then(r => r.json()),
+        fetch('/api/admin/admins', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
       ]);
 
       if (statsRes.success) {
@@ -267,6 +293,7 @@ export default function AdminDashboardPage() {
         }
       }
       if (emailsRes.success) setEmailLogs(emailsRes.data || []);
+      if (adminsRes.success) setAdminUsers(adminsRes.data || []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
       showNotification('Failed to load dashboard data. Please refresh.', 'error');
@@ -822,8 +849,65 @@ export default function AdminDashboardPage() {
       showNotification('Error deleting announcement.', 'error');
     }
   };
+  // 6. ADMIN TEAM MANAGEMENT ACTIONS
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminForm.full_name || !newAdminForm.email || !newAdminForm.password) {
+      showNotification('Please fill in all fields for the new administrator.', 'error');
+      return;
+    }
+    setAdminActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/admins', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify(newAdminForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Administrator ${newAdminForm.full_name} added successfully!`);
+        setShowAddAdminModal(false);
+        setNewAdminForm({ full_name: '', email: '', password: '', role: 'Admin' });
+        loadDashboardData();
+      } else {
+        showNotification(data.message || 'Failed to add administrator.', 'error');
+      }
+    } catch {
+      showNotification('Error adding administrator.', 'error');
+    } finally {
+      setAdminActionLoading(false);
+    }
+  };
 
-  // 6. SITE SETTINGS ACTIONS
+  const handleDeleteAdmin = async (adminId: number, adminName: string) => {
+    if (adminId === 0) {
+      showNotification('The master administrator account cannot be deleted.', 'error');
+      return;
+    }
+    if (!confirm(`Are you sure you want to remove administrator "${adminName}"? They will no longer be able to log in.`)) return;
+    setAdminActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/admins?id=${adminId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Administrator ${adminName} has been removed.`);
+        loadDashboardData();
+      } else {
+        showNotification(data.message || 'Failed to remove administrator.', 'error');
+      }
+    } catch {
+      showNotification('Error removing administrator.', 'error');
+    } finally {
+      setAdminActionLoading(false);
+    }
+  };
+
+  // 7. SITE SETTINGS ACTIONS
   const saveAllSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading(true);
@@ -3483,6 +3567,203 @@ export default function AdminDashboardPage() {
                   </table>
                 </div>
               )}
+            </div>
+
+            {/* Admin Team Management Panel */}
+            {currentAdmin?.role === 'SuperAdmin' && (
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', marginTop: '36px', border: '1px solid rgba(15,23,42,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(245,166,35,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Users size={22} color="#F5A623" />
+                    </div>
+                    <div>
+                      <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                        Admin Team Management
+                      </h3>
+                      <p style={{ margin: 0, color: '#64748B', fontSize: '0.84rem' }}>
+                        Add or remove administrators who can help manage the system
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowAddAdminModal(true)}
+                    className="btn btn-primary"
+                    style={{ padding: '10px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Plus size={16} /> Add Administrator
+                  </button>
+                </div>
+
+                {/* Admin Users Table */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 16px' }}>Administrator</th>
+                        <th style={{ padding: '12px 16px' }}>Email</th>
+                        <th style={{ padding: '12px 16px' }}>Role</th>
+                        <th style={{ padding: '12px 16px' }}>Added</th>
+                        <th style={{ padding: '12px 16px' }}>Last Login</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminUsers.map((admin) => (
+                        <tr key={admin.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '12px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{
+                                width: '36px', height: '36px', borderRadius: '50%',
+                                background: admin.is_master ? 'linear-gradient(135deg, #F5A623, #E8930C)' : 'linear-gradient(135deg, #081F3E, #0F2D5E)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#FFFFFF', fontWeight: 800, fontSize: '0.8rem'
+                              }}>
+                                {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <strong style={{ color: '#081F3E' }}>{admin.full_name}</strong>
+                                {admin.is_master && (
+                                  <span style={{ marginLeft: '8px', fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
+                                    Master
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 16px', color: '#64748B' }}>{admin.email}</td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{
+                              fontSize: '0.75rem', padding: '3px 8px', borderRadius: '4px', fontWeight: 700,
+                              background: admin.role === 'SuperAdmin' ? '#FEF3C7' : '#EEF2FF',
+                              color: admin.role === 'SuperAdmin' ? '#B45309' : '#4F46E5'
+                            }}>
+                              {admin.role === 'SuperAdmin' ? '🛡️ SuperAdmin' : '👤 Admin'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
+                            {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
+                            {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                            {admin.is_master ? (
+                              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                                <Lock size={14} /> Protected
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleDeleteAdmin(admin.id, admin.full_name)}
+                                disabled={adminActionLoading}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)',
+                                  borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700,
+                                  display: 'inline-flex', alignItems: 'center', gap: '4px'
+                                }}
+                              >
+                                <Trash2 size={13} /> Remove
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {adminUsers.length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: '24px 16px', textAlign: 'center', color: '#94A3B8' }}>
+                            No administrators found. Click &quot;Add Administrator&quot; to invite team members.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ADD ADMINISTRATOR MODAL */}
+        {showAddAdminModal && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(4, 16, 33, 0.88)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+            }}
+            onClick={() => setShowAddAdminModal(false)}
+          >
+            <div
+              style={{
+                background: '#FFFFFF', borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '90%',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.3)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
+                  <Shield size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+                  Add New Administrator
+                </h3>
+                <button onClick={() => setShowAddAdminModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                  <X size={22} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>Full Name *</label>
+                  <input
+                    type="text" required placeholder="e.g. John Doe"
+                    value={newAdminForm.full_name}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, full_name: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>Email Address *</label>
+                  <input
+                    type="email" required placeholder="e.g. admin@liahacademy.com"
+                    value={newAdminForm.email}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>Password *</label>
+                  <input
+                    type="password" required placeholder="Strong password (min 6 characters)"
+                    value={newAdminForm.password}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.95rem' }}
+                    minLength={6}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>Role</label>
+                  <select
+                    value={newAdminForm.role}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, role: e.target.value as 'Admin' | 'SuperAdmin' })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.95rem', background: '#FFF' }}
+                  >
+                    <option value="Admin">👤 Admin — Can manage applications, payments, inquiries, courses & news</option>
+                    <option value="SuperAdmin">🛡️ SuperAdmin — Full access including admin team management</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <button type="submit" disabled={adminActionLoading} className="btn btn-primary" style={{ flex: 1, padding: '12px 20px', fontWeight: 700 }}>
+                    {adminActionLoading ? 'Adding...' : '✓ Add Administrator'}
+                  </button>
+                  <button type="button" onClick={() => setShowAddAdminModal(false)} className="btn btn-secondary" style={{ padding: '12px 20px', color: '#64748B' }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

@@ -159,3 +159,17 @@ CREATE TABLE IF NOT EXISTS `email_logs` (
   `preview` TEXT,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 10: admins (System Administrators & Access Control)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `admins` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `full_name` VARCHAR(191) NOT NULL,
+  `email` VARCHAR(191) NOT NULL UNIQUE,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('SuperAdmin', 'Admin') DEFAULT 'Admin',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `last_login` DATETIME NULL,
+  INDEX `idx_admins_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
