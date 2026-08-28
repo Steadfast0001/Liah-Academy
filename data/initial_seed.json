@@ -1,0 +1,169 @@
+{
+  "courses": [
+    {
+      "id": 1,
+      "title": "Software Engineering HND",
+      "degree_type": "HND",
+      "program_type": "Software Engineering HND",
+      "study_format": "fulltime",
+      "duration": "2 Years",
+      "tuition_fee": 250000,
+      "description": "Full-stack web and mobile development, distributed cloud computing, DevOps pipelines, algorithm architecture, and enterprise software engineering.",
+      "modules": "Full-Stack Web, Mobile Apps (React Native / Flutter), Algorithms, Cloud DevOps, Enterprise Architecture",
+      "badge": "Highest Demand",
+      "school": "School of Engineering"
+    },
+    {
+      "id": 2,
+      "title": "Cybersecurity & Cloud Defense HND",
+      "degree_type": "HND",
+      "program_type": "Cybersecurity & Cloud Defense HND",
+      "study_format": "fulltime",
+      "duration": "2 Years",
+      "tuition_fee": 250000,
+      "description": "Ethical hacking, threat intelligence, SOC monitoring, penetration testing, cryptography, defensive infrastructure, and hybrid cloud security.",
+      "modules": "Ethical Hacking, Penetration Testing, SOC Operations, Cryptography, Cloud Security, Incident Response",
+      "badge": "High Security",
+      "school": "School of Engineering"
+    },
+    {
+      "id": 3,
+      "title": "Database Management & Systems Administration HND",
+      "degree_type": "HND",
+      "program_type": "Database Management & Systems Administration HND",
+      "study_format": "fulltime",
+      "duration": "2 Years",
+      "tuition_fee": 250000,
+      "description": "Enterprise SQL & NoSQL administration, Linux systems engineering, clustering, disaster recovery, data warehousing, and automated server configuration.",
+      "modules": "SQL & NoSQL Administration, Linux Engineering, Clustering, Disaster Recovery, Automated Server Ops",
+      "badge": "Infrastructure",
+      "school": "School of Engineering"
+    },
+    {
+      "id": 4,
+      "title": "Computer Graphics & Web Design HND",
+      "degree_type": "HND",
+      "program_type": "Computer Graphics & Web Design HND",
+      "study_format": "fulltime",
+      "duration": "2 Years",
+      "tuition_fee": 250000,
+      "description": "Modern UI/UX prototyping, visual brand communication, responsive frontend development, vector illustration, and digital marketing assets.",
+      "modules": "UI/UX Prototyping (Figma), Responsive Web Design, Vector Illustration, Brand Identity, Motion Design",
+      "badge": "Creative Tech",
+      "school": "School of Engineering"
+    },
+    {
+      "id": 5,
+      "title": "Network & Telecommunications Systems HND",
+      "degree_type": "HND",
+      "program_type": "Network & Telecommunications Systems HND",
+      "study_format": "fulltime",
+      "duration": "2 Years",
+      "tuition_fee": 250000,
+      "description": "Routing and switching infrastructure (Cisco/CCNA track), fiber optic cabling, wireless communication systems, VoIP, and enterprise LAN/WAN architecture.",
+      "modules": "Cisco Routing & Switching, Fiber Optics, Wireless Telecom, VoIP Infrastructure, LAN/WAN Architecture",
+      "badge": "Connectivity",
+      "school": "School of Engineering"
+    },
+    {
+      "id": 6,
+      "title": "Full-Stack Web Development Professional Certification",
+      "degree_type": "Certification",
+      "program_type": "Full-Stack Web Development Professional Certification",
+      "study_format": "fulltime",
+      "duration": "6 Months",
+      "tuition_fee": 150000,
+      "description": "Intensive 6-month hands-on career accelerator covering React, Next.js, Node.js, REST APIs, SQL databases, and cloud deployment.",
+      "modules": "JavaScript ES6+, React, Next.js, Node.js, Express, PostgreSQL, Git Workflow, CI/CD",
+      "badge": "Accelerated",
+      "school": "Professional Certifications"
+    },
+    {
+      "id": 7,
+      "title": "Cybersecurity Analyst & SOC Operations Certification",
+      "degree_type": "Certification",
+      "program_type": "Cybersecurity Analyst & SOC Operations Certification",
+      "study_format": "fulltime",
+      "duration": "6 Months",
+      "tuition_fee": 150000,
+      "description": "Hands-on defensive security operations, threat detection with SIEM tools, network log forensics, vulnerability scanning, and incident triage.",
+      "modules": "SIEM Tooling, Network Log Forensics, Wireshark, Vulnerability Management, Security Operations",
+      "badge": "Job Ready",
+      "school": "Professional Certifications"
+    }
+  ],
+  "news": [
+    {
+      "id": 1,
+      "title": "Fall 2026 / Spring 2027 Admissions Officially Open",
+      "category": "Admissions",
+      "date": "August 2026",
+      "image": "/assets/images/flyer_engineering.png",
+      "excerpt": "Applications are now open for HND Engineering and Professional Certification programs at Liah Academy Buea campus.",
+      "content": "Liah Academy invites ambitious students and tech enthusiasts to apply for our specialized HND cohorts in Software Engineering, Cybersecurity, and Network Systems."
+    },
+    {
+      "id": 2,
+      "title": "New High-Performance Computing & Cloud Defense Lab Unveiled",
+      "category": "Campus Life",
+      "date": "August 2026",
+      "image": "/assets/images/flyer_certification.png",
+      "excerpt": "State-of-the-art gigabit fiber-connected lab equipped with enterprise workstations now live for practical sessions.",
+      "content": "Our Buea campus has expanded its laboratory infrastructure with high-speed fiber connectivity, dedicated virtualization servers, and modern development workstations."
+    }
+  ],
+  "media": [
+    {
+      "id": 1,
+      "title": "Liah Academy Official Logo",
+      "type": "image",
+      "src": "/assets/images/logo.png",
+      "category": "Brand Assets",
+      "size": "180 KB"
+    },
+    {
+      "id": 2,
+      "title": "Engineering & Computing Programs Flyer",
+      "type": "image",
+      "src": "/assets/images/flyer_engineering.png",
+      "category": "Promotional",
+      "size": "980 KB"
+    },
+    {
+      "id": 3,
+      "title": "Professional Tech Certifications Flyer",
+      "type": "image",
+      "src": "/assets/images/flyer_certification.png",
+      "category": "Promotional",
+      "size": "970 KB"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "name": "Tabi Emmanuel",
+      "role": "Software Engineering HND Graduate",
+      "rating": 5,
+      "comment": "The practical focus at Liah Academy gave me real production-ready skills. I landed a remote engineering role right after graduation!"
+    },
+    {
+      "id": 2,
+      "name": "Enow Mirabelle",
+      "role": "Cybersecurity Analyst",
+      "rating": 5,
+      "comment": "Hands-on SOC training with real enterprise tools set Liah Academy apart from traditional universities. Highly recommended."
+    }
+  ],
+  "settings": {
+    "id": 1,
+    "admin_email": "info@liahacademy.com",
+    "site_title": "Liah Academy of Technology and Management",
+    "contact_phone": "+237 670 265 493",
+    "address": "Buea, South West Region, Cameroon",
+    "admissions_open": true,
+    "tiktok_url": "https://www.tiktok.com/@liahacademy",
+    "maps_url": "https://maps.google.com/?q=Liah+Academy+Buea",
+    "facebook_url": "https://facebook.com/liahacademy",
+    "instagram_url": "https://instagram.com/liahacademy"
+  }
+}
