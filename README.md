@@ -106,70 +106,63 @@ Combining intensive hands-on lab practicals with corporate software engineering 
 
 ---
 
-## 🚀 Quick Start & Installation
+## 🚀 Quick Start & Installation Guide
+
+Anyone cloning the repository can get the application fully running in less than 2 minutes:
 
 ### Prerequisites
 - **Node.js** v18.17+ or v20+
-- **npm** or **pnpm**
-- **MySQL / MariaDB** (Optional: the system automatically operates with atomic JSON fallback if MySQL is offline)
+- **npm**, **yarn**, or **pnpm**
+- **MySQL 8.0+ / MariaDB** (Optional: the system automatically operates with zero-config atomic storage if MySQL is offline)
 
-### 1. Clone the Repository
+---
+
+### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/Steadfast0001/Liah-Academy.git
-cd "Liah Academy"
+cd Liah-Academy
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Setup Environment Variables
-Create `.env.local` or configure `.env`:
-```env
-PORT=3000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Institutional Identity
-INSTITUTION_NAME="Liah Academy"
-INSTITUTION_EMAIL=info@liahacademy.com
-INSTITUTION_PHONE="+237 652 154 095"
-
-# Administrator Security PIN
-ADMIN_PIN=2024
-
-# MySQL Database Configuration
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASS=
-DB_NAME=liah_db
-
-# Campay Mobile Money Gateway
-CAMPAY_ENV=demo
-CAMPAY_APP_ID=your_app_id
-CAMPAY_USERNAME=your_username
-CAMPAY_PASSWORD=your_password
-CAMPAY_PERMANENT_ACCESS_TOKEN=your_token
-CAMPAY_WEBHOOK_KEY=your_webhook_key
+### Step 3: Run Automated Environment & Database Setup
+```bash
+npm run setup
 ```
+> *This automatically generates your `.env.local` configuration from `.env.example` and initializes the local data store with default courses, news, media, and demo accounts.*
 
-### 4. Run Development Server
+### Step 4: (Optional) MySQL Database Setup
+If using MySQL / phpMyAdmin:
+1. Create database: `liah_db`
+2. Import the schema: [`data/schema.sql`](./data/schema.sql)
+3. Ensure `MYSQL_HOST`, `MYSQL_USER`, and `MYSQL_PASSWORD` are set in `.env.local`.
+
+### Step 5: Launch the Application
+
+**Development Server**:
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Production Build & Start
+**Production Build**:
 ```bash
 npm run build
 npm run start
 ```
 
-### 6. Run System Diagnostic Check
-```bash
-node scratch/comprehensive_system_check.js
-```
+---
+
+## 🔑 Default Platform Credentials
+
+| Portal | Access URL | Default Identifier | Default Password | Permissions |
+| :--- | :--- | :--- | :--- | :--- |
+| **🛡️ Master Admin Portal** | [`/admin`](http://localhost:3000/admin) | `info@liahacademy.com` | `LiahAdmin2026!#` | SuperAdmin (Dossiers, Bulk Deletes, Payment Proof Review, Settings) |
+| **🎓 Student Portal** | [`/admissions`](http://localhost:3000/admissions) | `student@liahacademy.com` | `Student2026!#` | Student Dashboard (Status, MoMo Payment Directives, Receipt Upload) |
+| **🗄️ MySQL Database** | `localhost:3306` | `root` | *(None / Blank)* | Full Database Access (`liah_db`) |
 
 ---
 
