@@ -1287,6 +1287,15 @@ export const db = {
           return { lastInsertRowid: newId, changes: 1 };
         }
 
+        if (q.includes('DELETE FROM STUDENTS')) {
+          const [id] = params;
+          const initialLen = store.students.length;
+          store.students = store.students.filter(s => s.id !== parseInt(String(id)));
+          writeDb(store, true);
+          syncToMySQL('students', 'delete', { id });
+          return { lastInsertRowid: 0, changes: initialLen - store.students.length };
+        }
+
         return { lastInsertRowid: 0, changes: 0 };
       }
     };
