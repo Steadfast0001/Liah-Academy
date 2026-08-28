@@ -1510,7 +1510,7 @@ export default function AdminDashboardPage() {
                   {applications.filter(a => a.payment_status === 'Paid').length}
                 </h2>
                 <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 700 }}>
-                  {(applications.filter(a => a.payment_status === 'Paid').length * 50000).toLocaleString()} XAF cleared
+                  {(applications.filter(a => a.payment_status === 'Paid').length * 10000).toLocaleString()} XAF cleared
                 </span>
               </div>
 
@@ -2103,79 +2103,85 @@ export default function AdminDashboardPage() {
                             {/* Submitted Enrolment Documents */}
                             <td style={{ padding: '16px 16px' }}>
                               {docCount > 0 ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                                  <span style={{ 
-                                    background: '#ECFDF5', 
-                                    color: '#059669', 
-                                    padding: '3px 8px', 
-                                    borderRadius: '4px', 
-                                    fontSize: '0.76rem', 
-                                    fontWeight: 700,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                  }}>
-                                    <FileCheck size={12} /> {docCount} Credential(s)
-                                  </span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedApp(app)}
+                                    style={{
+                                      background: '#ECFDF5',
+                                      color: '#059669',
+                                      border: '1px solid #A7F3D0',
+                                      padding: '4px 10px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 800,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Open and inspect all submitted credentials for this applicant"
+                                  >
+                                    <FileCheck size={13} /> {docCount} Credential{docCount > 1 ? 's' : ''} Attached
+                                  </button>
 
-                                  {app.documents && app.documents.length > 0 ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const firstDoc = app.documents?.[0];
-                                        if (firstDoc) {
-                                          setPreviewDocItem({
-                                            title: firstDoc.label || 'Enrolment Credential',
-                                            url: firstDoc.url || firstDoc.fileName || '',
-                                            fileName: firstDoc.fileName || 'document.pdf',
+                                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                    {app.documents && app.documents.length > 0 ? (
+                                      app.documents.map((doc, dIdx) => (
+                                        <button
+                                          key={dIdx}
+                                          type="button"
+                                          onClick={() => setPreviewDocItem({
+                                            title: doc.label || `Credential #${dIdx + 1}`,
+                                            url: doc.url || doc.fileName || '',
+                                            fileName: doc.fileName || 'document.pdf',
                                             studentName: app.full_name
-                                          });
-                                        }
-                                      }}
-                                      style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: '#2563EB',
-                                        fontSize: '0.74rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        padding: 0,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '3px',
-                                        textDecoration: 'underline'
-                                      }}
-                                    >
-                                      <Eye size={12} /> Inspect Files
-                                    </button>
-                                  ) : app.document_url ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setPreviewDocItem({
+                                          })}
+                                          style={{
+                                            background: '#F1F5F9',
+                                            border: '1px solid #CBD5E1',
+                                            color: '#1E293B',
+                                            fontSize: '0.72rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '3px'
+                                          }}
+                                          title={`Preview ${doc.label || doc.fileName}`}
+                                        >
+                                          <Eye size={11} color="#2563EB" /> {doc.label?.split(' ')[0] || `Doc ${dIdx + 1}`}
+                                        </button>
+                                      ))
+                                    ) : app.document_url ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPreviewDocItem({
                                           title: 'Enrolment Credential',
                                           url: app.document_url || '',
                                           fileName: app.document_url || 'document.pdf',
                                           studentName: app.full_name
-                                        });
-                                      }}
-                                      style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: '#2563EB',
-                                        fontSize: '0.74rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        padding: 0,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '3px',
-                                        textDecoration: 'underline'
-                                      }}
-                                    >
-                                      <Eye size={12} /> View File
-                                    </button>
-                                  ) : null}
+                                        })}
+                                        style={{
+                                          background: '#F1F5F9',
+                                          border: '1px solid #CBD5E1',
+                                          color: '#1E293B',
+                                          fontSize: '0.72rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          padding: '2px 6px',
+                                          borderRadius: '4px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}
+                                      >
+                                        <Eye size={11} color="#2563EB" /> View Document
+                                      </button>
+                                    ) : null}
+                                  </div>
                                 </div>
                               ) : (
                                 <span style={{ color: '#94A3B8', fontSize: '0.78rem', fontStyle: 'italic' }}>
@@ -2234,7 +2240,7 @@ export default function AdminDashboardPage() {
                                   {app.payment_status === 'Paid' ? (
                                     <>
                                       <CheckCircle size={13} color="#059669" />
-                                      <span>✓ Paid ({(app.payment_amount || 50000).toLocaleString()} XAF)</span>
+                                      <span>✓ Paid ({(app.payment_amount || 10000).toLocaleString()} XAF)</span>
                                     </>
                                   ) : (app.payment_status === 'Pending Verification' || app.payment_proof_url) ? (
                                     <>
@@ -2477,7 +2483,7 @@ export default function AdminDashboardPage() {
                         borderRadius: '4px',
                         border: selectedApp.payment_status === 'Paid' ? '1px solid #A7F3D0' : selectedApp.payment_status === 'Pending Verification' ? '1px solid #BFDBFE' : '1px solid #FDE68A'
                       }}>
-                        {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || 50000).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
+                        {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || 10000).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
                       </span>
                     </div>
                   </div>
@@ -2547,7 +2553,7 @@ export default function AdminDashboardPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', marginBottom: '12px' }}>
                           <div>
                             <span style={{ color: '#64748B' }}>Amount:</span>
-                            <strong style={{ display: 'block', color: '#081F3E' }}>{(selectedApp.payment_amount || 50000).toLocaleString()} XAF</strong>
+                            <strong style={{ display: 'block', color: '#081F3E' }}>{(selectedApp.payment_amount || 10000).toLocaleString()} XAF</strong>
                           </div>
                           <div>
                             <span style={{ color: '#64748B' }}>Transaction ID:</span>
@@ -3887,7 +3893,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Claimed Amount</span>
                   <strong style={{ color: '#081F3E', fontSize: '1.05rem' }}>
-                    {(previewProofItem.payment_amount || 50000).toLocaleString()} XAF
+                    {(previewProofItem.payment_amount || 10000).toLocaleString()} XAF
                   </strong>
                 </div>
 
@@ -3945,7 +3951,7 @@ export default function AdminDashboardPage() {
                   className="btn btn-primary"
                   style={{ flex: 1.8, background: '#10B981', borderColor: '#10B981', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 800 }}
                 >
-                  <CheckCircle size={16} /> Approve Payment (50k)
+                  <CheckCircle size={16} /> Approve Reg Fee (10k)
                 </button>
               </div>
 

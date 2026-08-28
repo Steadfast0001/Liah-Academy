@@ -123,7 +123,7 @@ function AdmissionsContent() {
   // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
   const [payMethod, setPayMethod] = useState<'MTN' | 'ORANGE'>('MTN');
-  const [payAmountOption, setPayAmountOption] = useState<number | 'custom'>(50000);
+  const [payAmountOption, setPayAmountOption] = useState<number>(10000);
   const [payCustomAmount, setPayCustomAmount] = useState<string>('');
   const [paySenderPhone, setPaySenderPhone] = useState<string>('');
   const [payTransactionId, setPayTransactionId] = useState<string>('');
@@ -193,14 +193,20 @@ function AdmissionsContent() {
         ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
         : Math.round(file.size / 1024) + ' KB';
       
-      setUploadedDocs(prev => ({
-        ...prev,
-        [slotId]: {
-          fileName: file.name,
-          size: sizeStr,
-          label
-        }
-      }));
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const dataUrl = uploadEvent.target?.result as string;
+        setUploadedDocs(prev => ({
+          ...prev,
+          [slotId]: {
+            fileName: file.name,
+            size: sizeStr,
+            label,
+            url: dataUrl
+          }
+        }));
+      };
+      reader.readAsDataURL(file);
       setRegError('');
     }
   };
@@ -233,7 +239,7 @@ function AdmissionsContent() {
       label: info.label,
       fileName: info.fileName,
       size: info.size,
-      url: `/uploads/${info.fileName}`
+      url: (info as any).url || `/uploads/${info.fileName}`
     }));
 
     try {
@@ -320,9 +326,7 @@ function AdmissionsContent() {
     setPayLoading(true);
     setPayError('');
 
-    const effectiveAmount = payAmountOption === 'custom' 
-      ? parseInt(payCustomAmount, 10) 
-      : payAmountOption;
+    const effectiveAmount = payAmountOption || 10000;
 
     if (!effectiveAmount || isNaN(effectiveAmount) || effectiveAmount <= 0) {
       setPayError('Please enter or select a valid payment amount.');
@@ -1255,98 +1259,26 @@ function AdmissionsContent() {
                     </div>
                   </div>
 
-                  {/* 1. Payment Amount Preset Selection */}
-                  <div style={{ marginBottom: '18px' }}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '8px' }}>
-                      Select Payment Item / Amount:
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption(10000)}
-                        style={{
-                          background: payAmountOption === 10000 ? '#081F3E' : '#F8FAFC',
-                          color: payAmountOption === 10000 ? '#FFFFFF' : '#081F3E',
-                          border: payAmountOption === 10000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        10,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Application Fee</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption(50000)}
-                        style={{
-                          background: payAmountOption === 50000 ? '#081F3E' : '#F8FAFC',
-                          color: payAmountOption === 50000 ? '#FFFFFF' : '#081F3E',
-                          border: payAmountOption === 50000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        50,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Seat Deposit</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption(125000)}
-                        style={{
-                          background: payAmountOption === 125000 ? '#081F3E' : '#F8FAFC',
-                          color: payAmountOption === 125000 ? '#FFFFFF' : '#081F3E',
-                          border: payAmountOption === 125000 ? '2px solid #081F3E' : '1px solid #E2E8F0',
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        125,000 XAF <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>HND Semester 1</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption('custom')}
-                        style={{
-                          background: payAmountOption === 'custom' ? '#081F3E' : '#F8FAFC',
-                          color: payAmountOption === 'custom' ? '#FFFFFF' : '#081F3E',
-                          border: payAmountOption === 'custom' ? '2px solid #081F3E' : '1px solid #E2E8F0',
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        Custom Amount <span style={{ display: 'block', fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>Enter other amount</span>
-                      </button>
-                    </div>
-
-                    {payAmountOption === 'custom' && (
-                      <div style={{ marginTop: '10px' }}>
-                        <input
-                          type="number"
-                          placeholder="e.g. 75000"
-                          value={payCustomAmount}
-                          onChange={(e) => setPayCustomAmount(e.target.value)}
-                          className="form-input-light"
-                          style={{ width: '100%', padding: '10px 14px' }}
-                          required
-                        />
+                  {/* 1. Fixed Official Registration Fee Card */}
+                  <div style={{ marginBottom: '18px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px' }}>
+                          Official Enrolment Fee
+                        </span>
+                        <h4 style={{ margin: '4px 0 0 0', color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
+                          10,000 XAF
+                        </h4>
                       </div>
-                    )}
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600, display: 'block' }}>Payment Method</span>
+                        <strong style={{ color: '#081F3E', fontSize: '0.85rem' }}>MTN MoMo / Orange Money</strong>
+                      </div>
+                    </div>
+                    
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5, marginTop: '8px' }}>
+                      📌 <strong>Important Notice:</strong> Online payment is strictly <strong>10,000 XAF</strong> for your official Application &amp; Registration. All remaining tuition fees and installments are to be paid physically at the <strong>Academy Secretary&apos;s Office in Buea</strong> upon admission confirmation.
+                    </div>
                   </div>
 
                   {/* 2. Directives Tab Switcher (MTN vs Orange) */}
@@ -1416,8 +1348,8 @@ function AdmissionsContent() {
                           <li>Dial <strong>*126#</strong> on your mobile phone.</li>
                           <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To MTN number)</strong>.</li>
                           <li>Enter recipient number: <strong>670265493</strong>.</li>
-                          <li>Enter amount: <strong>{(payAmountOption === 'custom' ? payCustomAmount : payAmountOption) || 50000} XAF</strong>.</li>
-                          <li>Enter reason / reference: <strong>LIAH-{student?.id || 'ID'}</strong>.</li>
+                          <li>Enter amount: <strong>10,000 XAF</strong>.</li>
+                          <li>Enter reason / reference: <strong>Reg #{student?.id || 'ID'}</strong>.</li>
                           <li>Enter your <strong>MoMo PIN</strong> to authorize the transfer.</li>
                         </ol>
                       ) : (
@@ -1425,7 +1357,7 @@ function AdmissionsContent() {
                           <li>Dial <strong>#150#</strong> on your mobile phone.</li>
                           <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To Orange number)</strong>.</li>
                           <li>Enter recipient number: <strong>670265493</strong>.</li>
-                          <li>Enter amount: <strong>{(payAmountOption === 'custom' ? payCustomAmount : payAmountOption) || 50000} XAF</strong>.</li>
+                          <li>Enter amount: <strong>10,000 XAF</strong>.</li>
                           <li>Enter your <strong>Orange Money PIN</strong> to authorize the transfer.</li>
                         </ol>
                       )}
