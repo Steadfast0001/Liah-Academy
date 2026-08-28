@@ -11,6 +11,7 @@ import {
   ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
   Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck
 } from 'lucide-react';
+import { exportApplicantsToCSVString } from '@/lib/csv';
 
 interface Application {
   id: number;
@@ -583,29 +584,32 @@ export default function AdminDashboardPage() {
       showNotification('No applications to export.', 'error');
       return;
     }
-    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Degree Level', 'Program Track', 'Study Format', 'Admission Status', 'Payment Status', 'Date'];
-    const rows = applications.map(a => [
-      a.id,
-      `"${a.full_name.replace(/"/g, '""')}"`,
-      `"${a.email}"`,
-      `"${a.phone || ''}"`,
-      `"${a.degree_type}"`,
-      `"${a.program_type}"`,
-      `"${a.study_format}"`,
-      `"${a.admission_status}"`,
-      `"${a.payment_status}"`,
-      `"${new Date(a.created_at).toLocaleString()}"`
-    ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const rawRecords = applications.map(a => ({
+      id: a.id,
+      matricule: a.matricule,
+      fullName: a.full_name,
+      email: a.email,
+      phone: a.phone || '',
+      degreeLevel: a.degree_type,
+      programTrack: a.program_type,
+      studyFormat: a.study_format,
+      admissionStatus: a.admission_status,
+      paymentStatus: a.payment_status,
+      createdAt: a.created_at
+    }));
+
+    const csvData = exportApplicantsToCSVString(rawRecords);
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `liah_academy_applicants_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    link.download = `liah_academy_applicants_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showNotification('Applicants exported to CSV successfully!');
+    URL.revokeObjectURL(url);
+    showNotification('Sanitized applicants exported to CSV successfully!');
   };
 
   // 2. INQUIRY ACTIONS
