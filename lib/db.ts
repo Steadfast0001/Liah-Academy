@@ -226,6 +226,7 @@ export interface DocumentItem {
 
 export interface Student {
   id: number;
+  matricule?: string;
   full_name: string;
   email: string;
   password: string;
@@ -371,6 +372,56 @@ export interface Schema {
     last_updated: string;
     total_writes: number;
   };
+}
+
+// Matricule Generation Utilities
+export function getProgramCode(programType: string): string {
+  const p = (programType || '').toUpperCase();
+  if (p.includes('SOFTWARE') || p.includes('SE')) return 'SW';
+  if (p.includes('CYBER') || p.includes('SECURITY') || p.includes('DEFENSE')) return 'CS';
+  if (p.includes('NETWORK') && p.includes('MAINTENANCE')) return 'NM';
+  if (p.includes('NETWORK') || p.includes('SCIENCE AND NETWORKING')) return 'CN';
+  if (p.includes('WEB') && p.includes('GRAPHIC')) return 'WG';
+  if (p.includes('WEB')) return 'WD';
+  if (p.includes('DIGITAL') || p.includes('MARKETING') || p.includes('COMMERCE')) return 'DM';
+  if (p.includes('ACCOUNT')) return 'CA';
+  if (p.includes('DATA')) return 'DS';
+  if (p.includes('DEVOPS')) return 'DO';
+  if (p.includes('DATABASE') || p.includes('DBA')) return 'DB';
+  if (p.includes('INFO') || p.includes('COMMUNICATION')) return 'IT';
+  if (p.includes('COMPUTER ENG') || p.includes('ENGINEERING ND')) return 'CE';
+  if (p.includes('GRAPHIC') || p.includes('PRINTING')) return 'GD';
+  if (p.includes('BASIC')) return 'BC';
+  return 'SW';
+}
+
+export function getDegreePrefix(degreeType: string): string {
+  const d = (degreeType || '').toUpperCase();
+  if (d.includes('HND')) return 'HND';
+  if (d.includes('ND')) return 'ND';
+  if (d.includes('CERT') || d.includes('PROF') || d.includes('PC')) return 'PC';
+  return 'HND';
+}
+
+export function generateMatricule(degreeType: string, programType: string, existingStudents: Student[] = [], createdAtDate?: string): string {
+  const degreePrefix = getDegreePrefix(degreeType);
+  const progCode = getProgramCode(programType);
+  const dateObj = createdAtDate ? new Date(createdAtDate) : new Date();
+  const yearStr = String(dateObj.getFullYear()).slice(-2) || '26';
+
+  const prefixPattern = `${degreePrefix}${yearStr}${progCode}`;
+  
+  const matchingCount = existingStudents.filter(s => {
+    if (s.matricule && s.matricule.startsWith(prefixPattern)) return true;
+    const sDegree = getDegreePrefix(s.degree_type);
+    const sProg = getProgramCode(s.program_type);
+    const sYear = String(new Date(s.created_at || Date.now()).getFullYear()).slice(-2);
+    return `${sDegree}${sYear}${sProg}` === prefixPattern;
+  }).length;
+
+  const nextSeq = matchingCount + 1;
+  const seqStr = String(nextSeq).padStart(3, '0');
+  return `${prefixPattern}${seqStr}`;
 }
 
 // 4. CANONICAL INITIAL DATA
@@ -616,7 +667,12 @@ export function readDb(): Schema {
       modified = true;
     }
 
-    parsed.students.forEach(s => {
+    parsed.students.forEach((s, idx) => {
+      if (!s.matricule) {
+        const priorStudents = parsed.students.slice(0, idx);
+        s.matricule = generateMatricule(s.degree_type || 'HND', s.program_type || 'Software Engineering HND', priorStudents, s.created_at);
+        modified = true;
+      }
       if (!s.documents || s.documents.length === 0) {
         if (s.document_url && s.document_url.startsWith('[')) {
           try {
@@ -1276,8 +1332,11 @@ export const db = {
             parsedDocs = [{ slotId: 'doc_primary', label: 'Uploaded Credential', fileName: document_url, url: document_url }];
           }
 
+          const matricule = generateMatricule(degree_type || 'HND', program_type || 'Software Engineering HND', store.students);
+
           const newStudent: Student = {
             id: newId,
+            matricule,
             full_name,
             email: (email || '').toLowerCase().trim(),
             password,

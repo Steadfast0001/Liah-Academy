@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     }
 
     const student = db.prepare(`
-      SELECT id, full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
+      SELECT id, matricule, full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
       FROM students
       WHERE LOWER(email) = ?
     `).get(cleanEmail) as any;
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       data: safeStudent,
+      student: safeStudent,
       message: 'Authentication successful. Welcome to your Student Portal!'
     });
   } catch (error: any) {

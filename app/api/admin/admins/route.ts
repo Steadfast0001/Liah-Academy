@@ -154,6 +154,15 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // Prevent deleting your own active account
+    const targetAdmin = adminStore.getAdmins().find(a => a.id === Number(id));
+    if (targetAdmin && caller.email && targetAdmin.email.toLowerCase() === caller.email.toLowerCase()) {
+      return NextResponse.json(
+        { success: false, message: 'You cannot delete your own active administrator account.' },
+        { status: 400 }
+      );
+    }
+
     const deleted = adminStore.deleteAdmin(Number(id));
     if (!deleted) {
       return NextResponse.json({ success: false, message: 'Admin not found.' }, { status: 404 });

@@ -14,6 +14,7 @@ import {
 
 interface Application {
   id: number;
+  matricule?: string;
   full_name: string;
   email: string;
   phone: string;
@@ -885,6 +886,11 @@ export default function AdminDashboardPage() {
       showNotification('The master administrator account cannot be deleted.', 'error');
       return;
     }
+    const target = adminUsers.find(a => a.id === adminId);
+    if (target && target.email.toLowerCase() === (currentAdmin?.email || '').toLowerCase()) {
+      showNotification('You cannot delete your own active administrator account.', 'error');
+      return;
+    }
     if (!confirm(`Are you sure you want to remove administrator "${adminName}"? They will no longer be able to log in.`)) return;
     setAdminActionLoading(true);
     try {
@@ -1645,7 +1651,9 @@ export default function AdminDashboardPage() {
                       >
                         <div>
                           <div style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.95rem' }}>{app.full_name}</div>
-                          <div style={{ fontSize: '0.82rem', color: '#64748B' }}>{app.program_type} &bull; #{app.id}</div>
+                          <div style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                            {app.program_type} &bull; <strong style={{ color: '#081F3E', fontFamily: 'var(--font-mono)' }}>{app.matricule || `#${app.id}`}</strong>
+                          </div>
                         </div>
                         <span style={{ 
                           fontSize: '0.75rem',
@@ -2126,8 +2134,8 @@ export default function AdminDashboardPage() {
                               <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
                                 {app.email} &bull; {app.phone || 'No phone'}
                               </div>
-                              <span style={{ fontSize: '0.72rem', color: '#B45309', fontFamily: 'var(--font-mono)' }}>
-                                #{app.id}
+                              <span style={{ fontSize: '0.75rem', background: '#F1F5F9', color: '#081F3E', fontFamily: 'var(--font-mono)', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '2px' }}>
+                                {app.matricule || `HND26SW${String(app.id).padStart(3, '0')}`}
                               </span>
                             </td>
 
@@ -2464,9 +2472,14 @@ export default function AdminDashboardPage() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div>
-                      <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
-                        APPLICATION DOSSIER #{selectedApp.id}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', background: '#081F3E', color: '#F5A623', padding: '3px 8px', borderRadius: '4px', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+                          MATRICULE: {selectedApp.matricule || `HND26SW${String(selectedApp.id).padStart(3, '0')}`}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                          ID #{selectedApp.id}
+                        </span>
+                      </div>
                       <h2 style={{ color: '#081F3E', margin: '6px 0 0 0', fontSize: '1.4rem' }}>
                         {selectedApp.full_name}
                       </h2>
@@ -3698,6 +3711,10 @@ export default function AdminDashboardPage() {
                             <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
                               <Lock size={14} /> Protected Master
                             </span>
+                          ) : admin.email.toLowerCase() === (currentAdmin?.email || '').toLowerCase() ? (
+                            <span style={{ fontSize: '0.75rem', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                              <Lock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Active (You)
+                            </span>
                           ) : (
                             <button
                               onClick={() => handleDeleteAdmin(admin.id, admin.full_name)}
@@ -3813,6 +3830,10 @@ export default function AdminDashboardPage() {
                           {admin.is_master ? (
                             <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>
                               <Lock size={14} /> Protected Master
+                            </span>
+                          ) : admin.email.toLowerCase() === (currentAdmin?.email || '').toLowerCase() ? (
+                            <span style={{ fontSize: '0.75rem', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                              <Lock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Active (You)
                             </span>
                           ) : (
                             <button

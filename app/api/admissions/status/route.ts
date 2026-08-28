@@ -19,14 +19,14 @@ export async function GET(request: Request) {
     let student: any;
     if (id) {
       student = db.prepare(`
-        SELECT id, full_name, email, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
+        SELECT id, matricule, full_name, email, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
         FROM students
         WHERE id = ?
       `).get(parseInt(id));
     } else if (email) {
       const cleanEmail = email.toLowerCase().trim();
       student = db.prepare(`
-        SELECT id, full_name, email, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
+        SELECT id, matricule, full_name, email, phone, degree_type, program_type, study_format, document_url, documents, payment_status, payment_amount, payment_proof_url, payment_transaction_id, admission_status, created_at
         FROM students
         WHERE LOWER(email) = ?
       `).get(cleanEmail);

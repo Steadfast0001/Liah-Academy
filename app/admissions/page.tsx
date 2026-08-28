@@ -8,7 +8,7 @@ import {
   CheckCircle, FileText, Lock, ArrowRight, ArrowLeft, 
   LogIn, UserPlus, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
   UploadCloud, FileCheck, Trash2, Paperclip, Smartphone, Loader2, Copy, Image as ImageIcon,
-  Clock
+  Clock, Printer, Award, Building, Mail, MapPin
 } from 'lucide-react';
 
 interface DocRequirement {
@@ -25,67 +25,74 @@ const docRequirementsByDegree: Record<string, DocRequirement[]> = {
       id: 'gce_al',
       label: 'GCE Advanced Level Certificate / Results Slip',
       required: true,
-      hint: 'Scanned original GCE A-Level slip showing minimum of 2 papers passed.',
+      hint: 'At least 2 A-Level passes (excluding Religious Knowledge)',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'gce_ol',
-      label: 'GCE Ordinary Level Certificate',
+      label: 'GCE Ordinary Level Certificate / Slip',
       required: true,
-      hint: 'Scanned GCE O-Level slip with at least 4 passes including English & Mathematics.',
+      hint: 'At least 4 O-Level passes including English & Mathematics',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'birth_cert',
-      label: 'Birth Certificate Copy',
+      label: 'Certified Birth Certificate',
       required: true,
-      hint: 'Clear photocopy or scan of official municipal birth certificate.',
+      hint: 'Clear official copy with administrative stamp',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'id_card',
-      label: 'National Identity Card (CNI) or Passport',
+      label: 'National Identity Card or Valid Passport',
+      required: true,
+      hint: 'Front and back scan / photo',
+      accept: '.pdf,.png,.jpg,.jpeg'
+    },
+    {
+      id: 'academic_transcript',
+      label: 'High School Transcript / Term Reports',
       required: false,
-      hint: 'Valid national ID card or passport data page.',
+      hint: 'Optional but recommended for scholarship consideration',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
   ],
   ND: [
     {
       id: 'gce_ol',
-      label: 'GCE Ordinary Level / CAP / Probatoire Certificate',
+      label: 'GCE Ordinary Level Certificate / Results Slip',
       required: true,
-      hint: 'Scanned GCE O-Level or technical equivalent certificate.',
+      hint: 'At least 3 O-Level passes or equivalent Technical CAP certificate',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'birth_cert',
-      label: 'Birth Certificate Copy',
+      label: 'Certified Birth Certificate',
       required: true,
-      hint: 'Clear photocopy or scan of official municipal birth certificate.',
+      hint: 'Clear copy with administrative stamp',
       accept: '.pdf,.png,.jpg,.jpeg'
     },
     {
       id: 'id_card',
-      label: 'National Identity Card (CNI) or School ID',
-      required: false,
-      hint: 'Valid ID card or academic badge.',
+      label: 'National ID Card or Student ID',
+      required: true,
+      hint: 'Front & back scan',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
   ],
   Certification: [
     {
-      id: 'highest_cert',
-      label: 'Highest Academic / Professional Credential',
-      required: true,
-      hint: 'GCE A/L, HND, BSc, or relevant work certificate.',
-      accept: '.pdf,.png,.jpg,.jpeg'
-    },
-    {
       id: 'id_card',
       label: 'National ID Card or Passport',
       required: true,
-      hint: 'Valid identification document.',
+      hint: 'Valid government-issued photo identification',
+      accept: '.pdf,.png,.jpg,.jpeg'
+    },
+    {
+      id: 'highest_diploma',
+      label: 'Highest Academic Certificate or CV',
+      required: false,
+      hint: 'O-Level, A-Level, Degree, or professional portfolio',
       accept: '.pdf,.png,.jpg,.jpeg'
     }
   ]
@@ -120,6 +127,7 @@ function AdmissionsContent() {
 
   // Logged in Student Session State
   const [student, setStudent] = useState<any>(null);
+  const [showAdmissionLetterModal, setShowAdmissionLetterModal] = useState(false);
 
   // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
@@ -675,9 +683,9 @@ function AdmissionsContent() {
               {/* Status Row */}
               <div className="grid-3" style={{ marginBottom: '30px' }}>
                 <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Application ID</span>
-                  <strong style={{ color: '#081F3E', fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>
-                    #LIAH-{student.id}
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Student Matricule</span>
+                  <strong style={{ color: '#081F3E', fontFamily: 'var(--font-mono)', fontSize: '1.15rem', letterSpacing: '0.04em' }}>
+                    {student.matricule || `HND26SW${String(student.id).padStart(3, '0')}`}
                   </strong>
                 </div>
 
@@ -766,9 +774,21 @@ function AdmissionsContent() {
                     {student.payment_status === 'Pending Verification' ? 'Upload Updated Payment Proof' : 'Pay via Mobile Money (670265493)'}
                   </button>
                 )}
-                <a href="/assets/images/flyer_engineering.png" download="Liah_Prospectus.png" className="btn btn-secondary" style={{ color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <Download size={18} /> Download Program Syllabus
-                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowAdmissionLetterModal(true)}
+                  className="btn btn-secondary"
+                  style={{
+                    color: '#081F3E',
+                    borderColor: 'rgba(15,23,42,0.2)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontWeight: 700
+                  }}
+                >
+                  <Download size={18} /> Download Admission Form
+                </button>
               </div>
             </div>
           ) : (
@@ -1580,6 +1600,231 @@ function AdmissionsContent() {
 
                 </form>
               )}
+            </div>
+          </div>
+        )}
+        {/* OFFICIAL ADMISSION LETTER & ENROLMENT FORM MODAL */}
+        {showAdmissionLetterModal && student && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(8, 31, 62, 0.85)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+              overflowY: 'auto',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <div 
+              id="admission-letter-printable"
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                maxWidth: '820px',
+                width: '100%',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                padding: '36px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                position: 'relative'
+              }}
+            >
+              {/* Header Action Bar (Hidden during print) */}
+              <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #E2E8F0', paddingBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ background: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800 }}>
+                    OFFICIAL INSTITUTIONAL DOSSIER
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: '#64748B' }}>
+                    Reference: {student.matricule || `HND26SW${String(student.id).padStart(3, '0')}`}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="btn btn-primary"
+                    style={{ padding: '8px 18px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Printer size={16} /> Print / Save as PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdmissionLetterModal(false)}
+                    style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontWeight: 700, color: '#475569' }}
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+
+              {/* PRINTABLE LETTER CONTENT */}
+              <div style={{ border: '2px solid #081F3E', borderRadius: '12px', padding: '30px', background: '#FFFFFF' }}>
+                
+                {/* Official Letterhead */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #081F3E', paddingBottom: '20px', marginBottom: '20px' }}>
+                  {/* Left: Republic Details */}
+                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                    <p style={{ fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>Republic of Cameroon</p>
+                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Peace - Work - Fatherland</p>
+                    <p style={{ margin: 0 }}>Ministry of Higher Education</p>
+                    <p style={{ margin: 0 }}>Ministry of Vocational Training</p>
+                  </div>
+
+                  {/* Center: Official Crest Logo */}
+                  <div style={{ textAlign: 'center', width: '30%' }}>
+                    <img 
+                      src="/assets/images/logo.png" 
+                      alt="Liah Academy Crest" 
+                      style={{ height: '76px', width: 'auto', margin: '0 auto', display: 'block' }} 
+                    />
+                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '4px' }}>
+                      INNOVATION &amp; EXCELLENCE
+                    </span>
+                  </div>
+
+                  {/* Right: Institution Details */}
+                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                    <p style={{ fontWeight: 800, margin: 0, color: '#081F3E' }}>LIAH ACADEMY</p>
+                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Higher Institute of Technology</p>
+                    <p style={{ margin: 0 }}>Buea Main Campus, SW Region</p>
+                    <p style={{ margin: 0 }}>Tel: (+237) 670 265 493 / 652 154 095</p>
+                    <p style={{ margin: 0, color: '#2563EB' }}>info@liahacademy.com</p>
+                  </div>
+                </div>
+
+                {/* Document Banner */}
+                <div style={{ textAlign: 'center', background: '#081F3E', color: '#FFFFFF', padding: '10px 16px', borderRadius: '6px', marginBottom: '24px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 800 }}>
+                    Official Admission Form &amp; Offer of Enrolment
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: '#F5A623', fontWeight: 600 }}>
+                    2026 / 2027 Academic Session
+                  </span>
+                </div>
+
+                {/* Candidate & Academic Dossier Grid */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px', fontSize: '0.88rem' }}>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', width: '30%', fontWeight: 700, color: '#64748B' }}>Student Matricule:</td>
+                      <td style={{ padding: '8px 12px', width: '70%', fontWeight: 800, color: '#081F3E', fontFamily: 'var(--font-mono)', fontSize: '1rem', letterSpacing: '0.04em' }}>
+                        {student.matricule || `HND26SW${String(student.id).padStart(3, '0')}`}
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Applicant Full Name:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#081F3E' }}>{student.full_name}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Academic Program:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>{student.program_type}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Degree Category:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600, color: '#1E293B' }}>{student.degree_type}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Study Format &amp; Campus:</td>
+                      <td style={{ padding: '8px 12px', color: '#1E293B' }}>
+                        {student.study_format === 'oncampus' ? 'On-Campus (Buea Innovation Labs)' : 'Online / Hybrid Learning'}
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Contact Information:</td>
+                      <td style={{ padding: '8px 12px', color: '#1E293B' }}>
+                        {student.email} {student.phone ? `| Tel: ${student.phone}` : ''}
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Admission Status:</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{ 
+                          padding: '3px 8px', 
+                          borderRadius: '4px', 
+                          fontWeight: 800, 
+                          fontSize: '0.82rem',
+                          background: student.admission_status === 'Approved' ? '#ECFDF5' : student.admission_status === 'Rejected' ? '#FEF2F2' : '#FFFBEB',
+                          color: student.admission_status === 'Approved' ? '#059669' : student.admission_status === 'Rejected' ? '#DC2626' : '#D97706'
+                        }}>
+                          {student.admission_status === 'Approved' ? '✓ OFFICIALLY ACCEPTED & ADMITTED' : student.admission_status === 'Rejected' ? '✗ NOT SELECTED' : '⏳ PROVISIONAL - UNDER REVIEW'}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Registration Fee (10k):</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{ 
+                          padding: '3px 8px', 
+                          borderRadius: '4px', 
+                          fontWeight: 800, 
+                          fontSize: '0.82rem',
+                          background: student.payment_status === 'Paid' ? '#ECFDF5' : '#EFF6FF',
+                          color: student.payment_status === 'Paid' ? '#059669' : '#2563EB'
+                        }}>
+                          {student.payment_status === 'Paid' ? '✓ 10,000 XAF REGISTRATION FEE CLEARED' : '⏳ 10,000 XAF REGISTRATION FEE PENDING'}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Acceptance Terms & Secretary Office Reporting Notice */}
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontSize: '0.82rem', lineHeight: '1.6', color: '#334155' }}>
+                  <strong style={{ color: '#081F3E', display: 'block', marginBottom: '6px', fontSize: '0.88rem' }}>
+                    🏢 Institutional Next Steps &amp; Secretary Desk Instructions:
+                  </strong>
+                  <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                    <li>Present this printed Admission Form to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong>.</li>
+                    <li>Submit certified hard copies of your academic qualifications and certified birth certificate for final registry validation.</li>
+                    <li>Collect your official Student Orientation Starter Pack, Student ID Badge, and Laboratory Access Keycard.</li>
+                    <li>All remaining semester tuition fee installments are settled physically at the bursary counter.</li>
+                  </ol>
+                </div>
+
+                {/* Signatures and Institutional Verification Seal */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '30px', paddingTop: '16px', borderTop: '1px dashed #CBD5E1' }}>
+                  <div style={{ textAlign: 'center', width: '45%' }}>
+                    <div style={{ 
+                      width: '120px', 
+                      height: '50px', 
+                      margin: '0 auto 8px auto', 
+                      border: '2px solid #059669', 
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#059669',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      transform: 'rotate(-4deg)',
+                      background: 'rgba(5,150,105,0.05)'
+                    }}>
+                      LIAH ACADEMY<br />VERIFIED &amp; STAMPED
+                    </div>
+                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '4px', fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
+                      Office of the Registrar &amp; Admissions
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', width: '45%' }}>
+                    <div style={{ height: '50px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', margin: '0 auto 8px auto' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontStyle: 'italic', color: '#081F3E', fontSize: '0.85rem', fontWeight: 700 }}>
+                        Liah Academic Board 2026
+                      </span>
+                    </div>
+                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '4px', fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
+                      Director of Academic Affairs
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
           </div>
         )}
