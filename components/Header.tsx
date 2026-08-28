@@ -54,16 +54,17 @@ export default function Header() {
         <div className="header-container">
           {/* Logo */}
           <Link href="/" className="logo-link" onClick={closeAll}>
-            <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+            <div className="site-logo-wrap">
               <Image
                 src="/assets/images/logo.png"
                 alt="Liah Academy Logo"
                 fill
+                sizes="(max-width: 640px) 58px, 68px"
                 style={{ objectFit: 'contain' }}
                 priority
               />
             </div>
-            <span className="logo-text" style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+            <span className="logo-text" style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
               Liah <span style={{ color: '#F5A623', marginLeft: '4px' }}>Academy</span>
             </span>
           </Link>

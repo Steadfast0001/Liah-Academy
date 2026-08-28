@@ -14,7 +14,7 @@ export default function Footer() {
           {/* Brand Column */}
           <div>
             <Link href="/" className="logo-link" style={{ marginBottom: '20px' }}>
-              <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+              <div className="site-logo-wrap" style={{ width: '64px', height: '64px' }}>
                 <Image
                   src="/assets/images/logo.png"
                   alt="Liah Academy Logo"

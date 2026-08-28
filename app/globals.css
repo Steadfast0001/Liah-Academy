@@ -308,19 +308,47 @@ h4 {
 .logo-link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.logo-link:hover {
+  transform: translateY(-1px);
+}
+
+.site-logo-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.45));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-link:hover .site-logo-wrap {
+  transform: scale(1.06);
+}
+
+@media (max-width: 640px) {
+  .site-logo-wrap {
+    width: 58px;
+    height: 58px;
+  }
 }
 
 .logo-img {
-  height: 48px;
+  height: 68px;
   width: auto;
   object-fit: contain;
 }
 
 .logo-text {
   font-family: var(--font-heading);
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: #F8FAFC;
   letter-spacing: -0.02em;
