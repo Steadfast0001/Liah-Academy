@@ -375,50 +375,8 @@ export interface Schema {
 
 // 4. CANONICAL INITIAL DATA
 const initialData: Schema = {
-  students: [
-    {
-      id: 1001,
-      full_name: 'Steddy Lyonga',
-      email: 'steddy@liahacademy.org',
-      password: 'password123',
-      phone: '+237 670 112 233',
-      degree_type: 'HND',
-      program_type: 'Software Engineering HND',
-      study_format: 'oncampus',
-      documents: [
-        {
-          slotId: 'gce_al',
-          label: 'GCE Advanced Level Certificate',
-          fileName: 'gce_results.pdf',
-          size: '1.2 MB',
-          url: '/assets/docs/gce_results.pdf'
-        }
-      ],
-      document_url: '/assets/docs/gce_results.pdf',
-      payment_status: 'Paid',
-      admission_status: 'Approved',
-      created_at: new Date().toISOString()
-    }
-  ],
-  payments: [
-    {
-      id: 1,
-      reference: 'PAY-INIT-1001',
-      student_id: 1001,
-      student_name: 'Steddy Lyonga',
-      student_email: 'steddy@liahacademy.org',
-      amount: 50000,
-      currency: 'XAF',
-      operator: 'MTN Mobile Money',
-      phone: '+237 670 112 233',
-      status: 'APPROVED',
-      description: 'Seat Reservation Deposit #1001',
-      transaction_id: 'MP260820.1001.MOMO',
-      verified_by: 'Registrar Office',
-      verified_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
-    }
-  ],
+  students: [],
+  payments: [],
   reviews: [
     {
       id: 1,

@@ -48,24 +48,9 @@ if (!fs.existsSync(storePath)) {
     try {
       const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
       const initialStore = {
-        students: [
-          {
-            id: 5233,
-            full_name: 'Demo Student Account',
-            email: 'student@liahacademy.com',
-            password: 'pbkdf2$100000$d1533ad3b91807d722d56a297920ec0e$db68350325d2c3882fcf3e0984852924376fb16cce0805ffb70e7e6fc8dae28d447d25e0a6d07e6005c21ec46b1fe75a8a65f9db215978a3c5a882a472659e98',
-            phone: '+237 670 265 493',
-            degree_type: 'HND',
-            program_type: 'Software Engineering HND',
-            study_format: 'oncampus',
-            document_url: '',
-            documents: [],
-            payment_status: 'Pending',
-            admission_status: 'Under Review',
-            created_at: new Date().toISOString()
-          }
-        ],
+        students: [],
         payments: [],
+        admins: [],
         courses: seedData.courses || [],
         news: seedData.news || [],
         media: seedData.media || [],

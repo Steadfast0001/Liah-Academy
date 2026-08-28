@@ -83,7 +83,7 @@ interface NewsItem {
 }
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'media' | 'courses' | 'news' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'media' | 'courses' | 'news' | 'settings' | 'admins'>('overview');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -1286,6 +1286,26 @@ export default function AdminDashboardPage() {
               View Public Portal <ExternalLink size={14} />
             </Link>
             <button
+              onClick={() => setShowAddAdminModal(true)}
+              className="btn"
+              style={{
+                padding: '10px 16px',
+                fontSize: '0.85rem',
+                background: 'rgba(245, 166, 35, 0.2)',
+                color: '#F5A623',
+                border: '1px solid rgba(245, 166, 35, 0.4)',
+                borderRadius: '8px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Create a new administrator account"
+            >
+              <Plus size={15} /> + Add Admin
+            </button>
+            <button
               onClick={handleAdminLogout}
               className="btn"
               style={{ 
@@ -1455,6 +1475,25 @@ export default function AdminDashboardPage() {
             }}
           >
             <Sparkles size={16} /> Post &amp; News Studio ({news.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('admins')}
+            style={{
+              padding: '12px 18px',
+              borderRadius: '8px 8px 0 0',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              border: 'none',
+              background: activeTab === 'admins' ? '#081F3E' : 'transparent',
+              color: activeTab === 'admins' ? '#F5A623' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Shield size={16} /> 👥 Admin Team ({adminUsers.length})
           </button>
 
           <button
@@ -3576,117 +3615,225 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Admin Team Management Panel */}
-            {currentAdmin?.role === 'SuperAdmin' && (
-              <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', marginTop: '36px', border: '1px solid rgba(15,23,42,0.08)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(245,166,35,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Users size={22} color="#F5A623" />
-                    </div>
-                    <div>
-                      <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                        Admin Team Management
-                      </h3>
-                      <p style={{ margin: 0, color: '#64748B', fontSize: '0.84rem' }}>
-                        Add or remove administrators who can help manage the system
-                      </p>
-                    </div>
+            <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', marginTop: '36px', border: '1px solid rgba(15,23,42,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(245,166,35,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={22} color="#F5A623" />
                   </div>
-
-                  <button
-                    onClick={() => setShowAddAdminModal(true)}
-                    className="btn btn-primary"
-                    style={{ padding: '10px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Plus size={16} /> Add Administrator
-                  </button>
+                  <div>
+                    <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                      👥 Admin Team Management
+                    </h3>
+                    <p style={{ margin: 0, color: '#64748B', fontSize: '0.84rem' }}>
+                      Add or remove administrators who can manage admissions, payments, curriculum, and inquiries
+                    </p>
+                  </div>
                 </div>
 
-                {/* Admin Users Table */}
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                    <thead>
-                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                        <th style={{ padding: '12px 16px' }}>Administrator</th>
-                        <th style={{ padding: '12px 16px' }}>Email</th>
-                        <th style={{ padding: '12px 16px' }}>Role</th>
-                        <th style={{ padding: '12px 16px' }}>Added</th>
-                        <th style={{ padding: '12px 16px' }}>Last Login</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {adminUsers.map((admin) => (
-                        <tr key={admin.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                          <td style={{ padding: '12px 16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{
-                                width: '36px', height: '36px', borderRadius: '50%',
-                                background: admin.is_master ? 'linear-gradient(135deg, #F5A623, #E8930C)' : 'linear-gradient(135deg, #081F3E, #0F2D5E)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: '#FFFFFF', fontWeight: 800, fontSize: '0.8rem'
-                              }}>
-                                {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                              </div>
-                              <div>
-                                <strong style={{ color: '#081F3E' }}>{admin.full_name}</strong>
-                                {admin.is_master && (
-                                  <span style={{ marginLeft: '8px', fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
-                                    Master
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px 16px', color: '#64748B' }}>{admin.email}</td>
-                          <td style={{ padding: '12px 16px' }}>
-                            <span style={{
-                              fontSize: '0.75rem', padding: '3px 8px', borderRadius: '4px', fontWeight: 700,
-                              background: admin.role === 'SuperAdmin' ? '#FEF3C7' : '#EEF2FF',
-                              color: admin.role === 'SuperAdmin' ? '#B45309' : '#4F46E5'
-                            }}>
-                              {admin.role === 'SuperAdmin' ? '🛡️ SuperAdmin' : '👤 Admin'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
-                            {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
-                          </td>
-                          <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
-                            {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                            {admin.is_master ? (
-                              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                                <Lock size={14} /> Protected
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleDeleteAdmin(admin.id, admin.full_name)}
-                                disabled={adminActionLoading}
-                                style={{
-                                  background: 'rgba(239, 68, 68, 0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)',
-                                  borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700,
-                                  display: 'inline-flex', alignItems: 'center', gap: '4px'
-                                }}
-                              >
-                                <Trash2 size={13} /> Remove
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                      {adminUsers.length === 0 && (
-                        <tr>
-                          <td colSpan={6} style={{ padding: '24px 16px', textAlign: 'center', color: '#94A3B8' }}>
-                            No administrators found. Click &quot;Add Administrator&quot; to invite team members.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddAdminModal(true)}
+                  className="btn btn-primary"
+                  style={{ padding: '10px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Plus size={16} /> + Add Administrator
+                </button>
               </div>
-            )}
+
+              {/* Admin Users Table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px 16px' }}>Administrator</th>
+                      <th style={{ padding: '12px 16px' }}>Email</th>
+                      <th style={{ padding: '12px 16px' }}>Role</th>
+                      <th style={{ padding: '12px 16px' }}>Added</th>
+                      <th style={{ padding: '12px 16px' }}>Last Login</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminUsers.map((admin) => (
+                      <tr key={admin.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{
+                              width: '36px', height: '36px', borderRadius: '50%',
+                              background: admin.is_master ? 'linear-gradient(135deg, #F5A623, #E8930C)' : 'linear-gradient(135deg, #081F3E, #0F2D5E)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: '#FFFFFF', fontWeight: 800, fontSize: '0.8rem'
+                            }}>
+                              {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <strong style={{ color: '#081F3E' }}>{admin.full_name}</strong>
+                              {admin.is_master && (
+                                <span style={{ marginLeft: '8px', fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
+                                  Master SuperAdmin
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#64748B' }}>{admin.email}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{
+                            fontSize: '0.75rem', padding: '3px 8px', borderRadius: '4px', fontWeight: 700,
+                            background: admin.role === 'SuperAdmin' ? '#FEF3C7' : '#EEF2FF',
+                            color: admin.role === 'SuperAdmin' ? '#B45309' : '#4F46E5'
+                          }}>
+                            {admin.role === 'SuperAdmin' ? '🛡️ SuperAdmin' : '👤 Admin'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
+                          {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
+                          {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          {admin.is_master ? (
+                            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                              <Lock size={14} /> Protected Master
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleDeleteAdmin(admin.id, admin.full_name)}
+                              disabled={adminActionLoading}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)',
+                                borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                              }}
+                            >
+                              <Trash2 size={13} /> Remove
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {adminUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: '24px 16px', textAlign: 'center', color: '#94A3B8' }}>
+                          No administrators found. Click &quot;+ Add Administrator&quot; to invite team members.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB 8: DEDICATED ADMIN TEAM TAB */}
+        {/* ======================================================== */}
+        {activeTab === 'admins' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ color: '#081F3E', fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>
+                  👥 Administration &amp; Governance Team
+                </h2>
+                <p style={{ color: '#64748B', margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+                  Manage authorized administrators, system roles, and governance permissions.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAddAdminModal(true)}
+                className="btn btn-primary"
+                style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Plus size={18} /> + Add Administrator
+              </button>
+            </div>
+
+            <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', border: '1px solid rgba(15,23,42,0.08)' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px 16px' }}>Administrator</th>
+                      <th style={{ padding: '12px 16px' }}>Email Address</th>
+                      <th style={{ padding: '12px 16px' }}>Access Role</th>
+                      <th style={{ padding: '12px 16px' }}>Date Created</th>
+                      <th style={{ padding: '12px 16px' }}>Last Activity</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminUsers.map((admin) => (
+                      <tr key={admin.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{
+                              width: '38px', height: '38px', borderRadius: '50%',
+                              background: admin.is_master ? 'linear-gradient(135deg, #F5A623, #E8930C)' : 'linear-gradient(135deg, #081F3E, #0F2D5E)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: '#FFFFFF', fontWeight: 800, fontSize: '0.85rem'
+                            }}>
+                              {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <strong style={{ color: '#081F3E', display: 'block', fontSize: '0.95rem' }}>{admin.full_name}</strong>
+                              {admin.is_master ? (
+                                <span style={{ fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
+                                  Master SuperAdmin
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                  {admin.role}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '14px 16px', color: '#64748B', fontWeight: 600 }}>{admin.email}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{
+                            fontSize: '0.78rem', padding: '4px 10px', borderRadius: '4px', fontWeight: 800,
+                            background: admin.role === 'SuperAdmin' ? '#FEF3C7' : '#EEF2FF',
+                            color: admin.role === 'SuperAdmin' ? '#B45309' : '#4F46E5'
+                          }}>
+                            {admin.role === 'SuperAdmin' ? '🛡️ SuperAdmin' : '👤 Admin'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '0.84rem' }}>
+                          {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '0.84rem' }}>
+                          {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          {admin.is_master ? (
+                            <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>
+                              <Lock size={14} /> Protected Master
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleDeleteAdmin(admin.id, admin.full_name)}
+                              disabled={adminActionLoading}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)',
+                                borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                              }}
+                            >
+                              <Trash2 size={14} /> Remove Admin
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
