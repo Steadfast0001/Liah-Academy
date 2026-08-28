@@ -1249,23 +1249,23 @@ export default function AdminDashboardPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <span style={{ 
-                background: '#F5A623', 
+                background: currentAdmin?.role === 'SuperAdmin' || !currentAdmin ? '#F5A623' : '#3B82F6', 
                 color: '#081F3E', 
-                padding: '4px 10px', 
+                padding: '2px 8px', 
                 borderRadius: '4px', 
                 fontFamily: 'var(--font-mono)', 
                 fontSize: '0.72rem', 
                 fontWeight: 800,
                 letterSpacing: '0.05em'
               }}>
-                MASTER STUDIO
+                {currentAdmin?.role === 'SuperAdmin' || !currentAdmin ? '🛡️ SUPERADMIN GOVERNANCE' : '👤 ADMIN ACCESS'}
               </span>
               <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
-                Liah Academy Zero-Code Management Suite
+                {currentAdmin ? `Logged in: ${currentAdmin.email} (${currentAdmin.role})` : 'SuperAdmin (info@liahacademy.com)'}
               </span>
             </div>
             <h1 style={{ fontSize: '1.9rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
-              Management &amp; Governance Center
+              Governance &amp; Administration Center
             </h1>
           </div>
 

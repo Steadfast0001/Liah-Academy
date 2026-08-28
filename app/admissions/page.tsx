@@ -7,7 +7,8 @@ import {
   Calculator, UserCheck, ShieldCheck, CreditCard, 
   CheckCircle, FileText, Lock, ArrowRight, ArrowLeft, 
   LogIn, UserPlus, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
-  UploadCloud, FileCheck, Trash2, Paperclip, Smartphone, Loader2, Copy, Image as ImageIcon
+  UploadCloud, FileCheck, Trash2, Paperclip, Smartphone, Loader2, Copy, Image as ImageIcon,
+  Clock
 } from 'lucide-react';
 
 interface DocRequirement {
@@ -184,7 +185,27 @@ function AdmissionsContent() {
       setActiveTab('register');
       setCurrentStep(1);
     }
+
+    // Restore authenticated student session from sessionStorage
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = sessionStorage.getItem('liah_student_session');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.id) {
+            setStudent(parsed);
+          }
+        }
+      }
+    } catch {}
   }, [degreeParam, programParam]);
+
+  const handleStudentLogout = () => {
+    setStudent(null);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('liah_student_session');
+    }
+  };
 
   const handleFileUploadForSlot = (slotId: string, label: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -294,6 +315,9 @@ function AdmissionsContent() {
 
       if (data.success && data.data) {
         setStudent(data.data);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('liah_student_session', JSON.stringify(data.data));
+        }
       } else {
         setLoginError(data.message || 'Invalid email or password.');
       }
@@ -581,13 +605,72 @@ function AdmissionsContent() {
                   </h2>
                 </div>
                 <button
-                  onClick={() => setStudent(null)}
+                  onClick={handleStudentLogout}
                   className="btn btn-secondary"
                   style={{ color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', padding: '8px 16px', fontSize: '0.85rem' }}
                 >
                   <LogOut size={16} /> Logout
                 </button>
               </div>
+
+              {/* ENROLMENT STATE BANNER (Approved / Rejected / Under Review) */}
+              {student.admission_status === 'Approved' ? (
+                <div style={{ background: '#ECFDF5', border: '2px solid #10B981', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px', boxShadow: '0 4px 15px rgba(16,185,129,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <CheckCircle size={28} color="#10B981" />
+                    <div>
+                      <h3 style={{ color: '#065F46', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                        🎉 Congratulations! Your Application has been APPROVED
+                      </h3>
+                      <p style={{ margin: 0, color: '#047857', fontSize: '0.88rem', fontWeight: 600 }}>
+                        Official Admission Offered for {student.program_type} ({student.degree_type})
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ color: '#064E3B', fontSize: '0.88rem', lineHeight: '1.5', margin: '10px 0 0 0' }}>
+                    Your academic credentials have been verified and approved by the Admissions Board. 
+                    {student.payment_status === 'Paid' ? (
+                      <span> Your <strong>10,000 XAF Registration Fee is fully settled</strong>. Please report to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong> to collect your student orientation kit and finalize physical tuition payment.</span>
+                    ) : (
+                      <span> Please complete your <strong>10,000 XAF Registration Fee</strong> below to confirm your matriculation seat. All remaining tuition fees will be paid physically at the Secretary&apos;s Office in Buea.</span>
+                    )}
+                  </p>
+                </div>
+              ) : student.admission_status === 'Rejected' ? (
+                <div style={{ background: '#FEF2F2', border: '2px solid #EF4444', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px', boxShadow: '0 4px 15px rgba(239,68,68,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <AlertCircle size={28} color="#EF4444" />
+                    <div>
+                      <h3 style={{ color: '#991B1B', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                        Admission Decision: Application Not Selected
+                      </h3>
+                      <p style={{ margin: 0, color: '#B91C1C', fontSize: '0.88rem', fontWeight: 600 }}>
+                        Programme: {student.program_type} ({student.degree_type})
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ color: '#7F1D1D', fontSize: '0.88rem', lineHeight: '1.5', margin: '10px 0 0 0' }}>
+                    Thank you for your application to Liah Academy. Due to high competition and cohort seat limitations, our admissions committee was unable to offer you admission for this academic intake. For questions, feedback, or future cohort re-application, please contact our admissions office at <a href="mailto:info@liahacademy.com" style={{ color: '#DC2626', fontWeight: 700, textDecoration: 'underline' }}>info@liahacademy.com</a>.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ background: '#FFFBEB', border: '2px solid #F59E0B', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px', boxShadow: '0 4px 15px rgba(245,158,11,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <Clock size={28} color="#F59E0B" />
+                    <div>
+                      <h3 style={{ color: '#92400E', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                        ⏳ Enrolment Status: Application Under Review
+                      </h3>
+                      <p style={{ margin: 0, color: '#B45309', fontSize: '0.88rem', fontWeight: 600 }}>
+                        Programme: {student.program_type} ({student.degree_type})
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ color: '#78350F', fontSize: '0.88rem', lineHeight: '1.5', margin: '10px 0 0 0' }}>
+                    Your academic documents and application credentials have been received. Our Admissions Board is currently reviewing your file. You can log into this portal at any time to monitor the progress of your application.
+                  </p>
+                </div>
+              )}
 
               {/* Status Row */}
               <div className="grid-3" style={{ marginBottom: '30px' }}>
@@ -599,7 +682,7 @@ function AdmissionsContent() {
                 </div>
 
                 <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Admission Status</span>
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Admission Decision</span>
                   <span 
                     style={{ 
                       padding: '4px 10px', 
@@ -610,12 +693,12 @@ function AdmissionsContent() {
                       color: student.admission_status === 'Approved' ? '#10B981' : student.admission_status === 'Rejected' ? '#DC2626' : '#B45309'
                     }}
                   >
-                    {student.admission_status || 'Pending Review'}
+                    {student.admission_status === 'Approved' ? '✓ Accepted' : student.admission_status === 'Rejected' ? '✗ Not Accepted' : '⏳ Under Review'}
                   </span>
                 </div>
 
                 <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Payment Status</span>
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Registration Fee (10k)</span>
                   <span 
                     style={{ 
                       padding: '4px 10px', 
@@ -634,7 +717,7 @@ function AdmissionsContent() {
                         : '#DC2626'
                     }}
                   >
-                    {student.payment_status === 'Pending Verification' ? '⏳ Verification Pending' : student.payment_status || 'Pending'}
+                    {student.payment_status === 'Paid' ? '✓ Paid' : student.payment_status === 'Pending Verification' ? '⏳ Verification Pending' : 'Pending Payment'}
                   </span>
                 </div>
               </div>
@@ -646,7 +729,7 @@ function AdmissionsContent() {
                   <div>
                     <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.95rem' }}>Payment Proof Under Review</strong>
                     <p style={{ margin: 0, lineHeight: '1.5', color: '#1E3A8A' }}>
-                      Your payment proof of <strong>{(student.payment_amount || 50000).toLocaleString()} XAF</strong> has been successfully uploaded and is undergoing verification by the Liah Academy Finance Office. Your enrollment status will automatically update to <strong>Approved</strong> upon approval.
+                      Your registration fee proof of <strong>{(student.payment_amount || 10000).toLocaleString()} XAF</strong> has been received and is undergoing verification by the Liah Academy Finance Office.
                     </p>
                   </div>
                 </div>

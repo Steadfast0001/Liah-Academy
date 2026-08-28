@@ -1198,7 +1198,7 @@ export const db = {
           return store.students.find(s => s.email.toLowerCase() === (email || '').toLowerCase().trim() && s.password === password);
         }
 
-        if (q.includes('FROM STUDENTS WHERE EMAIL = ?') || (q.includes('FROM STUDENTS') && q.includes('EMAIL = ?'))) {
+        if (q.includes('FROM STUDENTS') && (q.includes('EMAIL = ?') || q.includes('LOWER(EMAIL) = ?') || q.includes('EMAIL'))) {
           const [email] = params;
           return store.students.find(s => s.email.toLowerCase() === (email || '').toLowerCase().trim());
         }
@@ -1279,7 +1279,7 @@ export const db = {
           const newStudent: Student = {
             id: newId,
             full_name,
-            email,
+            email: (email || '').toLowerCase().trim(),
             password,
             phone,
             degree_type: degree_type || 'HND',

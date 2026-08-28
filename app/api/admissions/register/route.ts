@@ -3,6 +3,8 @@ import db from '@/lib/db';
 import { sendApplicationSignals } from '@/lib/email';
 import { hashPassword } from '@/lib/security';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
