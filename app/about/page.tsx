@@ -100,17 +100,17 @@ export default function AboutPage() {
           </div>
 
           {/* Executive Leadership Spotlight */}
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '720px', margin: '0 auto' }}>
             {/* Mr. NSAH ESLI */}
             <div 
               className="premium-card" 
               style={{ 
                 background: '#FFFFFF', 
-                borderRadius: '16px', 
-                padding: '48px 36px', 
+                borderRadius: '20px', 
+                padding: '48px 40px', 
                 textAlign: 'center',
                 border: '1px solid rgba(15, 23, 42, 0.08)',
-                boxShadow: '0 12px 36px rgba(8,31,62,0.06)',
+                boxShadow: '0 16px 40px rgba(8,31,62,0.07)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
@@ -118,44 +118,86 @@ export default function AboutPage() {
             >
               <div 
                 style={{ 
-                  width: '90px', 
-                  height: '90px', 
+                  width: '96px', 
+                  height: '96px', 
                   borderRadius: '50%', 
                   background: 'linear-gradient(135deg, #081F3E 0%, #0D2D59 100%)', 
                   color: '#F5A623', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  fontSize: '1.6rem', 
+                  fontSize: '1.75rem', 
                   fontWeight: 900, 
                   marginBottom: '20px',
-                  boxShadow: '0 8px 20px rgba(8,31,62,0.25)',
+                  boxShadow: '0 8px 24px rgba(8,31,62,0.25)',
                   border: '3px solid #F5A623'
                 }}
               >
                 NE
               </div>
-              <h3 style={{ color: '#081F3E', fontSize: '1.5rem', fontWeight: 800, marginBottom: '6px' }}>
+
+              <h3 style={{ color: '#081F3E', fontSize: '1.6rem', fontWeight: 900, marginBottom: '6px' }}>
                 Mr. NSAH ESLI
               </h3>
-              <span style={{ 
-                fontFamily: 'var(--font-mono)', 
-                color: '#B45309', 
-                fontSize: '0.85rem', 
-                fontWeight: 800, 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.06em',
-                marginBottom: '18px',
-                display: 'inline-block',
-                background: '#FEF3C7',
-                padding: '4px 14px',
-                borderRadius: '20px'
-              }}>
-                Owner &amp; Managing Director
-              </span>
-              <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.7', margin: 0, maxWidth: '520px' }}>
-                Visionary leader, founder, and managing director steering Liah Academy&apos;s mission in technical excellence, practical vocational education, and digital innovation in Cameroon.
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '18px' }}>
+                <span style={{ 
+                  fontFamily: 'var(--font-mono)', 
+                  color: '#B45309', 
+                  fontSize: '0.82rem', 
+                  fontWeight: 800, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.06em',
+                  background: '#FEF3C7',
+                  padding: '4px 14px',
+                  borderRadius: '20px'
+                }}>
+                  Founder, Owner &amp; Managing Director
+                </span>
+                <span style={{ 
+                  fontFamily: 'var(--font-mono)', 
+                  color: '#1E40AF', 
+                  fontSize: '0.82rem', 
+                  fontWeight: 800, 
+                  background: '#EFF6FF',
+                  padding: '4px 14px',
+                  borderRadius: '20px'
+                }}>
+                  🎓 B.Tech Computer Engineering (CUIB)
+                </span>
+              </div>
+
+              <p style={{ color: '#475569', fontSize: '0.96rem', lineHeight: '1.75', margin: '0 0 24px 0', maxWidth: '600px' }}>
+                Experienced Network Engineer with a demonstrated history of working in the computer software industry. Skilled in Graphic Design, Software Development, Project Management, Team Leadership, and Video Production. Strong information technology professional holding a <strong>Bachelor of Technology (BTech) in Computer Engineering from Catholic University Institute of Buea (CUIB)</strong>, passionately steering Liah Academy&apos;s mission in technical excellence, practical software incubation, and industry-grade education.
               </p>
+
+              {/* Core Competencies Badges */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {[
+                  '🌐 Network Engineering',
+                  '💻 Software Development',
+                  '🎨 Graphic Design',
+                  '📊 Project Management',
+                  '👥 Team Leadership',
+                  '🎬 Video Production'
+                ].map((skill, i) => (
+                  <span 
+                    key={i}
+                    style={{
+                      background: '#F8FAFC',
+                      color: '#081F3E',
+                      border: '1px solid #E2E8F0',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700
+                    }}
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+
             </div>
           </div>
 
