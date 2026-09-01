@@ -101,7 +101,7 @@ export default function AboutPage() {
 
           {/* Executive Team 3-Card Grid */}
           <div className="grid-3" style={{ gap: '28px', alignItems: 'stretch' }}>
-            {/* Card 1: Dr. Daniel Ndip Okey */}
+            {/* Card 1: Mr. NSAH ESLI */}
             <div 
               className="premium-card" 
               style={{ 
@@ -122,20 +122,20 @@ export default function AboutPage() {
                   height: '80px', 
                   borderRadius: '50%', 
                   background: '#081F3E', 
-                  color: '#FFFFFF', 
+                  color: '#F5A623', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   fontSize: '1.4rem', 
-                  fontWeight: 800, 
+                  fontWeight: 900, 
                   marginBottom: '20px',
                   boxShadow: '0 4px 14px rgba(8,31,62,0.2)' 
                 }}
               >
-                DO
+                NE
               </div>
               <h3 style={{ color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
-                Dr. Daniel Ndip Okey
+                Mr. NSAH ESLI
               </h3>
               <span style={{ 
                 fontFamily: 'var(--font-mono)', 
@@ -147,10 +147,10 @@ export default function AboutPage() {
                 marginBottom: '16px',
                 display: 'block'
               }}>
-                Rector / Board Chair
+                Owner &amp; Managing Director
               </span>
               <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.65', margin: 0 }}>
-                Doctor of Software Engineering with 15+ years in international academic governance.
+                Visionary leader, founder and managing director steering Liah Academy&apos;s mission in technical excellence, practical vocational education, and digital innovation in Cameroon.
               </p>
             </div>
 

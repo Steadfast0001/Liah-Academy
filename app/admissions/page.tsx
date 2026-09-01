@@ -1813,12 +1813,12 @@ function AdmissionsContent() {
 
                   <div style={{ textAlign: 'center', width: '45%' }}>
                     <div style={{ height: '50px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', margin: '0 auto 8px auto' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontStyle: 'italic', color: '#081F3E', fontSize: '0.85rem', fontWeight: 700 }}>
-                        Liah Academic Board 2026
+                      <span style={{ fontFamily: 'var(--font-mono)', fontStyle: 'italic', color: '#081F3E', fontSize: '0.92rem', fontWeight: 800 }}>
+                        Mr. NSAH ESLI
                       </span>
                     </div>
                     <div style={{ borderTop: '1px solid #64748B', paddingTop: '4px', fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
-                      Director of Academic Affairs
+                      Owner &amp; Managing Director
                     </div>
                   </div>
                 </div>
