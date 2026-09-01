@@ -99,18 +99,18 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Executive Team 3-Card Grid */}
-          <div className="grid-3" style={{ gap: '28px', alignItems: 'stretch' }}>
-            {/* Card 1: Mr. NSAH ESLI */}
+          {/* Executive Leadership Spotlight */}
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+            {/* Mr. NSAH ESLI */}
             <div 
               className="premium-card" 
               style={{ 
                 background: '#FFFFFF', 
                 borderRadius: '16px', 
-                padding: '40px 30px', 
+                padding: '48px 36px', 
                 textAlign: 'center',
                 border: '1px solid rgba(15, 23, 42, 0.08)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+                boxShadow: '0 12px 36px rgba(8,31,62,0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
@@ -118,145 +118,43 @@ export default function AboutPage() {
             >
               <div 
                 style={{ 
-                  width: '80px', 
-                  height: '80px', 
+                  width: '90px', 
+                  height: '90px', 
                   borderRadius: '50%', 
-                  background: '#081F3E', 
+                  background: 'linear-gradient(135deg, #081F3E 0%, #0D2D59 100%)', 
                   color: '#F5A623', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  fontSize: '1.4rem', 
+                  fontSize: '1.6rem', 
                   fontWeight: 900, 
                   marginBottom: '20px',
-                  boxShadow: '0 4px 14px rgba(8,31,62,0.2)' 
+                  boxShadow: '0 8px 20px rgba(8,31,62,0.25)',
+                  border: '3px solid #F5A623'
                 }}
               >
                 NE
               </div>
-              <h3 style={{ color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
+              <h3 style={{ color: '#081F3E', fontSize: '1.5rem', fontWeight: 800, marginBottom: '6px' }}>
                 Mr. NSAH ESLI
               </h3>
               <span style={{ 
                 fontFamily: 'var(--font-mono)', 
                 color: '#B45309', 
-                fontSize: '0.78rem', 
-                fontWeight: 700, 
+                fontSize: '0.85rem', 
+                fontWeight: 800, 
                 textTransform: 'uppercase', 
-                letterSpacing: '0.04em',
-                marginBottom: '16px',
-                display: 'block'
+                letterSpacing: '0.06em',
+                marginBottom: '18px',
+                display: 'inline-block',
+                background: '#FEF3C7',
+                padding: '4px 14px',
+                borderRadius: '20px'
               }}>
                 Owner &amp; Managing Director
               </span>
-              <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.65', margin: 0 }}>
-                Visionary leader, founder and managing director steering Liah Academy&apos;s mission in technical excellence, practical vocational education, and digital innovation in Cameroon.
-              </p>
-            </div>
-
-            {/* Card 2: Brenda E. Lyonga */}
-            <div 
-              className="premium-card" 
-              style={{ 
-                background: '#FFFFFF', 
-                borderRadius: '16px', 
-                padding: '40px 30px', 
-                textAlign: 'center',
-                border: '1px solid rgba(15, 23, 42, 0.08)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              <div 
-                style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  borderRadius: '50%', 
-                  background: '#081F3E', 
-                  color: '#FFFFFF', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '1.4rem', 
-                  fontWeight: 800, 
-                  marginBottom: '20px',
-                  boxShadow: '0 4px 14px rgba(8,31,62,0.2)' 
-                }}
-              >
-                BE
-              </div>
-              <h3 style={{ color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
-                Brenda E. Lyonga
-              </h3>
-              <span style={{ 
-                fontFamily: 'var(--font-mono)', 
-                color: '#B45309', 
-                fontSize: '0.78rem', 
-                fontWeight: 700, 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.04em',
-                marginBottom: '16px',
-                display: 'block'
-              }}>
-                Director of Innovation
-              </span>
-              <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.65', margin: 0 }}>
-                Former DevOps advisor, managing technology incubators and corporate networks.
-              </p>
-            </div>
-
-            {/* Card 3: Teke A. Mbah */}
-            <div 
-              className="premium-card" 
-              style={{ 
-                background: '#FFFFFF', 
-                borderRadius: '16px', 
-                padding: '40px 30px', 
-                textAlign: 'center',
-                border: '1px solid rgba(15, 23, 42, 0.08)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              <div 
-                style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  borderRadius: '50%', 
-                  background: '#081F3E', 
-                  color: '#FFFFFF', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '1.4rem', 
-                  fontWeight: 800, 
-                  marginBottom: '20px',
-                  boxShadow: '0 4px 14px rgba(8,31,62,0.2)' 
-                }}
-              >
-                TA
-              </div>
-              <h3 style={{ color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
-                Teke A. Mbah
-              </h3>
-              <span style={{ 
-                fontFamily: 'var(--font-mono)', 
-                color: '#B45309', 
-                fontSize: '0.78rem', 
-                fontWeight: 700, 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.04em',
-                marginBottom: '16px',
-                display: 'block'
-              }}>
-                Dean of Academics
-              </span>
-              <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.65', margin: 0 }}>
-                Supervises curriculum alignment across Web engineering, Data Science, and HNDs.
+              <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.7', margin: 0, maxWidth: '520px' }}>
+                Visionary leader, founder, and managing director steering Liah Academy&apos;s mission in technical excellence, practical vocational education, and digital innovation in Cameroon.
               </p>
             </div>
           </div>
