@@ -904,42 +904,67 @@ h4 {
   transform: scale(1.08);
 }
 
-.chat-widget-window {
-  position: fixed;
-  bottom: 96px;
-  right: 24px;
-  width: 420px;
-  max-width: calc(100vw - 32px);
-  height: 580px;
-  max-height: calc(100vh - 120px);
-  background: #081F3E;
-  border: 1px solid rgba(245, 166, 35, 0.4);
-  border-radius: 18px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 1000;
-  transition: all 0.3s ease;
+.chat-widget-window, .chat-modal-window {
+  position: fixed !important;
+  bottom: 96px !important;
+  right: 24px !important;
+  left: auto !important;
+  top: auto !important;
+  width: 420px !important;
+  max-width: calc(100vw - 32px) !important;
+  height: 600px !important;
+  max-height: calc(100vh - 120px) !important;
+  background: #081F3E !important;
+  border: 1.5px solid rgba(245, 166, 35, 0.4) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 25px rgba(245, 166, 35, 0.15) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 9999 !important;
+  transition: all 0.3s ease !important;
 }
 
-@media (max-width: 480px) {
-  .chat-widget-window {
+.chat-header, .chat-window-header {
+  padding: 14px 18px !important;
+  background: linear-gradient(135deg, #041021 0%, #081F3E 100%) !important;
+  border-bottom: 1px solid rgba(245, 166, 35, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  color: #FFFFFF !important;
+}
+
+.chat-messages-container, .chat-messages-area {
+  flex-grow: 1 !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: #081F3E !important;
+  color: #F8FAFC !important;
+}
+
+@media (max-width: 600px) {
+  .chat-widget-window, .chat-modal-window {
     bottom: 0 !important;
     right: 0 !important;
+    left: 0 !important;
+    top: auto !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    border-radius: 0 !important;
-    border: none !important;
-    z-index: 2000 !important;
+    height: 85vh !important;
+    max-height: 85vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    z-index: 99999 !important;
   }
   .chat-widget-bubble {
-    bottom: 20px !important;
-    right: 20px !important;
-    width: 52px !important;
-    height: 52px !important;
+    bottom: 18px !important;
+    right: 16px !important;
+    width: 54px !important;
+    height: 54px !important;
   }
 }
 
@@ -1262,3 +1287,295 @@ h4 {
   font-size: 1.1rem;
   flex-shrink: 0;
 }
+
+/* ==========================================================================
+   Comprehensive Mobile Phone Compatibility & UX Optimization
+   ========================================================================== */
+
+/* Universal touch & mobile viewport ergonomics */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    font-size: 15px !important;
+  }
+
+  /* Prevent automatic iOS input zoom & enhance mobile touch ergonomics */
+  input, select, textarea {
+    font-size: 16px !important;
+    max-width: 100% !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    max-width: 100% !important;
+  }
+
+  /* Grids collapse cleanly on mobile */
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Header & Navigation on Phones */
+  .site-header {
+    height: 70px !important;
+  }
+
+  .header-container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .logo-text {
+    font-size: 1.25rem !important;
+  }
+
+  .mobile-nav-panel {
+    width: 86vw !important;
+    max-width: 320px !important;
+    padding: 20px 16px !important;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Admissions Wizard & Form Cards on Phones */
+  .admissions-card, [style*="boxShadow: '0 20px 40px"] {
+    padding: 20px 16px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Modal Sheets on Mobile */
+  .checkout-modal,
+  [style*="position: 'fixed'"][style*="zIndex: 1000"],
+  [style*="position: 'fixed'"][style*="zIndex: 1100"],
+  [style*="position: fixed"][style*="z-index: 1000"] {
+    padding: 10px !important;
+  }
+
+  .modal-inner-card,
+  [style*="maxWidth: '680px'"],
+  [style*="maxWidth: '720px'"],
+  [style*="maxWidth: '600px'"],
+  [style*="maxWidth: '560px'"] {
+    width: 100% !important;
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    margin: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Floating AI Chat Widget on Phones - Bottom Sheet UX */
+  .chat-widget-bubble {
+    bottom: 18px !important;
+    right: 16px !important;
+    width: 54px !important;
+    height: 54px !important;
+    box-shadow: 0 8px 25px rgba(245, 166, 35, 0.45) !important;
+  }
+
+  .chat-modal-window, .chat-widget-window {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 84vh !important;
+    max-height: 84vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border: 1px solid rgba(245, 166, 35, 0.4) !important;
+    border-bottom: none !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.75) !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
+  }
+
+  .chat-messages-container, .chat-messages-area {
+    padding: 12px 10px !important;
+    max-height: calc(84vh - 145px) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-quick-replies {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+
+  .quick-reply-chip {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 0.72rem !important;
+    padding: 5px 10px !important;
+  }
+
+  .chat-input-row {
+    padding: 10px 12px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Full-width Touch Buttons on Small Screens */
+  .btn, .btn-primary, .btn-secondary, .btn-accent {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem !important;
+  }
+
+  /* Hero Banner & Headings on Phones */
+  .hero-title {
+    font-size: 1.95rem !important;
+    line-height: 1.22 !important;
+  }
+
+  .hero-ctas {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  /* Tables & Responsive Cards */
+  .table-responsive, table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Admission Letter Modal on Phones */
+  #admission-letter-printable {
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+    max-height: 94vh !important;
+  }
+
+  .letter-inner-border {
+    padding: 14px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .letterhead-col {
+    font-size: 0.62rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .letterhead-logo {
+    height: 40px !important;
+  }
+
+  .admission-doc-table td {
+    padding: 5px 6px !important;
+    font-size: 0.76rem !important;
+  }
+}
+
+/* =========================================================
+   A4 STRICT SINGLE-PAGE PRINT STYLES (UNIVERSAL MOBILE & DESKTOP)
+   ========================================================= */
+@page {
+  size: A4 portrait;
+  margin: 6mm 8mm 6mm 8mm;
+}
+
+@media print {
+  *, *:before, *:after {
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-before: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything on the page completely */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make ONLY the exact admission form card visible */
+  #admission-letter-card,
+  #admission-letter-card * {
+    visibility: visible !important;
+  }
+
+  /* Expand card to cleanly fill the printed A4 sheet */
+  #admission-letter-card {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 20px 24px !important;
+    box-sizing: border-box !important;
+    background: #FFFFFF !important;
+    border: 2pt solid #081F3E !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-inside: avoid !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+  }
+
+  #admission-letter-card table,
+  #admission-letter-card .admission-doc-table {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+  }
+
+  #admission-letter-card table td,
+  #admission-letter-card .admission-doc-table td {
+    padding: 6px 10px !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+  }
+
+  #admission-letter-card img,
+  #admission-letter-card .letterhead-logo {
+    max-height: 52px !important;
+    width: auto !important;
+  }
+}
+
+
+
+
+
+

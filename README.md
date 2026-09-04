@@ -11,7 +11,7 @@
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react)](https://react.js.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![Campay Mobile Money](https://img.shields.io/badge/Payments-Campay%20(MTN%20%26%20Orange)-F5A623?style=for-the-badge)](https://campay.net/)
+[![MTN MoMo](https://img.shields.io/badge/Payments-MTN%20Mobile%20Money-FFCC00?style=for-the-badge&logoColor=black)](https://www.mtn.cm/)
 
 [🌐 Official Website](https://liahacademy.com) • [📖 User Manual](./USER_MANUAL.md) • [🛠️ Technical Documentation](./DOCUMENTATION.md) • [💬 WhatsApp Admissions](https://wa.me/237652154095)
 
@@ -42,14 +42,14 @@ Combining intensive hands-on lab practicals with corporate software engineering 
 - Streamlined digital admissions process capturing personal details, educational qualifications (GCE A/L, Baccalauréat), and career goals.
 - Instant issuance of verified **Student IDs (e.g. #2011)** and automated confirmation emails.
 
-### 📱 4. Instant Mobile Money Payment Gateway (Campay)
-- Direct USSD push payments on **MTN Cameroon Mobile Money (MoMo)** and **Orange Money (OM)**.
-- Settle application fees (10,000 XAF), seat deposits (50,000 XAF), or semester installments with instant on-screen digital receipt generation.
-- Automated real-time transaction polling and signed webhook reconciliation.
+### 📱 4. MTN Mobile Money Instant Short Code (`*126*14*670265493*Amount#`)
+- Direct USSD execution on **MTN Cameroon Mobile Money (MoMo)** via `*126*14*670265493*Amount#`.
+- Seamless 1-click **OK** trigger that launches the short code on the student's phone, prompting for their **Secret PIN** to validate and conclude the payment.
+- Settle application fees (10,000 XAF) or tuition with instant screenshot upload and admin audit.
 
 ### 🤖 5. LiahBot AI Academic Assistant
 - Intelligent natural language assistant equipped with the complete academy knowledge base.
-- **In-Chat Payments**: Initiates Mobile Money transactions directly inside conversation threads.
+- **In-Chat Short Code Execution**: Generates live `*126*14*670265493*Amount#` payment cards directly inside chat threads.
 - **Real-Time Dossier Verification**: Checks admission and payment statuses by email or Student ID.
 
 ### 🔒 6. Protected Administrative Portal (`/admin`)
@@ -81,8 +81,8 @@ Combining intensive hands-on lab practicals with corporate software engineering 
                      |                        |                        |
                      v                        v                        v
         +------------+-----------+  +---------+----------+  +----------+----------+
-        |   Admissions & Auth    |  |  Campay MoMo API   |  |   AI Chat Assistant  |
-        |  Application Service   |  |  (MTN / Orange)    |  |    (LiahBot NLP)     |
+        |   Admissions & Auth    |  | MTN MoMo Receipts  |  |   AI Chat Assistant  |
+        |  Application Service   |  |  (Proof / Upload)  |  |    (LiahBot NLP)     |
         +------------+-----------+  +---------+----------+  +----------+----------+
                      |                        |                        |
                      +------------------------+------------------------+
@@ -101,7 +101,7 @@ Combining intensive hands-on lab practicals with corporate software engineering 
 | **Frontend** | React 18.3.1, TypeScript 5.7.3, Vanilla CSS3 Variables, Lucide Icons |
 | **Graphics** | OGL 1.0.11 (Interactive WebGL Canvas) |
 | **Database** | MySQL 8.0+ / MariaDB (`mysql2`), Atomic JSON Store Fallback |
-| **Payments** | Campay Mobile Money Gateway (MTN Cameroon & Orange Cameroon) |
+| **Payments** | MTN Mobile Money (MoMo Directives & Proof Verification) |
 | **Email** | Nodemailer 9.0.5 (SMTP + file-based diagnostic ledger) |
 
 ---
@@ -182,7 +182,7 @@ d:\Liah Academy\
 │   ├── admin/page.tsx                   # Protected administrative control dashboard
 │   └── api/                             # REST API Route Handlers
 │       ├── admissions/                  # /register, /login, /status
-│       ├── payments/campay/             # /collect, /status, /webhook
+│       ├── payments/upload-proof/       # /upload-proof (MTN MoMo receipt verification)
 │       ├── chat/                        # /chat (AI NLP assistant & dossier lookups)
 │       ├── reviews/                     # /reviews (GET public, POST new review)
 │       ├── contact/                     # /contact (Direct inquiry submission)
@@ -191,14 +191,13 @@ d:\Liah Academy\
 │   ├── Header.tsx                       # Site header, mobile slide-over drawer, Ctrl+K hotkey
 │   ├── HeaderSearch.tsx                 # Floating transparent search modal with outside click
 │   ├── Footer.tsx                       # Multi-column footer, social icons, admin portal link
-│   ├── ChatWidget.tsx                   # Floating AI assistant with in-chat MoMo payment & dossier
+│   ├── ChatWidget.tsx                   # Floating AI assistant with MTN MoMo payment directives
 │   └── BackToTop.tsx                    # Floating smooth-scroll back to top component
 ├── data/                                # Data persistence and logs
 │   ├── liah_academy_store.json          # Master atomic JSON datastore
 │   └── email_notifications.log          # Email delivery ledger & diagnostic logs
 ├── lib/                                 # Shared utilities & database clients
 │   ├── db.ts                            # Hybrid MySQL/JSON database abstraction layer
-│   ├── campay.ts                        # Campay payment gateway integration helper
 │   ├── email.ts                         # Nodemailer SMTP transport & template engine
 │   ├── auth.ts                          # Administrator authentication & session tokens
 │   └── constants.ts                     # Institutional branding constants

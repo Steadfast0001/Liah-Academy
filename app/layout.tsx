@@ -1,9 +1,18 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
 import BackToTop from '@/components/BackToTop';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#081F3E',
+  colorScheme: 'light dark'
+};
 
 export const metadata: Metadata = {
   title: 'Liah Academy | Forge Your Future in Technology',

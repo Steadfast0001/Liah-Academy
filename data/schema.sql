@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
   `student_id` INT NULL,
   `amount` DECIMAL(12, 2) NOT NULL DEFAULT 50000.00,
   `currency` VARCHAR(10) DEFAULT 'XAF',
-  `operator` VARCHAR(50) DEFAULT 'MTN / Orange',
+  `operator` VARCHAR(50) DEFAULT 'MTN Mobile Money',
   `phone` VARCHAR(50) DEFAULT '',
   `status` ENUM('PENDING', 'SUCCESSFUL', 'FAILED', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
   `description` VARCHAR(255) DEFAULT 'Registration / Tuition Payment',

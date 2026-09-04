@@ -118,6 +118,7 @@ function AdmissionsContent() {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
   const [prefilledMessage, setPrefilledMessage] = useState<string | null>(null);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
 
   // Login Form State
   const [loginEmail, setLoginEmail] = useState('');
@@ -131,7 +132,7 @@ function AdmissionsContent() {
 
   // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
-  const [payMethod, setPayMethod] = useState<'MTN' | 'ORANGE'>('MTN');
+  const [payMethod] = useState<'MTN'>('MTN');
   const [payAmountOption, setPayAmountOption] = useState<number>(10000);
   const [payCustomAmount, setPayCustomAmount] = useState<string>('');
   const [paySenderPhone, setPaySenderPhone] = useState<string>('');
@@ -142,6 +143,16 @@ function AdmissionsContent() {
   const [paySuccess, setPaySuccess] = useState(false);
   const [payError, setPayError] = useState<string>('');
   const [copiedNumber, setCopiedNumber] = useState(false);
+  const [copiedShortCode, setCopiedShortCode] = useState(false);
+  const [shortCodeDialed, setShortCodeDialed] = useState(false);
+  const [paymentPhase, setPaymentPhase] = useState<'IDLE' | 'DIALED' | 'CHECKING' | 'CONFIRMED'>('IDLE');
+  const [autoCheckLoading, setAutoCheckLoading] = useState(false);
+  const [showManualUpload, setShowManualUpload] = useState(false);
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const [userPin, setUserPin] = useState('');
+  const [pinSubmitting, setPinSubmitting] = useState(false);
+  const [pinError, setPinError] = useState('');
+  const [momoReceipt, setMomoReceipt] = useState<any>(null);
 
   // Complete programs mapping
   const programOptions: Record<string, string[]> = {
@@ -168,8 +179,22 @@ function AdmissionsContent() {
     ]
   };
 
-  // Pre-fill from URL parameters (e.g. from "Enroll ->")
+  // Pre-fill from URL parameters & Restore Auto-Saved Incomplete Draft
   useEffect(() => {
+    // 1. Restore authenticated student session from localStorage / sessionStorage
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('liah_student_session') || sessionStorage.getItem('liah_student_session');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.id) {
+            setStudent(parsed);
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Pre-fill from URL parameters (e.g. from "Enroll ->")
     if (degreeParam) {
       const upper = degreeParam.toUpperCase();
       let normalizedDegree: 'HND' | 'ND' | 'Certification' = 'HND';
@@ -194,24 +219,78 @@ function AdmissionsContent() {
       setCurrentStep(1);
     }
 
-    // Restore authenticated student session from sessionStorage
+    // 3. Restore auto-saved draft if user left without completing
     try {
       if (typeof window !== 'undefined') {
-        const saved = sessionStorage.getItem('liah_student_session');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && parsed.id) {
-            setStudent(parsed);
+        const draftStr = localStorage.getItem('liah_admission_draft');
+        if (draftStr) {
+          const draft = JSON.parse(draftStr);
+          if (draft && (draft.fullName || draft.email || draft.phone || draft.currentStep > 1 || draft.showCheckout)) {
+            if (draft.fullName && !fullName) setFullName(draft.fullName);
+            if (draft.email && !email) setEmail(draft.email);
+            if (draft.phone && !phone) setPhone(draft.phone);
+            if (draft.degreeType && !degreeParam) setDegreeType(draft.degreeType);
+            if (draft.programType && !programParam) setProgramType(draft.programType);
+            if (draft.studyFormat) setStudyFormat(draft.studyFormat);
+            if (draft.uploadedDocs && Object.keys(draft.uploadedDocs).length > 0) setUploadedDocs(draft.uploadedDocs);
+            if (draft.currentStep) setCurrentStep(draft.currentStep);
+            if (draft.showCheckout) setShowCheckout(draft.showCheckout);
+            if (draft.payAmountOption) setPayAmountOption(draft.payAmountOption);
+            if (draft.payCustomAmount) setPayCustomAmount(draft.payCustomAmount);
+            setHasSavedDraft(true);
           }
         }
       }
     } catch {}
   }, [degreeParam, programParam]);
 
+  // Real-time auto-saving draft to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!student && (fullName || email || phone || currentStep > 1 || showCheckout)) {
+      try {
+        const draft = {
+          fullName,
+          email,
+          phone,
+          degreeType,
+          programType,
+          studyFormat,
+          uploadedDocs,
+          currentStep,
+          showCheckout,
+          payAmountOption,
+          payCustomAmount
+        };
+        localStorage.setItem('liah_admission_draft', JSON.stringify(draft));
+      } catch {}
+    }
+  }, [fullName, email, phone, degreeType, programType, studyFormat, uploadedDocs, currentStep, showCheckout, payAmountOption, payCustomAmount, student]);
+
+  const handleClearDraft = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('liah_admission_draft');
+    }
+    setFullName('');
+    setEmail('');
+    setPassword('');
+    setPhone('');
+    setDegreeType('HND');
+    setProgramType('Software Engineering HND');
+    setStudyFormat('oncampus');
+    setUploadedDocs({});
+    setCurrentStep(1);
+    setShowCheckout(false);
+    setHasSavedDraft(false);
+    setPayScreenshotFile(null);
+    setPayScreenshotPreview(null);
+  };
+
   const handleStudentLogout = () => {
     setStudent(null);
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('liah_student_session');
+      localStorage.removeItem('liah_student_session');
     }
   };
 
@@ -234,6 +313,14 @@ function AdmissionsContent() {
             url: dataUrl
           }
         }));
+
+        // Seamless mobile scroll retention: centers viewport directly on the selected slot
+        setTimeout(() => {
+          const container = document.getElementById(`doc-slot-container-${slotId}`);
+          if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 120);
       };
       reader.readAsDataURL(file);
       setRegError('');
@@ -294,6 +381,10 @@ function AdmissionsContent() {
       if (data.success && data.data) {
         setStudent(data.data);
         setShowCheckout(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('liah_student_session', JSON.stringify(data.data));
+          sessionStorage.setItem('liah_student_session', JSON.stringify(data.data));
+        }
       } else {
         setRegError(data.message || 'Registration failed.');
       }
@@ -324,6 +415,7 @@ function AdmissionsContent() {
       if (data.success && data.data) {
         setStudent(data.data);
         if (typeof window !== 'undefined') {
+          localStorage.setItem('liah_student_session', JSON.stringify(data.data));
           sessionStorage.setItem('liah_student_session', JSON.stringify(data.data));
         }
       } else {
@@ -341,6 +433,135 @@ function AdmissionsContent() {
     setTimeout(() => setCopiedNumber(false), 2500);
   };
 
+  const handleCopyShortCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedShortCode(true);
+    setTimeout(() => setCopiedShortCode(false), 2500);
+  };
+
+  const handleOpenMoMo = (code: string, amount: number) => {
+    setPaymentPhase('DIALED');
+    setShortCodeDialed(true);
+    setShowManualUpload(false);
+    setPayError('');
+    try {
+      navigator.clipboard.writeText(code);
+    } catch {}
+    // Encode # as %23 for tel URI protocol
+    const dialUri = `tel:*126*14*670265493*${amount}%23`;
+    window.location.href = dialUri;
+  };
+
+  const runAutoCheck = async () => {
+    setAutoCheckLoading(true);
+    setPayError('');
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+
+    try {
+      const res = await fetch('/api/payments/momo-confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: student?.id,
+          email: student?.email,
+          full_name: student?.full_name,
+          amount: effectiveAmount,
+          phone: paySenderPhone || student?.phone || '670265493',
+          pin: userPin || '0000'
+        })
+      });
+
+      const data = await res.json();
+      setAutoCheckLoading(false);
+
+      if (data.success) {
+        setPaySuccess(true);
+        setPaymentPhase('CONFIRMED');
+        setShowPinPrompt(false);
+        setMomoReceipt(data.data?.receipt || {
+          reference: data.data?.payment?.reference,
+          amount: effectiveAmount,
+          recipient: '670265493 (Liah Academy)',
+          date: new Date().toLocaleString(),
+          status: 'PAID & APPROVED'
+        });
+
+        if (student) {
+          setStudent({
+            ...student,
+            payment_status: 'Paid',
+            admission_status: 'Approved',
+            payment_amount: effectiveAmount,
+            payment_transaction_id: data.data?.payment?.transaction_id
+          });
+        }
+      } else {
+        setShowManualUpload(true);
+      }
+    } catch {
+      setAutoCheckLoading(false);
+      setShowManualUpload(true);
+    }
+  };
+
+  const handleAuthorizePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userPin || userPin.length < 4) {
+      setPinError('Please enter your 4 or 5-digit Secret MoMo PIN.');
+      return;
+    }
+    setPinSubmitting(true);
+    setPinError('');
+
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+
+    try {
+      const res = await fetch('/api/payments/momo-confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: student?.id,
+          email: student?.email,
+          full_name: student?.full_name,
+          amount: effectiveAmount,
+          phone: paySenderPhone || student?.phone || '670265493',
+          pin: userPin
+        })
+      });
+
+      const data = await res.json();
+      setPinSubmitting(false);
+
+      if (data.success) {
+        setPaySuccess(true);
+        setPaymentPhase('CONFIRMED');
+        setShowPinPrompt(false);
+        setMomoReceipt(data.data?.receipt || {
+          reference: data.data?.payment?.reference,
+          amount: effectiveAmount,
+          recipient: '670265493 (Liah Academy)',
+          date: new Date().toLocaleString(),
+          status: 'PAID & APPROVED'
+        });
+
+        if (student) {
+          setStudent({
+            ...student,
+            payment_status: 'Paid',
+            admission_status: 'Approved',
+            payment_amount: effectiveAmount,
+            payment_transaction_id: data.data?.payment?.transaction_id
+          });
+        }
+      } else {
+        setPinError(data.message || 'PIN validation failed. Please check your PIN.');
+      }
+    } catch {
+      setPinSubmitting(false);
+      setPinError('Network error confirming PIN authorization. Please try again.');
+    }
+  };
+
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -348,6 +569,14 @@ function AdmissionsContent() {
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         setPayScreenshotPreview(uploadEvent.target?.result as string);
+
+        // Seamless mobile scroll retention: centers viewport directly on the screenshot container
+        setTimeout(() => {
+          const container = document.getElementById('payment-screenshot-upload-container');
+          if (container) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 120);
       };
       reader.readAsDataURL(file);
     }
@@ -358,7 +587,7 @@ function AdmissionsContent() {
     setPayLoading(true);
     setPayError('');
 
-    const effectiveAmount = payAmountOption || 10000;
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
 
     if (!effectiveAmount || isNaN(effectiveAmount) || effectiveAmount <= 0) {
       setPayError('Please enter or select a valid payment amount.');
@@ -376,10 +605,10 @@ function AdmissionsContent() {
       const formData = new FormData();
       formData.append('student_id', String(student?.id || '0'));
       formData.append('amount', String(effectiveAmount));
-      formData.append('operator', payMethod === 'MTN' ? 'MTN Mobile Money' : 'Orange Money');
+      formData.append('operator', 'MTN Mobile Money');
       formData.append('phone', paySenderPhone || student?.phone || '670265493');
       formData.append('transaction_id', payTransactionId);
-      formData.append('description', `${payMethod} Payment of ${effectiveAmount.toLocaleString()} XAF for #${student?.id}`);
+      formData.append('description', `MTN MoMo Payment of ${effectiveAmount.toLocaleString()} XAF for #${student?.id}`);
 
       if (payScreenshotFile) {
         formData.append('screenshot', payScreenshotFile);
@@ -397,15 +626,24 @@ function AdmissionsContent() {
 
       if (data.success) {
         setPaySuccess(true);
-        if (student) {
-          setStudent({
-            ...student,
-            payment_status: 'Pending Verification',
-            payment_amount: effectiveAmount,
-            payment_proof_url: data.data?.payment?.proof_url || payScreenshotPreview,
-            payment_transaction_id: payTransactionId
-          });
+        const updatedStudent = student ? {
+          ...student,
+          payment_status: 'Pending Verification',
+          payment_amount: effectiveAmount,
+          payment_proof_url: data.data?.payment?.proof_url || payScreenshotPreview,
+          payment_transaction_id: payTransactionId
+        } : null;
+
+        if (updatedStudent) {
+          setStudent(updatedStudent);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('liah_student_session', JSON.stringify(updatedStudent));
+            sessionStorage.setItem('liah_student_session', JSON.stringify(updatedStudent));
+            localStorage.removeItem('liah_admission_draft');
+          }
         }
+        setHasSavedDraft(false);
+
         setTimeout(() => {
           setShowCheckout(false);
           setPaySuccess(false);
@@ -844,6 +1082,72 @@ function AdmissionsContent() {
               {/* REGISTER TAB (Multi-Step Form) */}
               {activeTab === 'register' ? (
                 <div>
+                  {/* Auto-Saved Draft Notification & Resume Banner */}
+                  {hasSavedDraft && !student && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, #081F3E 0%, #0F2F57 100%)',
+                      border: '1.5px solid #F5A623',
+                      borderRadius: '12px',
+                      padding: '14px 18px',
+                      marginBottom: '20px',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      boxShadow: '0 4px 15px rgba(8,31,62,0.15)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.4rem' }}>💾</span>
+                        <div>
+                          <strong style={{ color: '#FDE047', fontSize: '0.9rem', display: 'block' }}>
+                            Incomplete Application Restored
+                          </strong>
+                          <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
+                            Welcome back{fullName ? `, ${fullName}` : ''}! Your progress at <strong>Step {currentStep} of 3</strong> ({programType}) has been automatically saved.
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHasSavedDraft(false);
+                          }}
+                          style={{
+                            background: '#F5A623',
+                            color: '#081F3E',
+                            border: 'none',
+                            padding: '7px 14px',
+                            borderRadius: '6px',
+                            fontWeight: 800,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Continue Application ➔
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleClearDraft}
+                          style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            color: '#CBD5E1',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            padding: '7px 12px',
+                            borderRadius: '6px',
+                            fontWeight: 600,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Start Fresh
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Pre-fill Notification Banner */}
                   {prefilledMessage && (
                     <div style={{ 
@@ -870,18 +1174,42 @@ function AdmissionsContent() {
                   </div>
 
                   {/* Step indicators */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 1 ? '#081F3E' : '#E2E8F0', color: currentStep >= 1 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>1</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 1 ? '#081F3E' : '#64748B' }}>Personal Details</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '24px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      background: currentStep === 1 ? '#FEF3C7' : '#F8FAFC',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: currentStep === 1 ? '1.5px solid #F59E0B' : '1px solid #E2E8F0'
+                    }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep >= 1 ? '#081F3E' : '#E2E8F0', color: currentStep >= 1 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', flexShrink: 0 }}>1</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: currentStep === 1 ? '#92400E' : '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Details</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 2 ? '#081F3E' : '#E2E8F0', color: currentStep >= 2 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>2</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 2 ? '#081F3E' : '#64748B' }}>Program Selection</span>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      background: currentStep === 2 ? '#FEF3C7' : '#F8FAFC',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: currentStep === 2 ? '1.5px solid #F59E0B' : '1px solid #E2E8F0'
+                    }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep >= 2 ? '#081F3E' : '#E2E8F0', color: currentStep >= 2 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', flexShrink: 0 }}>2</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: currentStep === 2 ? '#92400E' : '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Program</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 3 ? '#081F3E' : '#E2E8F0', color: currentStep >= 3 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>3</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: currentStep === 3 ? '#081F3E' : '#64748B' }}>Submit &amp; Review</span>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      background: currentStep === 3 ? '#FEF3C7' : '#F8FAFC',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: currentStep === 3 ? '1.5px solid #F59E0B' : '1px solid #E2E8F0'
+                    }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep >= 3 ? '#081F3E' : '#E2E8F0', color: currentStep >= 3 ? '#F5A623' : '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', flexShrink: 0 }}>3</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: currentStep === 3 ? '#92400E' : '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Docs</span>
                     </div>
                   </div>
 
@@ -1046,12 +1374,14 @@ function AdmissionsContent() {
                             return (
                               <div
                                 key={slot.id}
+                                id={`doc-slot-container-${slot.id}`}
                                 style={{
                                   border: isUploaded ? '1.5px solid #10B981' : '1px solid #E2E8F0',
                                   borderRadius: '10px',
                                   padding: '16px',
                                   background: isUploaded ? 'rgba(16, 185, 129, 0.03)' : '#FFFFFF',
-                                  transition: 'all 0.2s ease'
+                                  transition: 'all 0.2s ease',
+                                  scrollMarginTop: '80px'
                                 }}
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
@@ -1364,111 +1694,187 @@ function AdmissionsContent() {
 
                   {/* 1. Fixed Official Registration Fee Card */}
                   <div style={{ marginBottom: '18px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                       <div>
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px' }}>
                           Official Enrolment Fee
                         </span>
                         <h4 style={{ margin: '4px 0 0 0', color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
-                          10,000 XAF
+                          {(payCustomAmount ? parseInt(payCustomAmount) || 0 : (payAmountOption || 10000)).toLocaleString()} XAF
                         </h4>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600, display: 'block' }}>Payment Method</span>
-                        <strong style={{ color: '#081F3E', fontSize: '0.85rem' }}>MTN MoMo / Orange Money</strong>
+                        <strong style={{ color: '#081F3E', fontSize: '0.85rem' }}>MTN Mobile Money (MoMo)</strong>
+                      </div>
+                    </div>
+
+                    {/* Amount Selector */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                        Select or Enter Payment Amount (XAF):
+                      </label>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                        {[
+                          { label: 'Application Fee (10,000 XAF)', val: 10000 },
+                          { label: 'Seat Deposit (50,000 XAF)', val: 50000 },
+                          { label: 'Semester Installment (125,000 XAF)', val: 125000 }
+                        ].map((opt) => (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() => {
+                              setPayAmountOption(opt.val);
+                              setPayCustomAmount('');
+                              setShortCodeDialed(false);
+                            }}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              border: payAmountOption === opt.val && !payCustomAmount ? '2px solid #F59E0B' : '1px solid #CBD5E1',
+                              background: payAmountOption === opt.val && !payCustomAmount ? '#FEF3C7' : '#FFFFFF',
+                              color: payAmountOption === opt.val && !payCustomAmount ? '#92400E' : '#475569'
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input
+                          type="number"
+                          placeholder="Or type custom amount in XAF..."
+                          value={payCustomAmount}
+                          onChange={(e) => {
+                            setPayCustomAmount(e.target.value);
+                            setShortCodeDialed(false);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            fontSize: '0.82rem'
+                          }}
+                        />
                       </div>
                     </div>
                     
-                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5, marginTop: '8px' }}>
-                      📌 <strong>Important Notice:</strong> Online payment is strictly <strong>10,000 XAF</strong> for your official Application &amp; Registration. All remaining tuition fees and installments are to be paid physically at the <strong>Academy Secretary&apos;s Office in Buea</strong> upon admission confirmation.
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5 }}>
+                      📌 <strong>Official Directive:</strong> Online payment is <strong>10,000 XAF</strong> for your official Application &amp; Registration. Tuition balances can be paid with the short code below or physically at the Buea Campus office.
                     </div>
                   </div>
 
-                  {/* 2. Directives Tab Switcher (MTN vs Orange) */}
+                  {/* 2. Direct USSD Short Code Execution (*126*14*670265493*Amount#) */}
                   <div style={{ marginBottom: '18px' }}>
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPayMethod('MTN')}
-                        style={{
-                          flex: 1,
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: payMethod === 'MTN' ? '2px solid #F59E0B' : '1px solid #E2E8F0',
-                          background: payMethod === 'MTN' ? '#FEF3C7' : '#FFFFFF',
-                          color: payMethod === 'MTN' ? '#92400E' : '#64748B',
-                          fontWeight: 800,
-                          fontSize: '0.82rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <Smartphone size={16} /> MTN Mobile Money (*126#)
-                      </button>
+                    {(() => {
+                      const amountToPay = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+                      const fullShortCode = `*126*14*670265493*${amountToPay || 10000}#`;
 
-                      <button
-                        type="button"
-                        onClick={() => setPayMethod('ORANGE')}
-                        style={{
-                          flex: 1,
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: payMethod === 'ORANGE' ? '2px solid #EA580C' : '1px solid #E2E8F0',
-                          background: payMethod === 'ORANGE' ? '#FFEDD5' : '#FFFFFF',
-                          color: payMethod === 'ORANGE' ? '#9A3412' : '#64748B',
-                          fontWeight: 800,
-                          fontSize: '0.82rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <Smartphone size={16} /> Orange Money (#150#)
-                      </button>
-                    </div>
+                      return (
+                        <div style={{
+                          background: '#0F172A',
+                          border: '2px solid #F59E0B',
+                          borderRadius: '12px',
+                          padding: '18px',
+                          color: '#FFFFFF'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Smartphone size={18} /> MTN Mobile Money (MoMo) Payment
+                            </span>
+                            <span style={{ fontSize: '0.78rem', background: '#10B981', color: '#FFFFFF', padding: '3px 10px', borderRadius: '4px', fontWeight: 700 }}>
+                              Amount: {(amountToPay || 10000).toLocaleString()} XAF
+                            </span>
+                          </div>
 
-                    {/* Step-by-Step Instructions Box */}
-                    <div style={{ 
-                      background: payMethod === 'MTN' ? '#FFFBEB' : '#FFF7ED', 
-                      border: payMethod === 'MTN' ? '1px solid #FDE68A' : '1px solid #FED7AA', 
-                      borderRadius: '10px', 
-                      padding: '14px 16px',
-                      fontSize: '0.84rem',
-                      lineHeight: '1.6',
-                      color: '#081F3E'
-                    }}>
-                      <div style={{ fontWeight: 800, marginBottom: '6px', color: payMethod === 'MTN' ? '#B45309' : '#C2410C', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>Dial Directives for {payMethod === 'MTN' ? 'MTN MoMo' : 'Orange Money'}:</span>
-                      </div>
+                          {/* Big "Pay Now — Open MTN MoMo" Button (Short code runs in background) */}
+                          <div style={{ marginBottom: '14px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenMoMo(fullShortCode, amountToPay || 10000)}
+                              style={{
+                                width: '100%',
+                                padding: '15px 22px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #F5A623 0%, #E28704 100%)',
+                                color: '#081F3E',
+                                fontWeight: 900,
+                                fontSize: '1.05rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px',
+                                boxShadow: '0 6px 20px rgba(245,166,35,0.45)',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <Smartphone size={22} /> Pay Now — Open MTN MoMo ({(amountToPay || 10000).toLocaleString()} XAF)
+                            </button>
+                          </div>
 
-                      {payMethod === 'MTN' ? (
-                        <ol style={{ paddingLeft: '18px', margin: 0 }}>
-                          <li>Dial <strong>*126#</strong> on your mobile phone.</li>
-                          <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To MTN number)</strong>.</li>
-                          <li>Enter recipient number: <strong>670265493</strong>.</li>
-                          <li>Enter amount: <strong>10,000 XAF</strong>.</li>
-                          <li>Enter reason / reference: <strong>Reg #{student?.id || 'ID'}</strong>.</li>
-                          <li>Enter your <strong>MoMo PIN</strong> to authorize the transfer.</li>
-                        </ol>
-                      ) : (
-                        <ol style={{ paddingLeft: '18px', margin: 0 }}>
-                          <li>Dial <strong>#150#</strong> on your mobile phone.</li>
-                          <li>Select <strong>1 (Transfer money)</strong> ➔ <strong>1 (To Orange number)</strong>.</li>
-                          <li>Enter recipient number: <strong>670265493</strong>.</li>
-                          <li>Enter amount: <strong>10,000 XAF</strong>.</li>
-                          <li>Enter your <strong>Orange Money PIN</strong> to authorize the transfer.</li>
-                        </ol>
-                      )}
-                    </div>
+                          {/* Instant Verified Digital Receipt */}
+                          {paySuccess && momoReceipt && (
+                            <div style={{
+                              background: '#ECFDF5',
+                              border: '2px solid #10B981',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              marginBottom: '14px'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <CheckCircle size={22} color="#10B981" />
+                                <span style={{ color: '#065F46', fontWeight: 800, fontSize: '0.98rem' }}>
+                                  🎉 Payment Confirmed &amp; Session Activated!
+                                </span>
+                              </div>
+                              <p style={{ margin: '0 0 10px 0', fontSize: '0.84rem', color: '#047857', lineHeight: 1.5 }}>
+                                Your transfer of <strong>{momoReceipt.amount.toLocaleString()} XAF</strong> has been validated. Your student session is active and admission is <strong>APPROVED</strong>!
+                              </p>
+                              <div style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: '8px', border: '1px solid #A7F3D0', fontSize: '0.8rem', color: '#065F46', lineHeight: 1.6 }}>
+                                <div>Receipt Reference: <strong>{momoReceipt.reference}</strong></div>
+                                <div>Recipient: <strong>{momoReceipt.recipient || '670265493 (Liah Academy)'}</strong></div>
+                                <div>Status: <strong style={{ color: '#059669' }}>PAID &amp; APPROVED</strong></div>
+                                <div>Date: <strong>{momoReceipt.date}</strong></div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* How It Works Guide */}
+                          <div style={{ fontSize: '0.78rem', color: '#94A3B8', lineHeight: 1.5, background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px' }}>
+                            <div style={{ color: '#FDE047', fontWeight: 700, marginBottom: '4px' }}>
+                              How the payment process works:
+                            </div>
+                            <ol style={{ paddingLeft: '16px', margin: 0 }}>
+                              <li>Tap <strong>Pay Now — Open MTN MoMo</strong>.</li>
+                              <li>Your phone dialer opens automatically with the payment code executed in the background.</li>
+                              <li>Enter your <strong>Secret PIN</strong> on your mobile screen to complete the transfer.</li>
+                              <li>Return here, attach the <strong>screenshot of your payment</strong> below, and click <strong>Submit</strong>!</li>
+                            </ol>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* 3. Upload Screenshot & Details */}
-                  <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '20px' }}>
+                  <div 
+                    id="payment-screenshot-upload-container"
+                    style={{ 
+                      background: '#F8FAFC', 
+                      padding: '16px', 
+                      borderRadius: '10px', 
+                      border: '1px solid #E2E8F0', 
+                      marginBottom: '20px',
+                      scrollMarginTop: '80px'
+                    }}
+                  >
                     <h5 style={{ color: '#081F3E', margin: '0 0 10px 0', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <UploadCloud size={16} color="#081F3E" /> Upload Payment Screenshot / Receipt *
                     </h5>
@@ -1520,7 +1926,7 @@ function AdmissionsContent() {
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#081F3E', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {payScreenshotFile?.name || 'Payment_Proof_Screenshot'}
                           </span>
-                          <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>Ready to verify</span>
+                          <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>Screenshot attached</span>
                         </div>
                         <button
                           type="button"
@@ -1575,7 +1981,7 @@ function AdmissionsContent() {
                       className="btn btn-secondary"
                       style={{ flex: 1, color: '#081F3E', borderColor: 'rgba(15,23,42,0.2)', padding: '12px' }}
                     >
-                      Pay Later
+                      Cancel
                     </button>
                     
                     <button
@@ -1587,12 +1993,12 @@ function AdmissionsContent() {
                       {payLoading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          <span>Uploading Proof...</span>
+                          <span>Submitting Application...</span>
                         </>
                       ) : (
                         <>
                           <UploadCloud size={16} />
-                          <span>Submit Proof for Verification</span>
+                          <span>Submit Application &amp; Screenshot</span>
                         </>
                       )}
                     </button>
@@ -1662,13 +2068,23 @@ function AdmissionsContent() {
                 </div>
               </div>
 
-              {/* PRINTABLE LETTER CONTENT */}
-              <div style={{ border: '2px solid #081F3E', borderRadius: '12px', padding: '30px', background: '#FFFFFF' }}>
+              {/* PRINTABLE LETTER CONTENT (Proportionally filling entire A4 Page) */}
+              <div id="admission-letter-card" className="letter-inner-border" style={{ 
+                border: '2.5px solid #081F3E', 
+                borderRadius: '12px', 
+                padding: '24px 28px', 
+                background: '#FFFFFF', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'space-between',
+                pageBreakInside: 'avoid', 
+                breakInside: 'avoid' 
+              }}>
                 
                 {/* Official Letterhead */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #081F3E', paddingBottom: '20px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #081F3E', paddingBottom: '14px', marginBottom: '14px' }}>
                   {/* Left: Republic Details */}
-                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                  <div className="letterhead-col" style={{ textAlign: 'center', width: '32%', fontSize: '0.74rem', lineHeight: '1.35', color: '#1E293B' }}>
                     <p style={{ fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>Republic of Cameroon</p>
                     <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Peace - Work - Fatherland</p>
                     <p style={{ margin: 0 }}>Ministry of Higher Education</p>
@@ -1680,15 +2096,16 @@ function AdmissionsContent() {
                     <img 
                       src="/assets/images/logo.png" 
                       alt="Liah Academy Crest" 
-                      style={{ height: '76px', width: 'auto', margin: '0 auto', display: 'block' }} 
+                      className="letterhead-logo"
+                      style={{ height: '56px', width: 'auto', margin: '0 auto', display: 'block' }} 
                     />
-                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '3px' }}>
                       INNOVATION &amp; EXCELLENCE
                     </span>
                   </div>
 
                   {/* Right: Institution Details */}
-                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                  <div className="letterhead-col" style={{ textAlign: 'center', width: '32%', fontSize: '0.74rem', lineHeight: '1.35', color: '#1E293B' }}>
                     <p style={{ fontWeight: 800, margin: 0, color: '#081F3E' }}>LIAH ACADEMY</p>
                     <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Higher Institute of Technology</p>
                     <p style={{ margin: 0 }}>Buea Main Campus, SW Region</p>
@@ -1698,56 +2115,56 @@ function AdmissionsContent() {
                 </div>
 
                 {/* Document Banner */}
-                <div style={{ textAlign: 'center', background: '#081F3E', color: '#FFFFFF', padding: '10px 16px', borderRadius: '6px', marginBottom: '24px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 800 }}>
+                <div style={{ textAlign: 'center', background: '#081F3E', color: '#FFFFFF', padding: '10px 16px', borderRadius: '6px', marginBottom: '14px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 800 }}>
                     Official Admission Form &amp; Offer of Enrolment
                   </h3>
                   <span style={{ fontSize: '0.8rem', color: '#F5A623', fontWeight: 600 }}>
-                    2026 / 2027 Academic Session
+                    2026 / 2027 Academic Session &bull; Ref: {student.matricule || `HND26SW${String(student.id).padStart(3, '0')}`}
                   </span>
                 </div>
 
                 {/* Candidate & Academic Dossier Grid */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px', fontSize: '0.88rem' }}>
+                <table className="admission-doc-table" style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '14px', fontSize: '0.88rem' }}>
                   <tbody>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', width: '30%', fontWeight: 700, color: '#64748B' }}>Student Matricule:</td>
-                      <td style={{ padding: '8px 12px', width: '70%', fontWeight: 800, color: '#081F3E', fontFamily: 'var(--font-mono)', fontSize: '1rem', letterSpacing: '0.04em' }}>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', width: '28%', fontWeight: 700, color: '#64748B' }}>Student Matricule:</td>
+                      <td style={{ padding: '6px 12px', width: '72%', fontWeight: 800, color: '#081F3E', fontFamily: 'var(--font-mono)', fontSize: '0.95rem' }}>
                         {student.matricule || `HND26SW${String(student.id).padStart(3, '0')}`}
                       </td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Applicant Full Name:</td>
-                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#081F3E' }}>{student.full_name}</td>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Applicant Full Name:</td>
+                      <td style={{ padding: '6px 12px', fontWeight: 800, color: '#081F3E' }}>{student.full_name}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Academic Program:</td>
-                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>{student.program_type}</td>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Academic Program:</td>
+                      <td style={{ padding: '6px 12px', fontWeight: 700, color: '#081F3E' }}>{student.program_type}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Degree Category:</td>
-                      <td style={{ padding: '8px 12px', fontWeight: 600, color: '#1E293B' }}>{student.degree_type}</td>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Degree Category:</td>
+                      <td style={{ padding: '6px 12px', fontWeight: 600, color: '#1E293B' }}>{student.degree_type}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Study Format &amp; Campus:</td>
-                      <td style={{ padding: '8px 12px', color: '#1E293B' }}>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Study Format &amp; Campus:</td>
+                      <td style={{ padding: '6px 12px', color: '#1E293B' }}>
                         {student.study_format === 'oncampus' ? 'On-Campus (Buea Innovation Labs)' : 'Online / Hybrid Learning'}
                       </td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Contact Information:</td>
-                      <td style={{ padding: '8px 12px', color: '#1E293B' }}>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Contact Details:</td>
+                      <td style={{ padding: '6px 12px', color: '#1E293B' }}>
                         {student.email} {student.phone ? `| Tel: ${student.phone}` : ''}
                       </td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Admission Status:</td>
-                      <td style={{ padding: '8px 12px' }}>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Admission Status:</td>
+                      <td style={{ padding: '6px 12px' }}>
                         <span style={{ 
                           padding: '3px 8px', 
                           borderRadius: '4px', 
                           fontWeight: 800, 
-                          fontSize: '0.82rem',
+                          fontSize: '0.8rem',
                           background: student.admission_status === 'Approved' ? '#ECFDF5' : student.admission_status === 'Rejected' ? '#FEF2F2' : '#FFFBEB',
                           color: student.admission_status === 'Approved' ? '#059669' : student.admission_status === 'Rejected' ? '#DC2626' : '#D97706'
                         }}>
@@ -1756,13 +2173,13 @@ function AdmissionsContent() {
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Registration Fee (10k):</td>
-                      <td style={{ padding: '8px 12px' }}>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Registration Fee:</td>
+                      <td style={{ padding: '6px 12px' }}>
                         <span style={{ 
                           padding: '3px 8px', 
                           borderRadius: '4px', 
                           fontWeight: 800, 
-                          fontSize: '0.82rem',
+                          fontSize: '0.8rem',
                           background: student.payment_status === 'Paid' ? '#ECFDF5' : '#EFF6FF',
                           color: student.payment_status === 'Paid' ? '#059669' : '#2563EB'
                         }}>
@@ -1774,25 +2191,24 @@ function AdmissionsContent() {
                 </table>
 
                 {/* Acceptance Terms & Secretary Office Reporting Notice */}
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontSize: '0.82rem', lineHeight: '1.6', color: '#334155' }}>
-                  <strong style={{ color: '#081F3E', display: 'block', marginBottom: '6px', fontSize: '0.88rem' }}>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '12px 16px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.78rem', lineHeight: '1.5', color: '#334155' }}>
+                  <strong style={{ color: '#081F3E', display: 'block', marginBottom: '4px', fontSize: '0.84rem' }}>
                     🏢 Institutional Next Steps &amp; Secretary Desk Instructions:
                   </strong>
-                  <ol style={{ margin: 0, paddingLeft: '20px' }}>
-                    <li>Present this printed Admission Form to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong>.</li>
-                    <li>Submit certified hard copies of your academic qualifications and certified birth certificate for final registry validation.</li>
-                    <li>Collect your official Student Orientation Starter Pack, Student ID Badge, and Laboratory Access Keycard.</li>
-                    <li>All remaining semester tuition fee installments are settled physically at the bursary counter.</li>
+                  <ol style={{ margin: 0, paddingLeft: '18px' }}>
+                    <li>Present this printed single-page Admission Form to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong>.</li>
+                    <li>Submit certified hard copies of academic qualifications and birth certificate for registry validation.</li>
+                    <li>Collect official Student Orientation Pack, Student ID Badge, and Laboratory Access Keycard.</li>
                   </ol>
                 </div>
 
                 {/* Signatures and Institutional Verification Seal */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '30px', paddingTop: '16px', borderTop: '1px dashed #CBD5E1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px dashed #CBD5E1' }}>
                   <div style={{ textAlign: 'center', width: '45%' }}>
                     <div style={{ 
-                      width: '120px', 
-                      height: '50px', 
-                      margin: '0 auto 8px auto', 
+                      width: '130px', 
+                      height: '48px', 
+                      margin: '0 auto 6px auto', 
                       border: '2px solid #059669', 
                       borderRadius: '8px',
                       display: 'flex',
@@ -1801,23 +2217,23 @@ function AdmissionsContent() {
                       color: '#059669',
                       fontSize: '0.68rem',
                       fontWeight: 800,
-                      transform: 'rotate(-4deg)',
+                      transform: 'rotate(-3deg)',
                       background: 'rgba(5,150,105,0.05)'
                     }}>
                       LIAH ACADEMY<br />VERIFIED &amp; STAMPED
                     </div>
-                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '4px', fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
+                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '3px', fontSize: '0.76rem', color: '#475569', fontWeight: 700 }}>
                       Office of the Registrar &amp; Admissions
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'center', width: '45%' }}>
-                    <div style={{ height: '50px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', margin: '0 auto 8px auto' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontStyle: 'italic', color: '#081F3E', fontSize: '0.92rem', fontWeight: 800 }}>
+                    <div style={{ height: '48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', margin: '0 auto 6px auto' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontStyle: 'italic', color: '#081F3E', fontSize: '0.95rem', fontWeight: 800 }}>
                         Mr. NSAH ESLI
                       </span>
                     </div>
-                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '4px', fontSize: '0.78rem', color: '#475569', fontWeight: 700 }}>
+                    <div style={{ borderTop: '1px solid #64748B', paddingTop: '3px', fontSize: '0.76rem', color: '#475569', fontWeight: 700 }}>
                       Owner &amp; Managing Director
                     </div>
                   </div>

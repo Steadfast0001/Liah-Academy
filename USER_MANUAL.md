@@ -12,13 +12,13 @@
    - 2.2 [Institutional Tuition & Fee Schedule](#22-institutional-tuition--fee-schedule)
    - 2.3 [Submitting an Online Admission Application](#23-submitting-an-online-admission-application)
    - 2.4 [Accessing the Student Portal & Checking Status](#24-accessing-the-student-portal--checking-status)
-   - 2.5 [Paying Tuition & Registration with Mobile Money (MTN & Orange)](#25-paying-tuition--registration-with-mobile-money-mtn--orange)
+   - 2.5 [Paying Tuition & Registration with MTN Mobile Money](#25-paying-tuition--registration-with-mtn-mobile-money)
    - 2.6 [Downloading & Verifying Digital Receipts](#26-downloading--verifying-digital-receipts)
    - 2.7 [Student Experience, Campus Life & Accommodation](#27-student-experience-campus-life--accommodation)
    - 2.8 [Direct Inquiries & WhatsApp Admissions Support](#28-direct-inquiries--whatsapp-admissions-support)
 3. [AI Chat Assistant Guide (LiahBot)](#3-ai-chat-assistant-guide-liahbot)
    - 3.1 [AI Chat Capabilities](#31-ai-chat-capabilities)
-   - 3.2 [In-Chat Mobile Money Payments](#32-in-chat-mobile-money-payments)
+   - 3.2 [In-Chat MTN MoMo Directives](#32-in-chat-mtn-momo-directives)
    - 3.3 [In-Chat Admission & Payment Status Dossier](#33-in-chat-admission--payment-status-dossier)
    - 3.4 [Example AI Prompts & Commands](#34-example-ai-prompts--commands)
 4. [Administrative Staff & Management Guide](#4-administrative-staff--management-guide)
@@ -41,8 +41,8 @@ Liah Academy is a premier higher institute of technology and corporate software 
 - Calculate transparent tuition fee schedules with real-time study format discounts (Online 15% discount, Part-Time 10% discount).
 - Register online through an intuitive 3-step admission application wizard.
 - Authenticate into the verified **Student Portal** to monitor admission progress and review financial dossiers.
-- Settle registration fees (10,000 XAF), seat deposits (50,000 XAF), or semester installments directly via **MTN Mobile Money** and **Orange Money**.
-- Interact with an intelligent **AI Academic Assistant** for instantaneous answers, payments, and applicant verification.
+- Settle registration fees (10,000 XAF) directly via **MTN Mobile Money (*126#)**.
+- Interact with an intelligent **AI Academic Assistant** for instantaneous answers, directives, and applicant verification.
 
 ---
 
@@ -113,29 +113,23 @@ Admitted and prospective students can log into their dossier at any time:
 
 ---
 
-### 2.5 Paying Tuition & Registration with Mobile Money (MTN & Orange)
+### 2.5 Paying Tuition & Registration with MTN Mobile Money
 
-Liah Academy features direct, end-to-end integration with the **Campay Mobile Money Gateway** for real-time payments across Cameroon.
+Liah Academy supports direct payments via the official **MTN Mobile Money Instant Short Code (`*126*14*670265493*Amount#`)** across Cameroon.
 
 #### Official Institution Payment Account:
 - **Recipient Number**: **`670 265 493`** (Liah Academy Official)
 - **Account Name**: **Liah Academy / Tech Division**
+- **Instant USSD Short Code**: **`*126*14*670265493*Amount#`**
 
-#### Step-by-Step Payment Directives:
-1. **Choose Your Network Operator**:
-   - **MTN Mobile Money (MoMo)**:
-     1. Dial `*126#` on your mobile phone.
-     2. Select `1 (Transfer money)` ➔ `1 (To MTN number)`.
-     3. Enter recipient number: **`670265493`**.
-     4. Enter amount (e.g. `50,000 XAF` deposit, `10,000 XAF` application fee, or `125,000 XAF` semester tuition).
-     5. Enter reason/reference: `LIAH-<YourStudentID>`.
-     6. Enter your secret **MoMo PIN** to confirm transfer.
-   - **Orange Money (OM)**:
-     1. Dial `#150#` on your mobile phone.
-     2. Select `1 (Transfer money)` ➔ `1 (To Orange number)`.
-     3. Enter recipient number: **`670265493`**.
-     4. Enter amount.
-     5. Enter your secret **Orange Money PIN** to confirm transfer.
+#### Step-by-Step Short Code Execution:
+1. **Trigger Short Code**:
+   - On the Admissions portal checkout or AI Chat assistant, select your amount (e.g. 10,000 XAF for application fee).
+   - Press **OK — Run Short Code & Enter PIN**.
+   - Your phone dialer opens with `*126*14*670265493*<Amount>#` ready to dial.
+2. **Input Secret PIN**:
+   - The MTN network displays the secure prompt requesting your **Secret MoMo PIN**.
+   - Enter your **PIN** to authorize and conclude the transaction.
 
 2. **Take a Screenshot / Photo of the Confirmation**:
    - Take a clear screenshot of your SMS transaction confirmation message or app receipt showing the transaction ID and amount.
@@ -159,7 +153,7 @@ Immediately upon administrative payment verification:
   - **Transaction Reference ID**
   - **Student Name & ID**
   - **Amount Paid (XAF)**
-  - **Payment Operator** (MTN MoMo or Orange Money)
+  - **Payment Operator** (MTN Mobile Money)
   - **Admin Verifier Timestamp**
 - A copy is stored in the database and accessible anytime via the Student Portal.
 
@@ -196,22 +190,20 @@ The **Liah Academy AI Chat Assistant** is located in the bottom-right floating g
 ### 3.1 AI Chat Capabilities
 - **Academic Advisory**: Explains curricula, course prerequisites, degree paths, and career prospects.
 - **Tuition Guidance**: Quotes exact tuition fees, discounts, and installment schedules.
-- **In-Chat Payment Trigger**: Generates interactive Mobile Money payment cards directly in the conversation.
+- **In-Chat Payment Directives**: Generates interactive MTN Mobile Money payment cards directly in the conversation.
 - **Real-Time Dossier Lookup**: Checks admission and payment statuses by email or Student ID.
 - **Campus & Practical Information**: Answers questions about lab setups, accommodation, and Buea campus life.
 
 ---
 
-### 3.2 In-Chat Mobile Money Payments
-To pay your fees through the AI Assistant:
+### 3.2 In-Chat MTN MoMo Directives
+To get payment instructions through the AI Assistant:
 1. Open the chat widget.
 2. Type: *"I want to pay my registration fee"* or *"How can I pay my tuition?"*
 3. The AI assistant immediately renders an **Interactive Payment Card**:
-   - Quick-select buttons for **10,000 XAF** (Registration), **50,000 XAF** (Deposit), **125,000 XAF** (HND Installment), or **Custom Amount**.
-   - Input field for your Mobile Money phone number.
-4. Click **Pay with Mobile Money (MoMo / Orange)**.
-5. Authorize the USSD prompt on your phone.
-6. The AI chat displays a **Verified Digital Receipt** directly in the chat stream upon completion.
+   - Quick-select buttons for **10,000 XAF** (Registration), **50,000 XAF** (Deposit), **125,000 XAF** (HND Installment), or other fee types.
+   - Direct dial instructions for MTN Mobile Money (*126#).
+4. Direct links to upload receipt on `/admissions` or confirm with human admissions officers on WhatsApp.
 
 ---
 
@@ -341,7 +333,7 @@ Inside the **Content & Media** tab:
 ## 5. FREQUENTLY ASKED QUESTIONS (FAQ)
 
 #### Q1: Which mobile networks are supported for fee payments?
-> **Answer**: Both **MTN Cameroon Mobile Money (MoMo)** and **Orange Cameroon Money (OM)** are fully supported with instant automated clearance.
+> **Answer**: Payments are processed exclusively via **MTN Cameroon Mobile Money (MoMo)** (*126#). Students send the registration fee to **`670 265 493`** and upload their transaction screenshot on the Admissions portal for verification.
 
 #### Q2: Is the registration fee refundable?
 > **Answer**: Application and registration fees (10,000 XAF) are non-refundable as they cover administrative processing and laboratory workstation reservation.

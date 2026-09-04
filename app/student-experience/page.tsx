@@ -368,7 +368,7 @@ export default function StudentExperiencePage() {
               },
               {
                 q: 'Can I pay my tuition in installments via Mobile Money?',
-                a: 'Yes! We support flexible 2 or 3 installment payment plans. You can pay seamlessly via MTN or Orange Mobile Money directly on the Admissions portal or inside our AI Chat assistant.'
+                a: 'Yes! We support flexible 2 or 3 installment payment plans. You can pay seamlessly via MTN Mobile Money (*126#) directly on the Admissions portal or follow directives inside our AI Chat assistant.'
               }
             ].map((faq, idx) => (
               <details

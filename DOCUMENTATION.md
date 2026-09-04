@@ -13,9 +13,9 @@
 4. [Database Design & Data Persistence Layer](#4-database-design--data-persistence-layer)
    - 4.1 [Relational Database Schema (MySQL)](#41-relational-database-schema-mysql)
    - 4.2 [JSON Dual-Layer Fallback Mechanism](#42-json-dual-layer-fallback-mechanism)
-5. [Payment Gateway Architecture (Campay Mobile Money)](#5-payment-gateway-architecture-campay-mobile-money)
-   - 5.1 [USSD Payment Collection Flow](#51-ussd-payment-collection-flow)
-   - 5.2 [Real-Time Polling & Webhook Handling](#52-real-time-polling--webhook-handling)
+5. [Payment Processing Architecture (MTN Mobile Money)](#5-payment-processing-architecture-mtn-mobile-money)
+   - 5.1 [USSD Payment Directives (*126#)](#51-step-by-step-payment--ussd-directives)
+   - 5.2 [Proof Upload & Administrative Reconciliation](#52-proof-upload--administrative-reconciliation)
    - 5.3 [Digital Receipt Generation & Security](#53-digital-receipt-generation--security)
 6. [AI Chatbot Engine & Context Architecture](#6-ai-chatbot-engine--context-architecture)
 7. [REST API Endpoints Specification](#7-rest-api-endpoints-specification)
@@ -51,8 +51,8 @@ The **Liah Academy Web Application** is a full-stack educational and admissions 
                      |                        |                        |
                      v                        v                        v
         +------------+-----------+  +---------+----------+  +----------+----------+
-        |   Admissions & Auth    |  |  Campay MoMo API   |  |   AI Chat Assistant  |
-        |  Application Service   |  |  (MTN / Orange)    |  |    (LiahBot NLP)     |
+        |   Admissions & Auth    |  | MTN MoMo Receipts  |  |   AI Chat Assistant  |
+        |  Application Service   |  |  (Proof / Upload)  |  |    (LiahBot NLP)     |
         +------------+-----------+  +---------+----------+  +----------+----------+
                      |                        |                        |
                      +------------------------+------------------------+
@@ -68,7 +68,7 @@ The **Liah Academy Web Application** is a full-stack educational and admissions 
 ### Key Architectural Tenets:
 1. **Zero-Downtime Resilience**: Hybrid data persistence allows full operation whether backed by MySQL or atomic file-system stores (`data/liah_academy_store.json`).
 2. **Mobile-First Responsive Layout**: Built to render on all viewports from 320px smartphones to ultrawide 4K displays with accessible touch targets (min 44px) and fluid typography (`clamp()`).
-3. **Instant Mobile Money Integration**: Direct USSD push integration with Campay for Cameroon MTN MoMo and Orange Money networks.
+3. **Instant Mobile Money Integration**: Direct USSD directives for Cameroon MTN Mobile Money (*126#).
 4. **Context-Aware AI Assistant**: Natural language processing model embedded with complete academy knowledge, financial computation tools, and live student dossier lookups.
 
 ---
@@ -82,7 +82,7 @@ The **Liah Academy Web Application** is a full-stack educational and admissions 
 | **Frontend UI** | React 18.3.1, Vanilla CSS3 Variables, CSS Grid / Flexbox, Lucide Icons |
 | **Graphics & 3D** | OGL 1.0.11 (WebGL canvas renderers) |
 | **Database** | MySQL 8.0+ / MariaDB (`mysql2`), Atomic JSON Store Fallback |
-| **Payment Gateway**| Campay API v1 (Mobile Money MTN & Orange Cameroon) |
+| **Payments** | MTN Mobile Money (MoMo Directives & Proof Upload) |
 | **Email Delivery** | Nodemailer 9.0.5 (SMTP with file-based diagnostic logger) |
 | **Security** | Session Cookie Auth, PIN Token Verification, SQL Injection Escaping |
 
@@ -110,7 +110,7 @@ d:\Liah Academy\
 │   │   └── page.tsx
 │   └── api/                             # REST API Route Handlers
 │       ├── admissions/                  # /register, /login, /status
-│       ├── payments/campay/             # /collect, /status, /webhook
+│       ├── payments/upload-proof/       # /upload-proof (MTN MoMo receipt upload & audit)
 │       ├── chat/                        # /chat (AI NLP assistant & dossier lookups)
 │       ├── reviews/                     # /reviews (GET public, POST new review)
 │       ├── contact/                     # /contact (Direct inquiry submission)
@@ -119,7 +119,7 @@ d:\Liah Academy\
 │   ├── Header.tsx                       # Site header, mobile slide-over drawer, Ctrl+K hotkey
 │   ├── HeaderSearch.tsx                 # Floating transparent search modal with outside click
 │   ├── Footer.tsx                       # Multi-column footer, social icons, admin portal link
-│   ├── ChatWidget.tsx                   # Floating AI assistant with in-chat MoMo payment & dossier
+│   ├── ChatWidget.tsx                   # Floating AI assistant with MTN MoMo directives & dossier
 │   └── BackToTop.tsx                    # Floating smooth-scroll back to top component
 ├── data/                                # Data stores and logs
 │   ├── liah_academy_store.json          # Master atomic JSON datastore
@@ -221,9 +221,9 @@ If the MySQL server is temporarily offline or undergoing migration, the system a
       | 1. Fill Admission Form             |                                        |
       +----------------------------------->|                                        |
       |                                    |                                        |
-      | 2. Follow Dial Directives          |                                        |
-      |    • MTN: *126# -> 670265493       |                                        |
-      |    • Orange: #150# -> 670265493    |                                        |
+      | 2. Run Instant USSD Short Code     |                                        |
+      |    • *126*14*670265493*Amount#     |                                        |
+      |    • Enter Secret PIN on Prompt    |                                        |
       +------------------------------------+                                        |
       |                                    |                                        |
       | 3. Upload Payment Screenshot       |                                        |
@@ -231,7 +231,7 @@ If the MySQL server is temporarily offline or undergoing migration, the system a
       |                                    |    Status: 'Pending Verification'      |
       |                                    +--------------------------------------->|
       |                                    |                                        | 5. Review Screenshot Dossier
-      |                                    |                                        |    & Validate Bank/MoMo Funds
+      |                                    |                                        |    & Validate MoMo Funds
       |                                    |    6. PUT /api/admin/payments          |
       |                                    |<---------------------------------------+
       |                                    |    Status: 'Paid' & 'Approved'         |
@@ -239,17 +239,16 @@ If the MySQL server is temporarily offline or undergoing migration, the system a
       |<-----------------------------------+                                        |
 ```
 
-### 5.1 Step-by-Step Payment & USSD Directives
-1. **Target Account**: **`670 265 493`** (Liah Academy Official Account).
-2. **MTN MoMo Directive**: Dial `*126#` ➔ Transfer money (1) ➔ To MTN number (1) ➔ Enter `670265493` ➔ Enter Amount ➔ Enter Ref (`LIAH-<StudentID>`) ➔ Authorize with PIN.
-3. **Orange Money Directive**: Dial `#150#` ➔ Transfer money (1) ➔ To Orange number (1) ➔ Enter `670265493` ➔ Enter Amount ➔ Authorize with PIN.
-4. **Proof Upload**: Student takes a screenshot of the transaction SMS / app screen and submits via `/api/payments/upload-proof`.
+### 5.1 Step-by-Step Payment & USSD Short Code Directives
+1. **Target Merchant Account**: **`670 265 493`** (Liah Academy Official Account).
+2. **Instant Short Code**: **`*126*14*670265493*Amount#`** (e.g. `*126*14*670265493*10000#` for the 10,000 XAF application fee).
+3. **Execution & PIN Validation**: Pressing **OK** on the web application automatically dispatches the short code to the phone dialer, which immediately requests the student to input their **Secret PIN** to validate and conclude the transaction.
+4. **Proof Upload**: Student takes a screenshot of the transaction SMS / app screen and submits via `/api/payments/upload-proof` on the Admissions portal.
 5. **Administrative Clearance**: The Admin verifies the proof with 1-click on `/admin`, which updates student records in real time and approves admission.
 
-### 5.2 Real-Time Polling & Webhook Handling
-- **Active Polling**: The frontend initiates polling against `GET /api/payments/campay/status?reference={ref}` every 3,000ms.
-- **Webhook Endpoint**: `POST /api/payments/campay/webhook` processes server-to-server asynchronous status callbacks signed with `CAMPAY_WEBHOOK_KEY`.
-- **Database Reconciliation**: Upon confirmation, the student's record is marked `Paid` or `Deposit Paid`, and the admission status is set to `Approved`.
+### 5.2 Digital Receipt & Audit Trail
+- Upon receipt upload, a transaction record is automatically logged with status `PENDING_VERIFICATION`.
+- When approved by the admin team, an official institutional verification timestamp and badge are recorded.
 
 ---
 
@@ -259,7 +258,7 @@ Located at `app/api/chat/route.ts` and rendered via `components/ChatWidget.tsx`:
 
 ### Features:
 1. **Deterministic Intent Classifier**:
-   - Matches payment intents (`pay`, `fee`, `tuition`, `registration`, `momo`, `orange money`) and yields `actionType: 'payment_form'`.
+   - Matches payment intents (`pay`, `fee`, `tuition`, `registration`, `momo`, `mtn`) and yields `actionType: 'payment_form'` with MTN MoMo payment instructions.
    - Matches status queries (`status`, `check my application`, email regex, ID `#2011`) and yields `actionType: 'status_card'`.
 2. **Context Knowledge Base**:
    - Full catalog of HND, ND, and Certification tracks with exact credit loads and tuition figures.
@@ -306,36 +305,21 @@ Authenticates a student into the Student Portal.
 
 ### 7.2 Payment & Financial APIs
 
-#### `POST /api/payments/campay/collect`
-Initiates a Mobile Money USSD prompt.
-- **Request Body**:
-  ```json
-  {
-    "amount": 10000,
-    "phoneNumber": "237677123456",
-    "description": "Registration Fee - John Doe",
-    "studentId": 2011
-  }
-  ```
+#### `POST /api/payments/upload-proof`
+Submits a payment screenshot and transaction details for admin verification.
+- **Content-Type**: `multipart/form-data` or `application/json`
+- **Fields**:
+  - `student_id`: Student ID number
+  - `amount`: 10000
+  - `operator`: "MTN Mobile Money"
+  - `phone`: "670265493"
+  - `transaction_id`: Transaction ID (optional)
+  - `screenshot` / `proof`: File attachment
 - **Response (200 OK)**:
   ```json
   {
     "success": true,
-    "reference": "CAMPAY_REF_892348923",
-    "operator": "MTN",
-    "message": "USSD prompt dispatched. Please check your phone."
-  }
-  ```
-
-#### `GET /api/payments/campay/status?reference={reference}`
-Retrieves real-time status of a transaction.
-- **Response (200 OK)**:
-  ```json
-  {
-    "success": true,
-    "status": "SUCCESSFUL",
-    "amount": 10000,
-    "reference": "CAMPAY_REF_892348923"
+    "message": "Proof of payment submitted successfully! Our administrative team will verify your transaction shortly."
   }
   ```
 
@@ -345,13 +329,12 @@ Retrieves real-time status of a transaction.
 
 #### `POST /api/chat`
 Handles AI queries and returns formatted conversational replies + action cards.
-- **Request Body**: `{ "message": "I want to pay my registration fee", "history": [...] }`
+- **Request Body**: `{ "query": "I want to pay my registration fee" }`
 - **Response (200 OK)**:
   ```json
   {
-    "reply": "I can help you pay your registration fee (10,000 XAF) via MTN MoMo or Orange Money...",
-    "actionType": "payment_form",
-    "data": { "defaultAmount": 10000, "reason": "Registration Fee" }
+    "response": "Here are the official directives to pay your application fee or tuition via MTN Mobile Money (*126#)...",
+    "actionType": "payment_form"
   }
   ```
 
@@ -367,9 +350,9 @@ Handles AI queries and returns formatted conversational replies + action cards.
    - User inputs in chat and inquiry forms are sanitized before rendering.
 3. **SQL Injection Prevention**:
    - All database queries use parameterized placeholders (`?`) via the `mysql2` driver.
-4. **Payment Integrity**:
-   - Webhook payloads are verified against the cryptographic secret `CAMPAY_WEBHOOK_KEY`.
-   - Transactions cannot be marked successful without server-side validation against Campay's verification endpoint.
+4. **Payment Proof Integrity**:
+   - Uploaded payment receipts are stored securely with sanitized file extensions in `public/assets/proofs/`.
+   - Records require administrative review before status elevation.
 
 ---
 
@@ -384,27 +367,28 @@ PORT=3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Institutional Identity
-INSTITUTION_NAME="Liah Academy"
+INSTITUTION_NAME="Liah Academy of Technology and Management"
 INSTITUTION_EMAIL=info@liahacademy.com
-INSTITUTION_PHONE="+237 652 154 095"
+INSTITUTION_PHONE="+237 670 265 493"
 
-# Administrator Security
-ADMIN_PIN=2024
+# Administrator Security & Credentials
+ADMIN_EMAIL=info@liahacademy.com
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=YourStrongPassword2026!#
+ADMIN_SESSION_SECRET=liah_admin_master_session_secret_buea_2026
 
 # MySQL Database Configuration
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASS=
-DB_NAME=liah_db
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DATABASE=liah_db
 
-# Campay Mobile Money Gateway
-CAMPAY_ENV=demo
-CAMPAY_APP_ID=your_campay_app_id
-CAMPAY_USERNAME=your_campay_username
-CAMPAY_PASSWORD=your_campay_password
-CAMPAY_PERMANENT_ACCESS_TOKEN=your_campay_token
-CAMPAY_WEBHOOK_KEY=your_webhook_key
+# Institutional SMTP Email
+SMTP_HOST=mail.liahacademy.com
+SMTP_PORT=465
+SMTP_USER=info@liahacademy.com
+SMTP_PASS=your_smtp_password
 ```
 
 ---

@@ -79,8 +79,11 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
              verified_by=VALUES(verified_by), verified_at=VALUES(verified_at),
              updated_at=NOW()`,
           [
-            data.reference, data.student_id ? Number(data.student_id) : null, Number(data.amount || 0), data.currency || 'XAF',
-            data.operator || 'MTN / Orange', data.phone || '', data.status || 'PENDING',
+            data.reference, 
+            (data.student_id && data.student_id > 0) ? Number(data.student_id) : null, 
+            Number(data.amount || 0), 
+            data.currency || 'XAF',
+            data.operator || 'MTN Mobile Money', data.phone || '', data.status || 'PENDING',
             data.description || 'Tuition / Registration Payment', data.proof_url || '', data.transaction_id || '',
             data.verified_by || null, data.verified_at ? new Date(data.verified_at) : null,
             data.external_reference || '',
@@ -256,7 +259,7 @@ export interface Payment {
   student_email?: string;
   amount: number;
   currency: string;
-  operator: string; // 'MTN Mobile Money' | 'Orange Money' | 'Manual MoMo Transfer' | 'Campay'
+  operator: string; // 'MTN Mobile Money'
   phone: string;
   status: 'PENDING' | 'PENDING_VERIFICATION' | 'APPROVED' | 'PAID' | 'FAILED' | 'REJECTED';
   description: string;
@@ -858,6 +861,60 @@ export const adminStore = {
 
     writeDb(store, true);
     syncToMySQL('payments', 'insert', newPayment);
+
+    return { payment: newPayment, student: student || null };
+  },
+
+  recordMoMoPayment: (paymentData: {
+    student_id?: number;
+    student_name?: string;
+    student_email?: string;
+    amount: number;
+    phone?: string;
+    operator?: string;
+    description?: string;
+  }): { payment: Payment; student: Student | null } => {
+    const store = readDb();
+    let student: Student | undefined;
+    if (paymentData.student_id) {
+      student = store.students.find(s => s.id === Number(paymentData.student_id));
+    } else if (paymentData.student_email) {
+      student = store.students.find(s => s.email.toLowerCase() === paymentData.student_email?.toLowerCase());
+    }
+
+    const reference = `MOMO-MTN-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const newPayment: Payment = {
+      id: (store.payments && store.payments.length ? Math.max(...store.payments.map(p => p.id || 0)) : 0) + 1,
+      reference,
+      student_id: student ? student.id : undefined,
+      student_name: student?.full_name || paymentData.student_name || 'Valued Candidate',
+      student_email: student?.email || paymentData.student_email || '',
+      amount: Number(paymentData.amount),
+      currency: 'XAF',
+      operator: paymentData.operator || 'MTN Mobile Money',
+      phone: paymentData.phone || student?.phone || '670265493',
+      status: 'PAID',
+      description: paymentData.description || `MTN MoMo USSD Payment (*126*14*670265493*${paymentData.amount}#)`,
+      transaction_id: `MTN-USSD-${Date.now()}`,
+      verified_by: 'MTN MoMo Gateway Verified',
+      verified_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    };
+
+    if (!store.payments) store.payments = [];
+    store.payments.unshift(newPayment);
+
+    if (student) {
+      student.payment_status = 'Paid';
+      student.admission_status = 'Approved';
+      student.payment_amount = Number(paymentData.amount);
+      student.payment_transaction_id = newPayment.transaction_id || '';
+      student.updated_at = new Date().toISOString();
+      syncToMySQL('students', 'update', student).catch(() => {});
+    }
+
+    writeDb(store, true);
+    syncToMySQL('payments', 'insert', newPayment).catch(() => {});
 
     return { payment: newPayment, student: student || null };
   },
