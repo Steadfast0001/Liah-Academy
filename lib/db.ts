@@ -21,12 +21,16 @@ let isMySQLLive = false;
 
 export function getMySQLPool(): mysql.Pool {
   if (!mysqlPool) {
+    const host = process.env.MYSQL_HOST || 'localhost';
+    const isRemote = host !== 'localhost' && host !== '127.0.0.1';
+
     mysqlPool = mysql.createPool({
-      host: process.env.MYSQL_HOST || 'localhost',
+      host: host,
       port: parseInt(process.env.MYSQL_PORT || '3306'),
       user: process.env.MYSQL_USER || 'root',
       password: process.env.MYSQL_PASSWORD || '',
-      database: process.env.MYSQL_DATABASE || 'liah_db',
+      database: process.env.MYSQL_DATABASE || 'test',
+      ssl: isRemote ? { rejectUnauthorized: true, minVersion: 'TLSv1.2' } : undefined,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0
