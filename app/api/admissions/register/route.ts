@@ -49,20 +49,18 @@ export async function POST(request: Request) {
 
     const studentId = result.lastInsertRowid;
 
-    // Dispatch email signals to both the applicant and the admin
-    try {
-      await sendApplicationSignals({
-        id: studentId,
-        full_name: fullname,
-        email,
-        phone,
-        degree_type: degree_type || 'HND',
-        program_type: program_type || 'Software Engineering HND',
-        study_format: study_format || 'oncampus'
-      });
-    } catch (mailErr) {
+    // Dispatch email signals in background (non-blocking)
+    sendApplicationSignals({
+      id: studentId,
+      full_name: fullname,
+      email,
+      phone,
+      degree_type: degree_type || 'HND',
+      program_type: program_type || 'Software Engineering HND',
+      study_format: study_format || 'oncampus'
+    }).catch(mailErr => {
       console.warn('Notification email dispatch notice:', mailErr);
-    }
+    });
 
     return NextResponse.json({
       success: true,

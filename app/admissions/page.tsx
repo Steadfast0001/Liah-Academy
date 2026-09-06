@@ -294,35 +294,59 @@ function AdmissionsContent() {
     }
   };
 
-  const handleFileUploadForSlot = (slotId: string, label: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUploadForSlot = async (slotId: string, label: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const sizeStr = file.size > 1024 * 1024 
         ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
         : Math.round(file.size / 1024) + ' KB';
       
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const dataUrl = uploadEvent.target?.result as string;
-        setUploadedDocs(prev => ({
-          ...prev,
-          [slotId]: {
-            fileName: file.name,
-            size: sizeStr,
-            label,
-            url: dataUrl
-          }
-        }));
+      // Temporary optimistic placeholder
+      setUploadedDocs(prev => ({
+        ...prev,
+        [slotId]: {
+          fileName: file.name,
+          size: sizeStr,
+          label,
+          url: `/uploads/${file.name}`
+        }
+      }));
 
-        // Seamless mobile scroll retention: centers viewport directly on the selected slot
-        setTimeout(() => {
-          const container = document.getElementById(`doc-slot-container-${slotId}`);
-          if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 120);
-      };
-      reader.readAsDataURL(file);
+      // Upload file directly to server to keep payload lightweight
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('slotId', slotId);
+
+        const uploadRes = await fetch('/api/admissions/upload-doc', {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success && uploadData.url) {
+          setUploadedDocs(prev => ({
+            ...prev,
+            [slotId]: {
+              fileName: file.name,
+              size: sizeStr,
+              label,
+              url: uploadData.url
+            }
+          }));
+        }
+      } catch (err) {
+        console.warn('Direct upload notice, using fallback reference:', err);
+      }
+
+      // Seamless mobile scroll retention: centers viewport directly on the selected slot
+      setTimeout(() => {
+        const container = document.getElementById(`doc-slot-container-${slotId}`);
+        if (container) {
+          container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 120);
+
       setRegError('');
     }
   };
@@ -375,10 +399,16 @@ function AdmissionsContent() {
         })
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { success: false, message: `Server error (${res.status} ${res.statusText})` };
+      }
+
       setRegLoading(false);
 
-      if (data.success && data.data) {
+      if (res.ok && data.success && data.data) {
         setStudent(data.data);
         setShowCheckout(true);
         if (typeof window !== 'undefined') {
@@ -386,11 +416,12 @@ function AdmissionsContent() {
           sessionStorage.setItem('liah_student_session', JSON.stringify(data.data));
         }
       } else {
-        setRegError(data.message || 'Registration failed.');
+        setRegError(data.message || 'Registration failed. Please check your details and try again.');
       }
-    } catch {
+    } catch (netErr: any) {
+      console.error('Registration error:', netErr);
       setRegLoading(false);
-      setRegError('Connection error. Please try again.');
+      setRegError(netErr?.message && netErr.message !== 'Failed to fetch' ? netErr.message : 'Connection error. Please ensure your network is connected and try again.');
     }
   };
 
