@@ -21,19 +21,25 @@ export async function POST(request: Request) {
     const bytes = await fileObj.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'credentials');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    let url = '';
+    try {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'credentials');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const safeExt = path.extname(fileObj.name) || '.pdf';
+      const cleanFileName = fileObj.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const diskFileName = `credential_${slotId}_${Date.now()}_${cleanFileName}`;
+      const filePath = path.join(uploadDir, diskFileName);
+
+      fs.writeFileSync(filePath, buffer);
+      url = `/uploads/credentials/${diskFileName}`;
+    } catch (fsErr) {
+      // Vercel serverless read-only filesystem fallback: inline Base64 data URL
+      const mimeType = fileObj.type || 'application/pdf';
+      url = `data:${mimeType};base64,${buffer.toString('base64')}`;
     }
-
-    const safeExt = path.extname(fileObj.name) || '.pdf';
-    const cleanFileName = fileObj.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const diskFileName = `credential_${slotId}_${Date.now()}_${cleanFileName}`;
-    const filePath = path.join(uploadDir, diskFileName);
-
-    fs.writeFileSync(filePath, buffer);
-
-    const url = `/uploads/credentials/${diskFileName}`;
 
     return NextResponse.json({
       success: true,

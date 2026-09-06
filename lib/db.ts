@@ -1,19 +1,32 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import mysql from 'mysql2/promise';
 
-// 1. DATA DIRECTORY & BACKUP PATH SETUP
-const dataDir = path.join(process.cwd(), 'data');
+// 1. DATA DIRECTORY & VERCEL SERVERLESS ENVIRONMENT ADAPTATION
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
+
+// When deployed on Vercel/serverless, process.cwd() is strictly read-only.
+// We use the writable /tmp directory to prevent EROFS crashes while preserving state across container invocations.
+const dataDir = isServerless 
+  ? path.join(os.tmpdir(), 'liah_academy_data')
+  : path.join(process.cwd(), 'data');
+
 const backupsDir = path.join(dataDir, 'backups');
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-if (!fs.existsSync(backupsDir)) {
-  fs.mkdirSync(backupsDir, { recursive: true });
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(backupsDir)) {
+    fs.mkdirSync(backupsDir, { recursive: true });
+  }
+} catch (e) {
+  // Gracefully handle any read-only filesystem restrictions
 }
 
 const jsonDbPath = path.join(dataDir, 'liah_academy_store.json');
+const bundleSeedPath = path.join(process.cwd(), 'data', 'liah_academy_store.json');
 
 // 2. MYSQL CONNECTION POOL & SYNC ENGINE
 let mysqlPool: mysql.Pool | null = null;
@@ -41,6 +54,10 @@ export function getMySQLPool(): mysql.Pool {
 
 // Background asynchronous MySQL synchronizer
 async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete', data: any) {
+  // Only attempt MySQL synchronization if a remote or dedicated MySQL host is configured
+  if (!process.env.MYSQL_HOST || (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1'))) {
+    return;
+  }
   try {
     const pool = getMySQLPool();
     if (table === 'students') {
@@ -641,6 +658,15 @@ function createBackup(data: Schema) {
 export function readDb(): Schema {
   try {
     if (!fs.existsSync(jsonDbPath)) {
+      if (fs.existsSync(bundleSeedPath)) {
+        try {
+          const seededRaw = fs.readFileSync(bundleSeedPath, 'utf-8');
+          const parsedSeeded = JSON.parse(seededRaw) as Schema;
+          writeDb(parsedSeeded, false);
+          memoryCache = parsedSeeded;
+          return parsedSeeded;
+        } catch {}
+      }
       writeDb(initialData, true);
       return initialData;
     }

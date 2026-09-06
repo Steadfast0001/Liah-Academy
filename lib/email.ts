@@ -30,15 +30,21 @@ export function getAdminEmail(): string {
 // Log email event to file and data store
 export function logEmailEvent(log: Omit<EmailLog, 'id' | 'created_at'>) {
   try {
-    const dataDir = path.join(process.cwd(), 'data');
+    const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
+    const dataDir = isServerless 
+      ? path.join(require('os').tmpdir(), 'liah_academy_data')
+      : path.join(process.cwd(), 'data');
+
     if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+      try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
     }
 
     const storePath = path.join(dataDir, 'liah_academy_store.json');
     let store: any = { email_logs: [] };
     if (fs.existsSync(storePath)) {
-      store = JSON.parse(fs.readFileSync(storePath, 'utf-8'));
+      try {
+        store = JSON.parse(fs.readFileSync(storePath, 'utf-8'));
+      } catch {}
     }
     if (!store.email_logs) store.email_logs = [];
 
@@ -53,16 +59,20 @@ export function logEmailEvent(log: Omit<EmailLog, 'id' | 'created_at'>) {
     if (store.email_logs.length > 200) {
       store.email_logs = store.email_logs.slice(0, 200);
     }
-    fs.writeFileSync(storePath, JSON.stringify(store, null, 2), 'utf-8');
+    try {
+      fs.writeFileSync(storePath, JSON.stringify(store, null, 2), 'utf-8');
+    } catch {}
 
-    // Also write to email_notifications.log text file
-    const logFilePath = path.join(dataDir, 'email_notifications.log');
-    const logLine = `[${newLog.created_at}] [${newLog.status.toUpperCase()}] TO: ${newLog.recipient} | TYPE: ${newLog.type} | SUBJECT: "${newLog.subject}"\n`;
-    fs.appendFileSync(logFilePath, logLine, 'utf-8');
+    // Also write to email_notifications.log text file if possible
+    try {
+      const logFilePath = path.join(dataDir, 'email_notifications.log');
+      const logLine = `[${newLog.created_at}] [${newLog.status.toUpperCase()}] TO: ${newLog.recipient} | TYPE: ${newLog.type} | SUBJECT: "${newLog.subject}"\n`;
+      fs.appendFileSync(logFilePath, logLine, 'utf-8');
+    } catch {}
 
     return newLog;
   } catch (err) {
-    console.error('Error logging email event:', err);
+    console.warn('Notice in logEmailEvent:', err);
     return null;
   }
 }

@@ -32,16 +32,22 @@ export async function POST(request: Request) {
         const bytes = await fileObj.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const uploadDir = path.join(process.cwd(), 'public', 'assets', 'proofs');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        try {
+          const uploadDir = path.join(process.cwd(), 'public', 'assets', 'proofs');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
 
-        const safeExt = path.extname(fileObj.name) || '.png';
-        const fileName = `proof_${studentId || 'anon'}_${Date.now()}${safeExt}`;
-        const filePath = path.join(uploadDir, fileName);
-        fs.writeFileSync(filePath, buffer);
-        proofUrl = `/assets/proofs/${fileName}`;
+          const safeExt = path.extname(fileObj.name) || '.png';
+          const fileName = `proof_${studentId || 'anon'}_${Date.now()}${safeExt}`;
+          const filePath = path.join(uploadDir, fileName);
+          fs.writeFileSync(filePath, buffer);
+          proofUrl = `/assets/proofs/${fileName}`;
+        } catch (fsErr) {
+          // Vercel serverless read-only filesystem fallback: inline Base64 data URL
+          const mimeType = fileObj.type || 'image/png';
+          proofUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+        }
       } else {
         proofUrl = String(formData.get('proof_url') || '');
       }
