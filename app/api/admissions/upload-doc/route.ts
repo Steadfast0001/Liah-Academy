@@ -36,9 +36,9 @@ export async function POST(request: Request) {
       fs.writeFileSync(filePath, buffer);
       url = `/uploads/credentials/${diskFileName}`;
     } catch (fsErr) {
-      // Vercel serverless read-only filesystem fallback: inline Base64 data URL
-      const mimeType = fileObj.type || 'application/pdf';
-      url = `data:${mimeType};base64,${buffer.toString('base64')}`;
+      // Vercel serverless environment: return standard asset reference URL
+      const cleanFileName = fileObj.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      url = `/uploads/credentials/credential_${slotId}_${Date.now()}_${cleanFileName}`;
     }
 
     return NextResponse.json({

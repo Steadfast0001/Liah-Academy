@@ -47,39 +47,43 @@ export async function POST(request: Request) {
       docPayload
     );
 
-    const studentId = result.lastInsertRowid;
-
-    // Dispatch email signals in background (non-blocking)
-    sendApplicationSignals({
+    // Fetch the newly created student record
+    const createdStudent = db.getStudentById(studentId) || {
       id: studentId,
       full_name: fullname,
-      email,
-      phone,
+      email: (email || '').toLowerCase().trim(),
+      phone: phone || '',
       degree_type: degree_type || 'HND',
       program_type: program_type || 'Software Engineering HND',
-      study_format: study_format || 'oncampus'
-    }).catch(mailErr => {
-      console.warn('Notification email dispatch notice:', mailErr);
-    });
+      study_format: study_format || 'oncampus',
+      admission_status: 'Under Review',
+      payment_status: 'Pending',
+      created_at: new Date().toISOString()
+    };
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    // Dispatch email signals in background (non-blocking)
+    try {
+      sendApplicationSignals({
         id: studentId,
         full_name: fullname,
         email,
-        degree_type,
-        program_type,
-        study_format,
-        admission_status: 'Under Review',
-        payment_status: 'Pending',
-        message: 'Application registered successfully! Confirmation email has been sent to your inbox.'
-      }
+        phone,
+        degree_type: degree_type || 'HND',
+        program_type: program_type || 'Software Engineering HND',
+        study_format: study_format || 'oncampus'
+      }).catch(mailErr => {
+        console.warn('Notification email dispatch notice:', mailErr);
+      });
+    } catch {}
+
+    return NextResponse.json({
+      success: true,
+      data: createdStudent
     });
   } catch (error: any) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { success: false, message: 'Server error processing registration: ' + (error.message || '') },
+      { success: false, message: error?.message || 'Server error processing registration. Please try again.' },
       { status: 500 }
     );
   }

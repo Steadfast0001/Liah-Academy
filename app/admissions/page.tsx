@@ -374,13 +374,19 @@ function AdmissionsContent() {
       return;
     }
 
-    const docsList = Object.entries(uploadedDocs).map(([slotId, info]) => ({
-      slotId,
-      label: info.label,
-      fileName: info.fileName,
-      size: info.size,
-      url: (info as any).url || `/uploads/${info.fileName}`
-    }));
+    const docsList = Object.entries(uploadedDocs).map(([slotId, info]) => {
+      let finalUrl = (info as any).url || `/uploads/${info.fileName}`;
+      if (finalUrl.startsWith('data:')) {
+        finalUrl = `/uploads/credentials/${info.fileName}`;
+      }
+      return {
+        slotId,
+        label: info.label,
+        fileName: info.fileName,
+        size: info.size,
+        url: finalUrl
+      };
+    });
 
     try {
       const res = await fetch('/api/admissions/register', {
