@@ -294,50 +294,76 @@ function AdmissionsContent() {
     }
   };
 
+  const compressImageFile = async (file: File, maxDim = 1200, quality = 0.75): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
+            resolve((e.target?.result as string) || '');
+          }
+        };
+        img.onerror = () => resolve((e.target?.result as string) || '');
+        img.src = (e.target?.result as string) || '';
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUploadForSlot = async (slotId: string, label: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      // Expanded max upload file size to 25MB
+      if (file.size > 25 * 1024 * 1024) {
+        setRegError(`"${file.name}" exceeds the 25MB limit. Please upload a document or photo under 25MB.`);
+        return;
+      }
+
       const sizeStr = file.size > 1024 * 1024 
         ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
         : Math.round(file.size / 1024) + ' KB';
       
-      // Temporary optimistic placeholder
+      // Auto-compress image to ensure instant visual preview and lightweight storage
+      const dataUrl = await compressImageFile(file, 1200, 0.75);
+
       setUploadedDocs(prev => ({
         ...prev,
         [slotId]: {
           fileName: file.name,
           size: sizeStr,
           label,
-          url: `/uploads/${file.name}`
+          url: dataUrl || `/uploads/${file.name}`
         }
       }));
-
-      // Upload file directly to server to keep payload lightweight
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('slotId', slotId);
-
-        const uploadRes = await fetch('/api/admissions/upload-doc', {
-          method: 'POST',
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-
-        if (uploadData.success && uploadData.url) {
-          setUploadedDocs(prev => ({
-            ...prev,
-            [slotId]: {
-              fileName: file.name,
-              size: sizeStr,
-              label,
-              url: uploadData.url
-            }
-          }));
-        }
-      } catch (err) {
-        console.warn('Direct upload notice, using fallback reference:', err);
-      }
 
       // Seamless mobile scroll retention: centers viewport directly on the selected slot
       setTimeout(() => {
@@ -374,19 +400,13 @@ function AdmissionsContent() {
       return;
     }
 
-    const docsList = Object.entries(uploadedDocs).map(([slotId, info]) => {
-      let finalUrl = (info as any).url || `/uploads/${info.fileName}`;
-      if (finalUrl.startsWith('data:')) {
-        finalUrl = `/uploads/credentials/${info.fileName}`;
-      }
-      return {
-        slotId,
-        label: info.label,
-        fileName: info.fileName,
-        size: info.size,
-        url: finalUrl
-      };
-    });
+    const docsList = Object.entries(uploadedDocs).map(([slotId, info]) => ({
+      slotId,
+      label: info.label,
+      fileName: info.fileName,
+      size: info.size,
+      url: info.url || `/uploads/${info.fileName}`
+    }));
 
     try {
       const res = await fetch('/api/admissions/register', {
@@ -599,23 +619,24 @@ function AdmissionsContent() {
     }
   };
 
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshotChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (file.size > 25 * 1024 * 1024) {
+        setPayError('Screenshot file exceeds the 25MB limit. Please select a smaller photo or image.');
+        return;
+      }
       setPayScreenshotFile(file);
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        setPayScreenshotPreview(uploadEvent.target?.result as string);
+      const compressedDataUrl = await compressImageFile(file, 1200, 0.75);
+      setPayScreenshotPreview(compressedDataUrl);
 
-        // Seamless mobile scroll retention: centers viewport directly on the screenshot container
-        setTimeout(() => {
-          const container = document.getElementById('payment-screenshot-upload-container');
-          if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 120);
-      };
-      reader.readAsDataURL(file);
+      // Seamless mobile scroll retention: centers viewport directly on the screenshot container
+      setTimeout(() => {
+        const container = document.getElementById('payment-screenshot-upload-container');
+        if (container) {
+          container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 120);
     }
   };
 
@@ -1398,7 +1419,7 @@ function AdmissionsContent() {
                             Required Academic Documents ({degreeType})
                           </h4>
                           <p style={{ margin: 0, color: '#64748B', fontSize: '0.86rem' }}>
-                            Upload each required file separately below. Accepted formats: PDF, PNG, JPG, DOCX (Max 10MB per file).
+                            Upload each required file separately below. Accepted formats: PDF, PNG, JPG, JPEG, DOCX (Max 25MB per file, auto-optimized).
                           </p>
                         </div>
 

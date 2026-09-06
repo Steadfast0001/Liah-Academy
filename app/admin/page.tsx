@@ -4219,17 +4219,38 @@ export default function AdminDashboardPage() {
                  previewDocItem.url.endsWith('.png') || 
                  previewDocItem.url.endsWith('.jpg') || 
                  previewDocItem.url.endsWith('.jpeg') || 
-                 previewDocItem.url.endsWith('.webp')) ? (
-                  <img
-                    src={previewDocItem.url}
-                    alt={previewDocItem.title}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '440px',
-                      objectFit: 'contain',
-                      borderRadius: '6px'
-                    }}
-                  />
+                 previewDocItem.url.endsWith('.webp') ||
+                 previewDocItem.fileName.toLowerCase().endsWith('.png') ||
+                 previewDocItem.fileName.toLowerCase().endsWith('.jpg') ||
+                 previewDocItem.fileName.toLowerCase().endsWith('.jpeg') ||
+                 previewDocItem.fileName.toLowerCase().endsWith('.webp')) ? (
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <img
+                      src={previewDocItem.url}
+                      alt={previewDocItem.title}
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                        const parent = (e.target as HTMLElement).parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('div');
+                          fallback.style.padding = '30px';
+                          fallback.style.textAlign = 'center';
+                          fallback.style.color = '#FFFFFF';
+                          fallback.innerHTML = `
+                            <p style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">${previewDocItem.fileName}</p>
+                            <p style="margin: 0; font-size: 0.85rem; color: #94A3B8;">Official Credential Document Attached</p>
+                          `;
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '440px',
+                        objectFit: 'contain',
+                        borderRadius: '6px'
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div style={{ padding: '40px 20px', textAlign: 'center', color: '#FFFFFF' }}>
                     <FileText size={52} color="#F5A623" style={{ margin: '0 auto 12px auto' }} />
