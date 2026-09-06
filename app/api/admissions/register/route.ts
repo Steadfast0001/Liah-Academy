@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     );
 
     // Fetch the newly created student record
-    const createdStudent = db.getStudentById(studentId) || {
+    const createdStudent = db.students.findById(studentId) || {
       id: studentId,
       full_name: fullname,
       email: (email || '').toLowerCase().trim(),
