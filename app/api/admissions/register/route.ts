@@ -47,6 +47,8 @@ export async function POST(request: Request) {
       docPayload
     );
 
+    const studentId = Number((result as any)?.lastInsertRowid || Date.now());
+
     // Fetch the newly created student record
     const createdStudent = db.students.findById(studentId) || {
       id: studentId,
