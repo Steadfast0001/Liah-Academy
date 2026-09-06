@@ -31,6 +31,7 @@ const bundleSeedPath = path.join(process.cwd(), 'data', 'liah_academy_store.json
 // 2. MYSQL CONNECTION POOL & SYNC ENGINE
 let mysqlPool: mysql.Pool | null = null;
 let isMySQLLive = false;
+let schemaInitialized = false;
 
 export function getMySQLPool(): mysql.Pool {
   if (!mysqlPool) {
@@ -52,6 +53,91 @@ export function getMySQLPool(): mysql.Pool {
   return mysqlPool;
 }
 
+// Auto-initialize schema in remote database if tables don't exist yet
+export async function ensureMySQLTables() {
+  if (schemaInitialized || !process.env.MYSQL_HOST || (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1'))) {
+    return;
+  }
+  try {
+    const pool = getMySQLPool();
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS students (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        matricule VARCHAR(50) DEFAULT '',
+        full_name VARCHAR(191) NOT NULL,
+        email VARCHAR(191) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) DEFAULT '',
+        degree_type VARCHAR(50) DEFAULT 'HND',
+        program_type VARCHAR(100) NOT NULL,
+        study_format VARCHAR(50) DEFAULT 'oncampus',
+        cohort VARCHAR(50) DEFAULT 'Fall 2026 / Spring 2027',
+        qualification VARCHAR(100) DEFAULT 'GCE Advanced Level',
+        statement TEXT,
+        document_url TEXT,
+        documents JSON,
+        payment_status VARCHAR(50) DEFAULT 'Pending',
+        admission_status VARCHAR(50) DEFAULT 'Under Review',
+        payment_proof_url TEXT,
+        payment_transaction_id VARCHAR(100) DEFAULT '',
+        payment_amount INT DEFAULT 50000,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_students_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        reference VARCHAR(100) PRIMARY KEY,
+        student_id INT NULL,
+        amount DECIMAL(12, 2) NOT NULL DEFAULT 50000.00,
+        currency VARCHAR(10) DEFAULT 'XAF',
+        operator VARCHAR(50) DEFAULT 'MTN Mobile Money',
+        phone VARCHAR(50) DEFAULT '',
+        status VARCHAR(50) DEFAULT 'PENDING',
+        description VARCHAR(255) DEFAULT 'Registration / Tuition Payment',
+        proof_url TEXT,
+        transaction_id VARCHAR(100) DEFAULT '',
+        external_reference VARCHAR(100) DEFAULT '',
+        verified_by VARCHAR(100) NULL,
+        verified_at DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_payments_student_id (student_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS inquiries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(191) NOT NULL,
+        email VARCHAR(191) NOT NULL,
+        subject VARCHAR(191) NOT NULL,
+        message TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'new',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(191) NOT NULL,
+        role VARCHAR(191) NOT NULL,
+        rating INT DEFAULT 5,
+        comment TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    schemaInitialized = true;
+    isMySQLLive = true;
+  } catch (err) {
+    console.warn('MySQL schema auto-init warning:', err);
+  }
+}
+
 // Background asynchronous MySQL synchronizer
 async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete', data: any) {
   // Only attempt MySQL synchronization if a remote or dedicated MySQL host is configured
@@ -59,16 +145,17 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
     return;
   }
   try {
+    await ensureMySQLTables();
     const pool = getMySQLPool();
     if (table === 'students') {
       if (action === 'delete') {
         await pool.query('DELETE FROM students WHERE id = ?', [data.id]);
       } else {
         await pool.query(
-          `INSERT INTO students (id, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, payment_proof_url, payment_transaction_id, payment_amount, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO students (id, matricule, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, payment_proof_url, payment_transaction_id, payment_amount, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
-             full_name=VALUES(full_name), email=VALUES(email), phone=VALUES(phone),
+             matricule=VALUES(matricule), full_name=VALUES(full_name), email=VALUES(email), phone=VALUES(phone),
              degree_type=VALUES(degree_type), program_type=VALUES(program_type),
              study_format=VALUES(study_format), cohort=VALUES(cohort),
              qualification=VALUES(qualification), statement=VALUES(statement),
@@ -77,11 +164,11 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
              payment_proof_url=VALUES(payment_proof_url), payment_transaction_id=VALUES(payment_transaction_id),
              payment_amount=VALUES(payment_amount)`,
           [
-            data.id, data.full_name, data.email, data.password, data.phone || '',
+            data.id, data.matricule || '', data.full_name, data.email, data.password, data.phone || '',
             data.degree_type || 'HND', data.program_type || '', data.study_format || 'oncampus',
-            data.cohort || 'Fall 2024 / Spring 2025', data.qualification || 'GCE Advanced Level',
+            data.cohort || 'Fall 2026 / Spring 2027', data.qualification || 'GCE Advanced Level',
             data.statement || '', data.document_url || '', JSON.stringify(data.documents || []),
-            data.payment_status || 'Pending', data.admission_status || 'Pending Review',
+            data.payment_status || 'Pending', data.admission_status || 'Under Review',
             data.payment_proof_url || '', data.payment_transaction_id || '', Number(data.payment_amount || 0),
             data.created_at ? new Date(data.created_at) : new Date()
           ]
