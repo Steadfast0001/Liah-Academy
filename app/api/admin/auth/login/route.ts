@@ -51,7 +51,10 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Admin login error:', error);
     return NextResponse.json(
-      { success: false, message: 'Authentication processing failed.' },
+      { 
+        success: false, 
+        message: `Authentication error: ${error?.message || String(error) || 'Internal error'}` 
+      },
       { status: 500 }
     );
   }

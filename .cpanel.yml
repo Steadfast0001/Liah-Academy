@@ -1,0 +1,9 @@
+﻿---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/rhibwcnc/liahacademy.com
+    - /bin/cp -R * $DEPLOYPATH/
+    - /bin/cp -R .next $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/chmod -R 755 $DEPLOYPATH/.next 2>/dev/null || true
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt

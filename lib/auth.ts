@@ -44,16 +44,20 @@ export function validateAdminCredentials(identifier: string, pass: string): Admi
   }
 
   // 2. Check database-stored admins
-  const dbAdmin = adminStore.getAdminByEmail(cleanId);
-  if (dbAdmin && verifyPassword(cleanPass, dbAdmin.password)) {
-    // Update last_login timestamp
-    adminStore.updateAdmin(dbAdmin.id, { last_login: new Date().toISOString() });
-    return {
-      email: dbAdmin.email,
-      full_name: dbAdmin.full_name,
-      role: dbAdmin.role,
-      source: 'database'
-    };
+  try {
+    const dbAdmin = adminStore.getAdminByEmail(cleanId);
+    if (dbAdmin && verifyPassword(cleanPass, dbAdmin.password)) {
+      // Update last_login timestamp
+      adminStore.updateAdmin(dbAdmin.id, { last_login: new Date().toISOString() });
+      return {
+        email: dbAdmin.email,
+        full_name: dbAdmin.full_name,
+        role: dbAdmin.role,
+        source: 'database'
+      };
+    }
+  } catch (dbErr) {
+    console.warn('Database admin lookup skipped:', dbErr);
   }
 
   return null;

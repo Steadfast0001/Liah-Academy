@@ -228,11 +228,19 @@ export default function AdminDashboardPage() {
       const res = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authIdentifier, password: authPassword }),
+        body: JSON.stringify({ identifier: authIdentifier.trim(), password: authPassword.trim() }),
         credentials: 'include'
       });
-      const data = await res.json();
-      if (data.success && data.token) {
+      
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('Non-JSON response from login endpoint:', jsonErr);
+        data = { success: false, message: `Server error (${res.status}). Please check server logs.` };
+      }
+
+      if (res.ok && data.success && data.token) {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('liah_admin_token', data.token);
           localStorage.setItem('liah_admin_token', data.token);
@@ -246,8 +254,9 @@ export default function AdminDashboardPage() {
       } else {
         setAuthError(data.message || 'Invalid administrative credentials. Access restricted.');
       }
-    } catch {
-      setAuthError('Authentication server communication error. Please try again.');
+    } catch (err: any) {
+      console.error('Login connection error:', err);
+      setAuthError(err?.message ? `Connection error: ${err.message}` : 'Authentication server communication error. Please try again.');
     } finally {
       setAuthSubmitting(false);
     }
@@ -1118,7 +1127,7 @@ export default function AdminDashboardPage() {
                       name="admin_identifier"
                       type="text"
                       required
-                      placeholder="info@liahacademy.com or admin"
+                      placeholder="Enter administrator ID or email"
                       value={authIdentifier}
                       onChange={(e) => setAuthIdentifier(e.target.value)}
                       style={{
@@ -1138,7 +1147,7 @@ export default function AdminDashboardPage() {
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <label htmlFor="admin_auth_password" style={{ fontSize: '0.84rem', fontWeight: 700, color: '#081F3E' }}>
-                      Master Security Password
+                      Security Password
                     </label>
                   </div>
                   <div style={{ position: 'relative' }}>
@@ -1147,7 +1156,7 @@ export default function AdminDashboardPage() {
                       name="admin_password"
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="••••••••••••"
+                      placeholder="Enter security password"
                       value={authPassword}
                       onChange={(e) => setAuthPassword(e.target.value)}
                       style={{
