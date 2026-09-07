@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const studentId = parseInt(String(body.student_id || body.studentId || '0'), 10);
-    const amount = parseInt(String(body.amount || '10000'), 10);
+    const amount = parseInt(String(body.amount || '15000'), 10);
     const phone = String(body.phone || body.sender_phone || '670265493');
     const pin = String(body.pin || '');
     const description = String(body.description || `MTN MoMo Direct Transfer (*126*14*670265493*${amount}#)`);

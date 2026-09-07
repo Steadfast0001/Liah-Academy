@@ -33,7 +33,8 @@ interface ChatMessage {
 }
 
 const feeOptions = [
-  { label: 'Application Fee', amount: 10000, desc: 'Auditing & Registration' },
+  { label: 'Application Fee (HND / ND)', amount: 15000, desc: 'HND & ND Application Fee' },
+  { label: 'Application Fee (Certifications)', amount: 25000, desc: 'Professional Certifications Application Fee' },
   { label: 'Seat Deposit', amount: 50000, desc: 'Enrollment Guarantee' },
   { label: 'HND 1st Installment', amount: 125000, desc: 'Semester 1 Tuition' },
   { label: 'ND 1st Installment', amount: 75000, desc: 'Semester 1 Tuition' },
@@ -64,8 +65,8 @@ export default function ChatWidget() {
   const [isTyping, setIsTyping] = useState(false);
 
   // In-Chat Payment Directives State
-  const [selectedFee, setSelectedFee] = useState<number>(10000);
-  const [selectedFeeName, setSelectedFeeName] = useState<string>('Application Fee');
+  const [selectedFee, setSelectedFee] = useState<number>(15000);
+  const [selectedFeeName, setSelectedFeeName] = useState<string>('Application Fee (HND / ND)');
   const [customChatAmount, setCustomChatAmount] = useState<string>('');
   const [studentIdTag, setStudentIdTag] = useState<string>('');
   const [copiedShortCode, setCopiedShortCode] = useState(false);
@@ -800,6 +801,8 @@ export default function ChatWidget() {
                   <button
                     onClick={() => {
                       setStudentIdTag(String(applySuccess.id));
+                      setSelectedFee(applyDegree === 'Certification' ? 25000 : 15000);
+                      setSelectedFeeName(applyDegree === 'Certification' ? 'Application Fee (Certifications)' : 'Application Fee (HND / ND)');
                       setActiveTab('pay');
                     }}
                     style={{
@@ -818,7 +821,7 @@ export default function ChatWidget() {
                       cursor: 'pointer'
                     }}
                   >
-                    Proceed to Pay Registration Fee (10,000 XAF) <ArrowRight size={14} />
+                    Proceed to Pay Application Fee ({applyDegree === 'Certification' ? '25,000' : '15,000'} XAF) <ArrowRight size={14} />
                   </button>
                 </div>
               ) : (

@@ -41,7 +41,7 @@ Liah Academy is a premier higher institute of technology and corporate software 
 - Calculate transparent tuition fee schedules with real-time study format discounts (Online 15% discount, Part-Time 10% discount).
 - Register online through an intuitive 3-step admission application wizard.
 - Authenticate into the verified **Student Portal** to monitor admission progress and review financial dossiers.
-- Settle registration fees (10,000 XAF) directly via **MTN Mobile Money (*126#)**.
+- Settle application fees (15,000 XAF for HND/ND, 25,000 XAF for Certifications) directly via **MTN Mobile Money (*126#)**.
 - Interact with an intelligent **AI Academic Assistant** for instantaneous answers, directives, and applicant verification.
 
 ---
@@ -68,7 +68,8 @@ Navigate to **Admissions & Portal** (`/admissions`):
    - **Higher National Diploma (HND)**: `250,000 XAF/year` (2 Academic Years)
    - **National Diploma (ND)**: `150,000 XAF/year` (1 Academic Year)
    - **Professional Certifications**: `350,000 XAF` (6 to 9 Months)
-   - **Application & Registration Fee**: `10,000 XAF` (One-time processing fee)
+   - **Application Fee (HND & ND)**: `15,000 XAF` (One-time processing fee)
+   - **Application Fee (Certifications)**: `25,000 XAF` (One-time processing fee)
 2. All tuition rates are fixed and straightforward with no hidden charges.
 
 ---
@@ -333,10 +334,10 @@ Inside the **Content & Media** tab:
 ## 5. FREQUENTLY ASKED QUESTIONS (FAQ)
 
 #### Q1: Which mobile networks are supported for fee payments?
-> **Answer**: Payments are processed exclusively via **MTN Cameroon Mobile Money (MoMo)** (*126#). Students send the registration fee to **`670 265 493`** and upload their transaction screenshot on the Admissions portal for verification.
+> **Answer**: Payments are processed exclusively via **MTN Cameroon Mobile Money (MoMo)** (*126#). Students send the application fee to **`670 265 493`** and upload their transaction screenshot on the Admissions portal for verification.
 
-#### Q2: Is the registration fee refundable?
-> **Answer**: Application and registration fees (10,000 XAF) are non-refundable as they cover administrative processing and laboratory workstation reservation.
+#### Q2: Is the application fee refundable?
+> **Answer**: Application fees (15,000 XAF for HND/ND, 25,000 XAF for Certifications) are non-refundable as they cover administrative dossier processing and laboratory workstation reservation.
 
 #### Q3: How do I know my application was received?
 > **Answer**: You will receive an immediate confirmation email containing your assigned Student ID. You can also log into `/admissions#portal` or ask the AI Chat assistant anytime.

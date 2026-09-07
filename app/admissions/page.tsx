@@ -98,6 +98,13 @@ const docRequirementsByDegree: Record<string, DocRequirement[]> = {
   ]
 };
 
+const getApplicationFee = (deg?: string): number => {
+  if (!deg) return 15000;
+  const upper = String(deg).toUpperCase();
+  if (upper.includes('CERT')) return 25000;
+  return 15000;
+};
+
 function AdmissionsContent() {
   const searchParams = useSearchParams();
   const degreeParam = searchParams.get('degree');
@@ -133,7 +140,7 @@ function AdmissionsContent() {
   // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
   const [payMethod] = useState<'MTN'>('MTN');
-  const [payAmountOption, setPayAmountOption] = useState<number>(10000);
+  const [payAmountOption, setPayAmountOption] = useState<number>(15000);
   const [payCustomAmount, setPayCustomAmount] = useState<string>('');
   const [paySenderPhone, setPaySenderPhone] = useState<string>('');
   const [payTransactionId, setPayTransactionId] = useState<string>('');
@@ -854,10 +861,18 @@ function AdmissionsContent() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
                   <div>
-                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Application &amp; Registration Fee</strong>
-                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>One-time processing fee</span>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Application Fee (HND &amp; ND)</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>One-time application processing fee</span>
                   </div>
-                  <span style={{ fontWeight: 800, color: '#10B981', fontSize: '1.05rem' }}>10,000 XAF</span>
+                  <span style={{ fontWeight: 800, color: '#10B981', fontSize: '1.05rem' }}>15,000 XAF</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div>
+                    <strong style={{ color: '#081F3E', fontSize: '0.92rem', display: 'block' }}>Application Fee (Certifications)</strong>
+                    <span style={{ color: '#64748B', fontSize: '0.82rem' }}>One-time application processing fee</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#10B981', fontSize: '1.05rem' }}>25,000 XAF</span>
                 </div>
               </div>
             </div>
@@ -934,9 +949,9 @@ function AdmissionsContent() {
                   <p style={{ color: '#064E3B', fontSize: '0.88rem', lineHeight: '1.5', margin: '10px 0 0 0' }}>
                     Your academic credentials have been verified and approved by the Admissions Board. 
                     {student.payment_status === 'Paid' ? (
-                      <span> Your <strong>10,000 XAF Registration Fee is fully settled</strong>. Please report to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong> to collect your student orientation kit and finalize physical tuition payment.</span>
+                      <span> Your <strong>{getApplicationFee(student.degree_type).toLocaleString()} XAF Application Fee is fully settled</strong>. Please report to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong> to collect your student orientation kit and finalize physical tuition payment.</span>
                     ) : (
-                      <span> Please complete your <strong>10,000 XAF Registration Fee</strong> below to confirm your matriculation seat. All remaining tuition fees will be paid physically at the Secretary&apos;s Office in Buea.</span>
+                      <span> Please complete your <strong>{getApplicationFee(student.degree_type).toLocaleString()} XAF Application Fee</strong> below to confirm your matriculation seat. All remaining tuition fees will be paid physically at the Secretary&apos;s Office in Buea.</span>
                     )}
                   </p>
                 </div>
@@ -1002,7 +1017,7 @@ function AdmissionsContent() {
                 </div>
 
                 <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.06)' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Registration Fee (10k)</span>
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginBottom: '4px' }}>Application Fee</span>
                   <span 
                     style={{ 
                       padding: '4px 10px', 
@@ -1033,7 +1048,7 @@ function AdmissionsContent() {
                   <div>
                     <strong style={{ display: 'block', marginBottom: '4px', fontSize: '0.95rem' }}>Payment Proof Under Review</strong>
                     <p style={{ margin: 0, lineHeight: '1.5', color: '#1E3A8A' }}>
-                      Your registration fee proof of <strong>{(student.payment_amount || 10000).toLocaleString()} XAF</strong> has been received and is undergoing verification by the Liah Academy Finance Office.
+                      Your application fee proof of <strong>{(student.payment_amount || getApplicationFee(student.degree_type)).toLocaleString()} XAF</strong> has been received and is undergoing verification by the Liah Academy Finance Office.
                     </p>
                   </div>
                 </div>
@@ -1750,15 +1765,15 @@ function AdmissionsContent() {
                     </div>
                   </div>
 
-                  {/* 1. Fixed Official Registration Fee Card */}
+                  {/* 1. Official Application Fee Card */}
                   <div style={{ marginBottom: '18px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                       <div>
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px' }}>
-                          Official Enrolment Fee
+                          Official Application Fee
                         </span>
                         <h4 style={{ margin: '4px 0 0 0', color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
-                          {(payCustomAmount ? parseInt(payCustomAmount) || 0 : (payAmountOption || 10000)).toLocaleString()} XAF
+                          {(payCustomAmount ? parseInt(payCustomAmount) || 0 : (payAmountOption || getApplicationFee(student?.degree_type || degreeType))).toLocaleString()} XAF
                         </h4>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -1773,33 +1788,36 @@ function AdmissionsContent() {
                         Select or Enter Payment Amount (XAF):
                       </label>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                        {[
-                          { label: 'Application Fee (10,000 XAF)', val: 10000 },
-                          { label: 'Seat Deposit (50,000 XAF)', val: 50000 },
-                          { label: 'Semester Installment (125,000 XAF)', val: 125000 }
-                        ].map((opt) => (
-                          <button
-                            key={opt.val}
-                            type="button"
-                            onClick={() => {
-                              setPayAmountOption(opt.val);
-                              setPayCustomAmount('');
-                              setShortCodeDialed(false);
-                            }}
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              border: payAmountOption === opt.val && !payCustomAmount ? '2px solid #F59E0B' : '1px solid #CBD5E1',
-                              background: payAmountOption === opt.val && !payCustomAmount ? '#FEF3C7' : '#FFFFFF',
-                              color: payAmountOption === opt.val && !payCustomAmount ? '#92400E' : '#475569'
-                            }}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
+                        {(() => {
+                          const currentAppFee = getApplicationFee(student?.degree_type || degreeType);
+                          return [
+                            { label: `Application Fee (${currentAppFee.toLocaleString()} XAF)`, val: currentAppFee },
+                            { label: 'Seat Deposit (50,000 XAF)', val: 50000 },
+                            { label: 'Semester Installment (125,000 XAF)', val: 125000 }
+                          ].map((opt) => (
+                            <button
+                              key={opt.val}
+                              type="button"
+                              onClick={() => {
+                                setPayAmountOption(opt.val);
+                                setPayCustomAmount('');
+                                setShortCodeDialed(false);
+                              }}
+                              style={{
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                border: payAmountOption === opt.val && !payCustomAmount ? '2px solid #F59E0B' : '1px solid #CBD5E1',
+                                background: payAmountOption === opt.val && !payCustomAmount ? '#FEF3C7' : '#FFFFFF',
+                                color: payAmountOption === opt.val && !payCustomAmount ? '#92400E' : '#475569'
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ));
+                        })()}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1823,15 +1841,16 @@ function AdmissionsContent() {
                     </div>
                     
                     <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5 }}>
-                      📌 <strong>Official Directive:</strong> Online payment is <strong>10,000 XAF</strong> for your official Application &amp; Registration. Tuition balances can be paid with the short code below or physically at the Buea Campus office.
+                      📌 <strong>Official Directive:</strong> Online payment is <strong>{getApplicationFee(student?.degree_type || degreeType).toLocaleString()} XAF</strong> for your official Application Fee ({student?.degree_type || degreeType || 'HND/ND'}). Tuition balances can be paid with the short code below or physically at the Buea Campus office.
                     </div>
                   </div>
 
                   {/* 2. Direct USSD Short Code Execution (*126*14*670265493*Amount#) */}
                   <div style={{ marginBottom: '18px' }}>
                     {(() => {
-                      const amountToPay = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
-                      const fullShortCode = `*126*14*670265493*${amountToPay || 10000}#`;
+                      const defaultFee = getApplicationFee(student?.degree_type || degreeType);
+                      const amountToPay = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || defaultFee);
+                      const fullShortCode = `*126*14*670265493*${amountToPay || defaultFee}#`;
 
                       return (
                         <div style={{
@@ -1846,7 +1865,7 @@ function AdmissionsContent() {
                               <Smartphone size={18} /> MTN Mobile Money (MoMo) Payment
                             </span>
                             <span style={{ fontSize: '0.78rem', background: '#10B981', color: '#FFFFFF', padding: '3px 10px', borderRadius: '4px', fontWeight: 700 }}>
-                              Amount: {(amountToPay || 10000).toLocaleString()} XAF
+                              Amount: {(amountToPay || defaultFee).toLocaleString()} XAF
                             </span>
                           </div>
 
@@ -1854,7 +1873,7 @@ function AdmissionsContent() {
                           <div style={{ marginBottom: '14px' }}>
                             <button
                               type="button"
-                              onClick={() => handleOpenMoMo(fullShortCode, amountToPay || 10000)}
+                              onClick={() => handleOpenMoMo(fullShortCode, amountToPay || defaultFee)}
                               style={{
                                 width: '100%',
                                 padding: '15px 22px',
@@ -1873,7 +1892,7 @@ function AdmissionsContent() {
                                 transition: 'all 0.2s ease'
                               }}
                             >
-                              <Smartphone size={22} /> Pay Now — Open MTN MoMo ({(amountToPay || 10000).toLocaleString()} XAF)
+                              <Smartphone size={22} /> Pay Now — Open MTN MoMo ({(amountToPay || defaultFee).toLocaleString()} XAF)
                             </button>
                           </div>
 
@@ -2231,7 +2250,7 @@ function AdmissionsContent() {
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Registration Fee:</td>
+                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Application Fee:</td>
                       <td style={{ padding: '6px 12px' }}>
                         <span style={{ 
                           padding: '3px 8px', 
@@ -2241,7 +2260,9 @@ function AdmissionsContent() {
                           background: student.payment_status === 'Paid' ? '#ECFDF5' : '#EFF6FF',
                           color: student.payment_status === 'Paid' ? '#059669' : '#2563EB'
                         }}>
-                          {student.payment_status === 'Paid' ? '✓ 10,000 XAF REGISTRATION FEE CLEARED' : '⏳ 10,000 XAF REGISTRATION FEE PENDING'}
+                          {student.payment_status === 'Paid' 
+                            ? `✓ ${getApplicationFee(student.degree_type).toLocaleString()} XAF APPLICATION FEE CLEARED` 
+                            : `⏳ ${getApplicationFee(student.degree_type).toLocaleString()} XAF APPLICATION FEE PENDING`}
                         </span>
                       </td>
                     </tr>

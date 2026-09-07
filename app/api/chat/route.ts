@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 1. **Choose Program**: Select from our HND (2 Years), ND (1 Year), or Professional Certification tracks.
 2. **Personal & Academic Details**: Fill out Step 1 & Step 2 on our Admissions page.
 3. **Upload Documents**: Attach your GCE A-Level, O-Level, or Academic Transcripts.
-4. **Complete Payment**: Settle the 10,000 XAF registration fee via MTN Mobile Money short code: **\*126\*14\*670265493\*10000#**.
+4. **Complete Payment**: Settle the Application Fee (15,000 XAF for HND/ND or 25,000 XAF for Certifications) via MTN Mobile Money short code: **\*126\*14\*670265493\*15000#** (or **\*126\*14\*670265493\*25000#**).
 5. **Instant Decision**: Once reviewed, your official admission letter is generated on the portal!`,
         actionType: 'apply_action'
       },
@@ -105,7 +105,8 @@ export async function POST(request: Request) {
 • **Higher National Diploma (HND)**: 250,000 XAF / academic year (Installments accepted)
 • **National Diploma (ND)**: 150,000 XAF / academic year
 • **Professional Certifications**: 350,000 XAF (Comprehensive 6–9 months)
-• **Application Registration Fee**: 10,000 XAF
+• **Application Fee (HND & ND)**: 15,000 XAF
+• **Application Fee (Certifications)**: 25,000 XAF
 
 💡 **Official MTN MoMo Short Code**:
 \`*126*14*670265493*<Amount>#\`

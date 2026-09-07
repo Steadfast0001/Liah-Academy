@@ -1568,7 +1568,7 @@ export default function AdminDashboardPage() {
                   {applications.filter(a => a.payment_status === 'Paid').length}
                 </h2>
                 <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 700 }}>
-                  {(applications.filter(a => a.payment_status === 'Paid').length * 10000).toLocaleString()} XAF cleared
+                  {(applications.filter(a => a.payment_status === 'Paid').reduce((sum, a) => sum + (a.payment_amount || (a.degree_type?.includes('Cert') ? 25000 : 15000)), 0)).toLocaleString()} XAF cleared
                 </span>
               </div>
 
@@ -2300,7 +2300,7 @@ export default function AdminDashboardPage() {
                                   {app.payment_status === 'Paid' ? (
                                     <>
                                       <CheckCircle size={13} color="#059669" />
-                                      <span>✓ Paid ({(app.payment_amount || 10000).toLocaleString()} XAF)</span>
+                                      <span>✓ Paid ({(app.payment_amount || (app.degree_type?.includes('Cert') ? 25000 : 15000)).toLocaleString()} XAF)</span>
                                     </>
                                   ) : (app.payment_status === 'Pending Verification' || app.payment_proof_url) ? (
                                     <>
@@ -2548,7 +2548,7 @@ export default function AdminDashboardPage() {
                         borderRadius: '4px',
                         border: selectedApp.payment_status === 'Paid' ? '1px solid #A7F3D0' : selectedApp.payment_status === 'Pending Verification' ? '1px solid #BFDBFE' : '1px solid #FDE68A'
                       }}>
-                        {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || 10000).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
+                        {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || (selectedApp.degree_type?.includes('Cert') ? 25000 : 15000)).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
                       </span>
                     </div>
                   </div>
@@ -2618,7 +2618,7 @@ export default function AdminDashboardPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', marginBottom: '12px' }}>
                           <div>
                             <span style={{ color: '#64748B' }}>Amount:</span>
-                            <strong style={{ display: 'block', color: '#081F3E' }}>{(selectedApp.payment_amount || 10000).toLocaleString()} XAF</strong>
+                            <strong style={{ display: 'block', color: '#081F3E' }}>{(selectedApp.payment_amount || (selectedApp.degree_type?.includes('Cert') ? 25000 : 15000)).toLocaleString()} XAF</strong>
                           </div>
                           <div>
                             <span style={{ color: '#64748B' }}>Transaction ID:</span>
@@ -4074,7 +4074,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <span style={{ color: '#64748B', display: 'block', fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700 }}>Claimed Amount</span>
                   <strong style={{ color: '#081F3E', fontSize: '1.05rem' }}>
-                    {(previewProofItem.payment_amount || 10000).toLocaleString()} XAF
+                    {(previewProofItem.payment_amount || (previewProofItem.degree_type?.includes('Cert') ? 25000 : 15000)).toLocaleString()} XAF
                   </strong>
                 </div>
 

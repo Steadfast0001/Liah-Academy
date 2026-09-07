@@ -20,11 +20,11 @@ export async function POST(request: Request) {
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       studentId = parseInt(String(formData.get('student_id') || formData.get('studentId') || '0'), 10);
-      amount = parseInt(String(formData.get('amount') || '10000'), 10);
+      amount = parseInt(String(formData.get('amount') || '15000'), 10);
       operator = String(formData.get('operator') || formData.get('payment_method') || 'MTN Mobile Money');
       phone = String(formData.get('phone') || formData.get('sender_phone') || '670265493');
       transactionId = String(formData.get('transaction_id') || formData.get('transactionId') || '');
-      description = String(formData.get('description') || `Registration Fee Proof for #${studentId}`);
+      description = String(formData.get('description') || `Application Fee Proof for #${studentId}`);
 
       const file = formData.get('screenshot') || formData.get('proof') || formData.get('file');
       if (file && typeof file === 'object' && 'arrayBuffer' in file) {
@@ -54,11 +54,11 @@ export async function POST(request: Request) {
     } else {
       const body = await request.json();
       studentId = parseInt(String(body.student_id || body.studentId || '0'), 10);
-      amount = parseInt(String(body.amount || '10000'), 10);
+      amount = parseInt(String(body.amount || '15000'), 10);
       operator = String(body.operator || body.payment_method || 'MTN Mobile Money');
       phone = String(body.phone || body.sender_phone || '670265493');
       transactionId = String(body.transaction_id || body.transactionId || '');
-      description = String(body.description || `Registration Fee Proof for #${studentId}`);
+      description = String(body.description || `Application Fee Proof for #${studentId}`);
       proofUrl = String(body.proof_url || body.screenshot || '');
     }
 
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     if (!amount || isNaN(amount) || amount <= 0) {
-      amount = 10000;
+      amount = 15000;
     }
 
     if (!proofUrl) {

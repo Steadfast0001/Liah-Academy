@@ -15,7 +15,7 @@ export default function FloatingPage() {
   const [activeTab, setActiveTab] = useState<'pay' | 'apply' | 'track' | 'programs' | 'contact'>('pay');
 
   // MoMo Pay State
-  const [payAmount, setPayAmount] = useState<number>(10000);
+  const [payAmount, setPayAmount] = useState<number>(15000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [dialed, setDialed] = useState(false);
@@ -38,8 +38,8 @@ export default function FloatingPage() {
   const [trackResult, setTrackResult] = useState<any>(null);
   const [trackError, setTrackError] = useState('');
 
-  const currentEffectiveAmount = customAmount ? (parseInt(customAmount) || 0) : (payAmount || 10000);
-  const liveShortCode = `*126*14*670265493*${currentEffectiveAmount || 10000}#`;
+  const currentEffectiveAmount = customAmount ? (parseInt(customAmount) || 0) : (payAmount || 15000);
+  const liveShortCode = `*126*14*670265493*${currentEffectiveAmount || 15000}#`;
 
   // Global hotkey Ctrl+J / Cmd+J to toggle floating page
   useEffect(() => {
@@ -359,7 +359,8 @@ export default function FloatingPage() {
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                     {[
-                      { label: 'Application Fee', val: 10000 },
+                      { label: 'Application Fee (HND/ND)', val: 15000 },
+                      { label: 'Application Fee (Cert)', val: 25000 },
                       { label: 'Seat Deposit', val: 50000 },
                       { label: 'HND Installment 1', val: 125000 },
                       { label: 'ND Installment 1', val: 75000 }

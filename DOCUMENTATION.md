@@ -241,7 +241,7 @@ If the MySQL server is temporarily offline or undergoing migration, the system a
 
 ### 5.1 Step-by-Step Payment & USSD Short Code Directives
 1. **Target Merchant Account**: **`670 265 493`** (Liah Academy Official Account).
-2. **Instant Short Code**: **`*126*14*670265493*Amount#`** (e.g. `*126*14*670265493*10000#` for the 10,000 XAF application fee).
+2. **Instant Short Code**: **`*126*14*670265493*Amount#`** (e.g. `*126*14*670265493*15000#` for HND/ND Application Fee or `*126*14*670265493*25000#` for Certifications).
 3. **Execution & PIN Validation**: Pressing **OK** on the web application automatically dispatches the short code to the phone dialer, which immediately requests the student to input their **Secret PIN** to validate and conclude the transaction.
 4. **Proof Upload**: Student takes a screenshot of the transaction SMS / app screen and submits via `/api/payments/upload-proof` on the Admissions portal.
 5. **Administrative Clearance**: The Admin verifies the proof with 1-click on `/admin`, which updates student records in real time and approves admission.
@@ -258,7 +258,7 @@ Located at `app/api/chat/route.ts` and rendered via `components/ChatWidget.tsx`:
 
 ### Features:
 1. **Deterministic Intent Classifier**:
-   - Matches payment intents (`pay`, `fee`, `tuition`, `registration`, `momo`, `mtn`) and yields `actionType: 'payment_form'` with MTN MoMo payment instructions.
+   - Matches payment intents (`pay`, `fee`, `tuition`, `application`, `momo`, `mtn`) and yields `actionType: 'payment_form'` with MTN MoMo payment instructions.
    - Matches status queries (`status`, `check my application`, email regex, ID `#2011`) and yields `actionType: 'status_card'`.
 2. **Context Knowledge Base**:
    - Full catalog of HND, ND, and Certification tracks with exact credit loads and tuition figures.
@@ -310,7 +310,7 @@ Submits a payment screenshot and transaction details for admin verification.
 - **Content-Type**: `multipart/form-data` or `application/json`
 - **Fields**:
   - `student_id`: Student ID number
-  - `amount`: 10000
+  - `amount`: 15000 (or 25000 for Certifications)
   - `operator`: "MTN Mobile Money"
   - `phone`: "670265493"
   - `transaction_id`: Transaction ID (optional)
@@ -329,7 +329,7 @@ Submits a payment screenshot and transaction details for admin verification.
 
 #### `POST /api/chat`
 Handles AI queries and returns formatted conversational replies + action cards.
-- **Request Body**: `{ "query": "I want to pay my registration fee" }`
+- **Request Body**: `{ "query": "I want to pay my application fee" }`
 - **Response (200 OK)**:
   ```json
   {
