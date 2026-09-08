@@ -14,15 +14,13 @@ import WebThreads from '@/components/WebThreads';
 
 const heroSlides = [
   { type: 'video', src: '/assets/videos/1.mp4' },
-  { type: 'image', src: '/assets/images/1.jpg' },
+  { type: 'image', src: '/assets/images/campus_students_liah_shirts.jpg' },
   { type: 'video', src: '/assets/videos/video.mp4' },
-  { type: 'image', src: '/assets/images/2.jpg' },
+  { type: 'image', src: '/assets/images/female_student_practical_guide.jpg' },
   { type: 'video', src: '/assets/videos/E1.mp4' },
-  { type: 'image', src: '/assets/images/image_3.jpg' },
+  { type: 'image', src: '/assets/images/male_student_laptop.jpg' },
   { type: 'video', src: '/assets/videos/E2.mp4' },
-  { type: 'image', src: '/assets/images/image_4.jpg' },
-  { type: 'image', src: '/assets/images/image_5.jpg' },
-  { type: 'image', src: '/assets/images/OIP_2.webp' }
+  { type: 'image', src: '/assets/images/two_students_laptop_guide.jpg' }
 ];
 
 const newsArticles = [
