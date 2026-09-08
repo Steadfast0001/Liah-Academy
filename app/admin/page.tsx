@@ -1656,18 +1656,21 @@ export default function AdminDashboardPage() {
                     {applications.slice(0, 5).map(app => (
                       <div 
                         key={app.id}
+                        className="recent-app-item"
                         style={{ 
                           padding: '12px 16px', 
                           background: '#F8FAFC', 
                           borderRadius: '8px',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '10px'
                         }}
                       >
-                        <div>
-                          <div style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.95rem' }}>{app.full_name}</div>
-                          <div style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                        <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+                          <div style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.95rem', wordBreak: 'break-word' }}>{app.full_name}</div>
+                          <div style={{ fontSize: '0.82rem', color: '#64748B', wordBreak: 'break-word' }}>
                             {app.program_type} &bull; <strong style={{ color: '#081F3E', fontFamily: 'var(--font-mono)' }}>{app.matricule || `#${app.id}`}</strong>
                           </div>
                         </div>
@@ -1677,7 +1680,8 @@ export default function AdminDashboardPage() {
                           padding: '4px 10px',
                           borderRadius: '4px',
                           background: app.admission_status === 'Approved' ? '#ECFDF5' : app.admission_status === 'Rejected' ? '#FEF2F2' : '#FEF3C7',
-                          color: app.admission_status === 'Approved' ? '#059669' : app.admission_status === 'Rejected' ? '#DC2626' : '#B45309'
+                          color: app.admission_status === 'Approved' ? '#059669' : app.admission_status === 'Rejected' ? '#DC2626' : '#B45309',
+                          flexShrink: 0
                         }}>
                           {app.admission_status}
                         </span>
@@ -1708,13 +1712,14 @@ export default function AdminDashboardPage() {
                     {inquiries.slice(0, 5).map(inq => (
                       <div 
                         key={inq.id}
+                        className="recent-inquiry-item"
                         style={{ 
                           padding: '12px 16px', 
                           background: '#F8FAFC', 
                           borderRadius: '8px'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
                           <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.92rem' }}>{inq.name}</span>
                           <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{new Date(inq.created_at).toLocaleDateString()}</span>
                         </div>
