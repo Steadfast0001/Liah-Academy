@@ -12,6 +12,7 @@ USE `liah_db`;
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `students` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `matricule` VARCHAR(50) DEFAULT NULL,
   `full_name` VARCHAR(191) NOT NULL,
   `email` VARCHAR(191) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
