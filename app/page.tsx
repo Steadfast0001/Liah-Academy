@@ -13,14 +13,14 @@ import { PARTNERSHIP_MAILTO_LINK } from '@/lib/constants';
 import WebThreads from '@/components/WebThreads';
 
 const heroSlides = [
-  { type: 'video', src: '/assets/videos/1.mp4' },
-  { type: 'image', src: '/assets/images/campus_students_liah_shirts.jpg' },
-  { type: 'video', src: '/assets/videos/video.mp4' },
-  { type: 'image', src: '/assets/images/female_student_practical_guide.jpg' },
-  { type: 'video', src: '/assets/videos/E1.mp4' },
-  { type: 'image', src: '/assets/images/male_student_laptop.jpg' },
-  { type: 'video', src: '/assets/videos/E2.mp4' },
-  { type: 'image', src: '/assets/images/two_students_laptop_guide.jpg' }
+  { type: 'video', src: '/assets/videos/1.mp4', position: 'center 20%' },
+  { type: 'image', src: '/assets/images/campus_students_liah_shirts.jpg', position: 'center 10%' },
+  { type: 'video', src: '/assets/videos/video.mp4', position: 'center 20%' },
+  { type: 'image', src: '/assets/images/female_student_practical_guide.jpg', position: 'center 10%' },
+  { type: 'video', src: '/assets/videos/E1.mp4', position: 'center 20%' },
+  { type: 'image', src: '/assets/images/male_student_laptop.jpg', position: 'center 12%' },
+  { type: 'video', src: '/assets/videos/E2.mp4', position: 'center 20%' },
+  { type: 'image', src: '/assets/images/two_students_laptop_guide.jpg', position: 'center 10%' }
 ];
 
 const newsArticles = [
@@ -189,7 +189,10 @@ export default function HomePage() {
               className={`slide ${idx === currentSlide ? 'active' : ''}`}
               style={
                 slide.type === 'image'
-                  ? { backgroundImage: `url('${slide.src}')` }
+                  ? { 
+                      backgroundImage: `url('${slide.src}')`,
+                      backgroundPosition: slide.position || 'center 10%'
+                    }
                   : {}
               }
             >
@@ -203,6 +206,7 @@ export default function HomePage() {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: slide.position || 'center 20%',
                     position: 'absolute',
                     top: 0,
                     left: 0
