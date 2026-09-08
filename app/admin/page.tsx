@@ -1251,6 +1251,7 @@ export default function AdminDashboardPage() {
         
         {/* Top Admin Header Bar */}
         <div 
+          className="admin-header-card"
           style={{ 
             background: 'linear-gradient(135deg, #081F3E 0%, #0D2D59 100%)', 
             borderRadius: '16px', 
@@ -1283,12 +1284,12 @@ export default function AdminDashboardPage() {
                 {currentAdmin ? `Logged in: ${currentAdmin.email} (${currentAdmin.role})` : 'SuperAdmin (info@liahacademy.com)'}
               </span>
             </div>
-            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+            <h1 className="admin-header-title" style={{ fontSize: '1.9rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
               Governance &amp; Administration Center
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
               onClick={() => loadDashboardData()} 
               disabled={loading}
@@ -1373,6 +1374,7 @@ export default function AdminDashboardPage() {
 
         {/* Navigation Tabs */}
         <div 
+          className="admin-nav-tabs"
           style={{ 
             display: 'flex', 
             gap: '8px', 
@@ -1541,6 +1543,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'overview' && (
           <div>
             <div 
+              className="admin-stats-grid"
               style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
@@ -1738,7 +1741,7 @@ export default function AdminDashboardPage() {
           <div>
             {/* Filter & Actions Bar */}
             <div 
-              className="premium-card" 
+              className="premium-card admin-toolbar" 
               style={{ 
                 padding: '20px 24px', 
                 background: '#FFFFFF', 
@@ -1774,7 +1777,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Status & Payment Filter Pills with Live Counts */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div className="admin-toolbar-controls" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '4px', background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
                   <button
                     onClick={() => setStatusFilter('ALL')}
@@ -2086,7 +2089,7 @@ export default function AdminDashboardPage() {
                 boxShadow: '0 8px 30px rgba(0,0,0,0.04)' 
               }}
             >
-              <div style={{ overflowX: 'auto' }}>
+              <div className="admin-table-container" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC', borderBottom: '1px solid rgba(15,23,42,0.08)', color: '#64748B', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -2472,6 +2475,7 @@ export default function AdminDashboardPage() {
                 }}
               >
                 <div 
+                  className="admin-modal-card"
                   style={{
                     background: '#FFFFFF',
                     borderRadius: '16px',
@@ -3108,7 +3112,7 @@ export default function AdminDashboardPage() {
                   zIndex: 9999, backdropFilter: 'blur(4px)', padding: '20px'
                 }}
               >
-                <div style={{ background: '#FFFFFF', borderRadius: '16px', maxWidth: '600px', width: '100%', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="admin-modal-card" style={{ background: '#FFFFFF', borderRadius: '16px', maxWidth: '600px', width: '100%', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ color: '#081F3E', margin: 0 }}>
                       {editingCourse ? 'Edit Academic Track' : 'Add New Academic Program'}
@@ -3301,7 +3305,7 @@ export default function AdminDashboardPage() {
                   zIndex: 9999, backdropFilter: 'blur(4px)', padding: '20px'
                 }}
               >
-                <div style={{ background: '#FFFFFF', borderRadius: '16px', maxWidth: '580px', width: '100%', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="admin-modal-card" style={{ background: '#FFFFFF', borderRadius: '16px', maxWidth: '580px', width: '100%', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ color: '#081F3E', margin: 0 }}>
                       {editingNews ? 'Edit Announcement' : 'Publish New Announcement'}
@@ -3596,7 +3600,7 @@ export default function AdminDashboardPage() {
               {emailLogs.length === 0 ? (
                 <p style={{ color: '#94A3B8' }}>No email signals logged yet. Submit an application or inquiry to test.</p>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="admin-table-container" style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
@@ -3668,7 +3672,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Admin Users Table */}
-              <div style={{ overflowX: 'auto' }}>
+              <div className="admin-table-container" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
@@ -3784,7 +3788,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', border: '1px solid rgba(15,23,42,0.08)' }}>
-              <div style={{ overflowX: 'auto' }}>
+              <div className="admin-table-container" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
@@ -3882,6 +3886,7 @@ export default function AdminDashboardPage() {
             onClick={() => setShowAddAdminModal(false)}
           >
             <div
+              className="admin-modal-card"
               style={{
                 background: '#FFFFFF', borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '90%',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.3)'
@@ -3974,7 +3979,7 @@ export default function AdminDashboardPage() {
             }}
           >
             <div
-              className="premium-card"
+              className="premium-card admin-modal-card"
               style={{
                 maxWidth: '680px',
                 width: '100%',
@@ -4159,6 +4164,7 @@ export default function AdminDashboardPage() {
             }}
           >
             <div 
+              className="admin-modal-card"
               style={{
                 background: '#FFFFFF',
                 borderRadius: '16px',
