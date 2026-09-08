@@ -148,7 +148,7 @@ function AdmissionsContent() {
   const [payScreenshotPreview, setPayScreenshotPreview] = useState<string | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
-  const [payError, setPayError] = useState<string>('');
+  const [payError, setPayError] = useState('');
   const [copiedNumber, setCopiedNumber] = useState(false);
   const [copiedShortCode, setCopiedShortCode] = useState(false);
   const [shortCodeDialed, setShortCodeDialed] = useState(false);
@@ -242,7 +242,11 @@ function AdmissionsContent() {
             if (draft.uploadedDocs && Object.keys(draft.uploadedDocs).length > 0) setUploadedDocs(draft.uploadedDocs);
             if (draft.currentStep) setCurrentStep(draft.currentStep);
             if (draft.showCheckout) setShowCheckout(draft.showCheckout);
-            if (draft.payAmountOption) setPayAmountOption(draft.payAmountOption);
+            if (draft.payAmountOption && draft.payAmountOption !== 10000 && draft.payAmountOption !== 50000 && draft.payAmountOption !== 125000) {
+              setPayAmountOption(draft.payAmountOption);
+            } else {
+              setPayAmountOption(getApplicationFee(draft.degreeType || degreeType));
+            }
             if (draft.payCustomAmount) setPayCustomAmount(draft.payCustomAmount);
             setHasSavedDraft(true);
           }
@@ -250,6 +254,12 @@ function AdmissionsContent() {
       }
     } catch {}
   }, [degreeParam, programParam]);
+
+  // Sync official application fee whenever degree type or student record changes
+  useEffect(() => {
+    const fee = getApplicationFee(student?.degree_type || degreeType);
+    setPayAmountOption(fee);
+  }, [student?.degree_type, degreeType]);
 
   // Real-time auto-saving draft to localStorage
   useEffect(() => {
@@ -519,7 +529,7 @@ function AdmissionsContent() {
   const runAutoCheck = async () => {
     setAutoCheckLoading(true);
     setPayError('');
-    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || getApplicationFee(student?.degree_type || degreeType));
 
     try {
       const res = await fetch('/api/payments/momo-confirm', {
@@ -577,7 +587,7 @@ function AdmissionsContent() {
     setPinSubmitting(true);
     setPinError('');
 
-    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || getApplicationFee(student?.degree_type || degreeType));
 
     try {
       const res = await fetch('/api/payments/momo-confirm', {
@@ -652,7 +662,7 @@ function AdmissionsContent() {
     setPayLoading(true);
     setPayError('');
 
-    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || 10000);
+    const effectiveAmount = payCustomAmount ? (parseInt(payCustomAmount) || 0) : (payAmountOption || getApplicationFee(student?.degree_type || degreeType));
 
     if (!effectiveAmount || isNaN(effectiveAmount) || effectiveAmount <= 0) {
       setPayError('Please enter or select a valid payment amount.');
@@ -1772,7 +1782,7 @@ function AdmissionsContent() {
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px' }}>
                           Official Application Fee
                         </span>
-                        <h4 style={{ margin: '4px 0 0 0', color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
+                        <h4 style={{ margin: '4px 0 0 0', color: '#081F3E', fontSize: '1.35rem', fontWeight: 800 }}>
                           {(payCustomAmount ? parseInt(payCustomAmount) || 0 : (payAmountOption || getApplicationFee(student?.degree_type || degreeType))).toLocaleString()} XAF
                         </h4>
                       </div>
@@ -1782,66 +1792,38 @@ function AdmissionsContent() {
                       </div>
                     </div>
 
-                    {/* Amount Selector */}
-                    <div style={{ marginBottom: '10px' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                        Select or Enter Payment Amount (XAF):
-                      </label>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                        {(() => {
-                          const currentAppFee = getApplicationFee(student?.degree_type || degreeType);
-                          return [
-                            { label: `Application Fee (${currentAppFee.toLocaleString()} XAF)`, val: currentAppFee },
-                            { label: 'Seat Deposit (50,000 XAF)', val: 50000 },
-                            { label: 'Semester Installment (125,000 XAF)', val: 125000 }
-                          ].map((opt) => (
-                            <button
-                              key={opt.val}
-                              type="button"
-                              onClick={() => {
-                                setPayAmountOption(opt.val);
-                                setPayCustomAmount('');
-                                setShortCodeDialed(false);
-                              }}
-                              style={{
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                border: payAmountOption === opt.val && !payCustomAmount ? '2px solid #F59E0B' : '1px solid #CBD5E1',
-                                background: payAmountOption === opt.val && !payCustomAmount ? '#FEF3C7' : '#FFFFFF',
-                                color: payAmountOption === opt.val && !payCustomAmount ? '#92400E' : '#475569'
-                              }}
-                            >
-                              {opt.label}
-                            </button>
-                          ));
-                        })()}
-                      </div>
+                    {/* Program Fee Summary */}
+                    {(() => {
+                      const currentAppFee = getApplicationFee(student?.degree_type || degreeType);
+                      const isCert = String(student?.degree_type || degreeType || '').toUpperCase().includes('CERT');
+                      return (
+                        <div style={{
+                          padding: '12px 14px',
+                          borderRadius: '8px',
+                          border: '1.5px solid #10B981',
+                          background: '#ECFDF5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '12px'
+                        }}>
+                          <div>
+                            <strong style={{ fontSize: '0.88rem', color: '#065F46', display: 'block' }}>
+                              {isCert ? 'Professional Certification Program' : 'Higher National Diploma (HND) / ND Program'}
+                            </strong>
+                            <span style={{ fontSize: '0.76rem', color: '#047857' }}>
+                              Official Application Fee: {isCert ? '25,000 XAF' : '15,000 XAF'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#065F46' }}>
+                            {currentAppFee.toLocaleString()} XAF
+                          </span>
+                        </div>
+                      );
+                    })()}
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input
-                          type="number"
-                          placeholder="Or type custom amount in XAF..."
-                          value={payCustomAmount}
-                          onChange={(e) => {
-                            setPayCustomAmount(e.target.value);
-                            setShortCodeDialed(false);
-                          }}
-                          style={{
-                            flex: 1,
-                            padding: '8px 12px',
-                            borderRadius: '6px',
-                            border: '1px solid #CBD5E1',
-                            fontSize: '0.82rem'
-                          }}
-                        />
-                      </div>
-                    </div>
-                    
                     <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', padding: '10px 12px', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.5 }}>
-                      📌 <strong>Official Directive:</strong> Online payment is <strong>{getApplicationFee(student?.degree_type || degreeType).toLocaleString()} XAF</strong> for your official Application Fee ({student?.degree_type || degreeType || 'HND/ND'}). Tuition balances can be paid with the short code below or physically at the Buea Campus office.
+                      📌 <strong>Official Directive:</strong> All HND and ND programs pay <strong>15,000 XAF</strong>, and Professional Certifications pay <strong>25,000 XAF</strong> for the official application fee.
                     </div>
                   </div>
 

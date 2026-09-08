@@ -33,11 +33,8 @@ interface ChatMessage {
 }
 
 const feeOptions = [
-  { label: 'Application Fee (HND / ND)', amount: 15000, desc: 'HND & ND Application Fee' },
-  { label: 'Application Fee (Certifications)', amount: 25000, desc: 'Professional Certifications Application Fee' },
-  { label: 'Seat Deposit', amount: 50000, desc: 'Enrollment Guarantee' },
-  { label: 'HND 1st Installment', amount: 125000, desc: 'Semester 1 Tuition' },
-  { label: 'ND 1st Installment', amount: 75000, desc: 'Semester 1 Tuition' },
+  { label: 'Application Fee (HND / ND)', amount: 15000, desc: 'HND & ND Application Fee (15,000 XAF)' },
+  { label: 'Application Fee (Certifications)', amount: 25000, desc: 'Professional Certifications Application Fee (25,000 XAF)' },
 ];
 
 const quickChips = [
@@ -140,7 +137,7 @@ export default function ChatWidget() {
   const handleAutoCheckStatus = async () => {
     setAutoChecking(true);
     setChatPinError('');
-    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 10000);
+    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
 
     try {
       const res = await fetch('/api/payments/momo-confirm', {
@@ -190,7 +187,7 @@ export default function ChatWidget() {
     setChatPinSubmitting(true);
     setChatPinError('');
 
-    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 10000);
+    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
 
     try {
       const res = await fetch('/api/payments/momo-confirm', {
@@ -341,8 +338,8 @@ export default function ChatWidget() {
     }
   };
 
-  const currentPayAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 10000);
-  const activeShortCode = `*126*14*670265493*${currentPayAmount || 10000}#`;
+  const currentPayAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
+  const activeShortCode = `*126*14*670265493*${currentPayAmount || 15000}#`;
 
   return (
     <>
@@ -691,7 +688,7 @@ export default function ChatWidget() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
                 <button
                   type="button"
-                  onClick={() => handleRunShortCode(activeShortCode, currentPayAmount || 10000)}
+                  onClick={() => handleRunShortCode(activeShortCode, currentPayAmount || 15000)}
                   style={{
                     width: '100%',
                     padding: '13px 16px',
@@ -709,7 +706,7 @@ export default function ChatWidget() {
                     boxShadow: '0 4px 14px rgba(245, 166, 35, 0.4)'
                   }}
                 >
-                  <Smartphone size={18} /> Pay Now — Open MTN MoMo ({(currentPayAmount || 10000).toLocaleString()} XAF)
+                  <Smartphone size={18} /> Pay Now — Open MTN MoMo ({(currentPayAmount || 15000).toLocaleString()} XAF)
                 </button>
               </div>
 

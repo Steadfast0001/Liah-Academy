@@ -78,7 +78,7 @@ Navigate to **Admissions & Portal** (`/admissions`):
 On the `/admissions` page, locate the **3-Step Online Registration Wizard**:
 
 > **IMPORTANT POLICY**:  
-> All admissions and laboratory workstation reservations are marked complete only after the applicant has completed payment of the registration fee or seat deposit.
+> All admissions and laboratory workstation reservations are marked complete only after the applicant has completed payment of the official application fee (15,000 XAF for HND/ND, 25,000 XAF for Certifications).
 
 #### Step 1: Personal Details & Security
 - **Full Legal Name**: Enter your full name as it appears on your National ID or Academic Certificates.
@@ -202,7 +202,7 @@ To get payment instructions through the AI Assistant:
 1. Open the chat widget.
 2. Type: *"I want to pay my registration fee"* or *"How can I pay my tuition?"*
 3. The AI assistant immediately renders an **Interactive Payment Card**:
-   - Quick-select buttons for **10,000 XAF** (Registration), **50,000 XAF** (Deposit), **125,000 XAF** (HND Installment), or other fee types.
+   - Quick-select buttons for **15,000 XAF** (HND / ND Application Fee) or **25,000 XAF** (Professional Certifications Application Fee).
    - Direct dial instructions for MTN Mobile Money (*126#).
 4. Direct links to upload receipt on `/admissions` or confirm with human admissions officers on WhatsApp.
 

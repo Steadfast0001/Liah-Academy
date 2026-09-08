@@ -360,10 +360,7 @@ export default function FloatingPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                     {[
                       { label: 'Application Fee (HND/ND)', val: 15000 },
-                      { label: 'Application Fee (Cert)', val: 25000 },
-                      { label: 'Seat Deposit', val: 50000 },
-                      { label: 'HND Installment 1', val: 125000 },
-                      { label: 'ND Installment 1', val: 75000 }
+                      { label: 'Application Fee (Cert)', val: 25000 }
                     ].map(opt => (
                       <button
                         key={opt.val}
