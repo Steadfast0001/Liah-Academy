@@ -1,3 +1,12 @@
+// Ensure working directory is always the project root
+if (__dirname) {
+  try {
+    process.chdir(__dirname);
+  } catch (e) {
+    console.warn('Could not chdir to __dirname:', e);
+  }
+}
+
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
@@ -5,8 +14,8 @@ const next = require('next');
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
 
-// Initialize Next.js app
-const app = next({ dev });
+// Initialize Next.js app with explicit root directory
+const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
