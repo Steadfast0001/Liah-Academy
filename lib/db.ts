@@ -3,27 +3,33 @@ import fs from 'fs';
 import os from 'os';
 import mysql from 'mysql2/promise';
 
-// 1. DATA DIRECTORY & VERCEL SERVERLESS ENVIRONMENT ADAPTATION
+// 1. DATA DIRECTORY & VERCEL/CPANEL SERVERLESS ENVIRONMENT ADAPTATION
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
 
-// When deployed on Vercel/serverless, process.cwd() is strictly read-only.
-// We use the writable /tmp directory to prevent EROFS crashes while preserving state across container invocations.
-const dataDir = isServerless 
+let dataDir = isServerless 
   ? path.join(os.tmpdir(), 'liah_academy_data')
   : path.join(process.cwd(), 'data');
-
-const backupsDir = path.join(dataDir, 'backups');
 
 try {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
+} catch (e) {
+  // If permission denied on process.cwd(), fallback to temporary folder
+  dataDir = path.join(os.tmpdir(), 'liah_academy_data');
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch {}
+}
+
+const backupsDir = path.join(dataDir, 'backups');
+try {
   if (!fs.existsSync(backupsDir)) {
     fs.mkdirSync(backupsDir, { recursive: true });
   }
-} catch (e) {
-  // Gracefully handle any read-only filesystem restrictions
-}
+} catch {}
 
 const jsonDbPath = path.join(dataDir, 'liah_academy_store.json');
 const bundleSeedPath = path.join(process.cwd(), 'data', 'liah_academy_store.json');
