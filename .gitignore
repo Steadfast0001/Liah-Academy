@@ -39,3 +39,4 @@ yarn-error.log*
 *.key
 Thumbs.db
 .qodo/
+*.zip
