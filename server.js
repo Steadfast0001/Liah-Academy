@@ -1,34 +1,35 @@
 ﻿// ============================================================================
-// LIAH ACADEMY - PRODUCTION ENTRYPOINT (cPanel / Passenger / PM2 / VPS)
+// LIAH ACADEMY - PRODUCTION SERVER (Phusion Passenger / cPanel / PM2 / Linux)
 // ============================================================================
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = process.env.HOSTNAME || '0.0.0.0';
-const port = parseInt(process.env.PORT || '3000', 10);
-
-const app = next({ dev, hostname, port });
+const app = next({ dev });
 const handle = app.getRequestHandler();
 
+// In cPanel Passenger, PORT can be a port number, socket path, or pipe
+const port = process.env.PORT || 3000;
+
 app.prepare().then(() => {
-  createServer(async (req, res) => {
+  createServer((req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
-      await handle(req, res, parsedUrl);
+      handle(req, res, parsedUrl);
     } catch (err) {
-      console.error('Error occurred handling request:', err);
+      console.error('Request handler error:', err);
       res.statusCode = 500;
       res.end('Internal Server Error');
     }
-  })
-  .once('error', (err) => {
-    console.error('Server startup error:', err);
-    process.exit(1);
-  })
-  .listen(port, () => {
-    console.log(`> 🎓 Liah Academy ready on http://${hostname}:${port}`);
-    console.log(`> Environment: ${process.env.NODE_ENV || 'development'}`);
+  }).listen(port, (err) => {
+    if (err) {
+      console.error('Server listen error:', err);
+      throw err;
+    }
+    console.log(`> Liah Academy online and listening on ${port}`);
   });
+}).catch((err) => {
+  console.error('Next.js startup error:', err);
+  process.exit(1);
 });
