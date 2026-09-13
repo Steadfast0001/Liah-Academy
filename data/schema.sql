@@ -174,3 +174,22 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `last_login` DATETIME NULL,
   INDEX `idx_admins_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 11: chat_sessions (Live Chat Conversations & Support Transcripts)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `chat_sessions` (
+  `id` VARCHAR(100) PRIMARY KEY,
+  `user_name` VARCHAR(191) DEFAULT 'Website Visitor',
+  `user_email` VARCHAR(191) DEFAULT '',
+  `user_phone` VARCHAR(50) DEFAULT '',
+  `status` ENUM('active', 'closed') DEFAULT 'active',
+  `unread_admin` TINYINT(1) DEFAULT 0,
+  `unread_user` TINYINT(1) DEFAULT 0,
+  `last_message` TEXT,
+  `messages` JSON,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_chat_updated` (`updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

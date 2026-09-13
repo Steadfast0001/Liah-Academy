@@ -64,7 +64,8 @@ if (!fs.existsSync(storePath)) {
           admissions_open: true
         },
         inquiries: [],
-        email_logs: []
+        email_logs: [],
+        chat_sessions: []
       };
       fs.writeFileSync(storePath, JSON.stringify(initialStore, null, 2));
       console.log('  ✅ Initialized /data/liah_academy_store.json with default courses, news & demo student.');

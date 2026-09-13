@@ -137,6 +137,107 @@ export async function ensureMySQLTables() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id INT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        degree_type VARCHAR(50) NOT NULL,
+        program_type VARCHAR(100) NOT NULL,
+        study_format VARCHAR(50) DEFAULT 'fulltime',
+        duration VARCHAR(50) DEFAULT '2 Years',
+        tuition_fee INT DEFAULT 250000,
+        description TEXT,
+        modules TEXT,
+        badge VARCHAR(50) DEFAULT 'Popular',
+        school VARCHAR(100) DEFAULT 'School of Engineering',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS news (
+        id INT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'News',
+        date VARCHAR(100) DEFAULT 'August 2026',
+        image TEXT,
+        excerpt TEXT,
+        content TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS media (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        src TEXT NOT NULL,
+        category VARCHAR(100) DEFAULT 'General',
+        size VARCHAR(50) DEFAULT 'Unknown',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id INT PRIMARY KEY DEFAULT 1,
+        admin_email VARCHAR(255) DEFAULT 'info@liahacademy.com',
+        site_title VARCHAR(255) DEFAULT 'Liah Academy',
+        contact_phone VARCHAR(100) DEFAULT '+237 652 154 095 / +237 699 526 607',
+        address TEXT,
+        admissions_open TINYINT(1) DEFAULT 1,
+        tiktok_url TEXT,
+        maps_url TEXT,
+        facebook_url TEXT,
+        instagram_url TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id VARCHAR(100) PRIMARY KEY,
+        recipient VARCHAR(191) NOT NULL,
+        recipient_type VARCHAR(50) DEFAULT 'applicant',
+        subject VARCHAR(255) NOT NULL,
+        type VARCHAR(50) DEFAULT 'custom',
+        status VARCHAR(50) DEFAULT 'logged',
+        preview TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id INT PRIMARY KEY,
+        full_name VARCHAR(191) NOT NULL,
+        email VARCHAR(191) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'Admin',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_login DATETIME NULL,
+        INDEX idx_admins_email (email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        id VARCHAR(100) PRIMARY KEY,
+        user_name VARCHAR(191) DEFAULT 'Website Visitor',
+        user_email VARCHAR(191) DEFAULT '',
+        user_phone VARCHAR(50) DEFAULT '',
+        status VARCHAR(50) DEFAULT 'active',
+        unread_admin TINYINT(1) DEFAULT 0,
+        unread_user TINYINT(1) DEFAULT 0,
+        last_message TEXT,
+        messages JSON,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_chat_updated (updated_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     schemaInitialized = true;
     isMySQLLive = true;
   } catch (err) {
@@ -321,6 +422,26 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
             data.id, data.full_name, data.email, data.password, data.role,
             data.created_at ? new Date(data.created_at) : new Date(),
             data.last_login ? new Date(data.last_login) : null
+          ]
+        );
+      }
+    } else if (table === 'chat_sessions') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM chat_sessions WHERE id = ?', [data.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO chat_sessions (id, user_name, user_email, user_phone, status, unread_admin, unread_user, last_message, messages, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             user_name=VALUES(user_name), user_email=VALUES(user_email), user_phone=VALUES(user_phone),
+             status=VALUES(status), unread_admin=VALUES(unread_admin), unread_user=VALUES(unread_user),
+             last_message=VALUES(last_message), messages=VALUES(messages), updated_at=VALUES(updated_at)`,
+          [
+            data.id, data.user_name || 'Website Visitor', data.user_email || '', data.user_phone || '',
+            data.status || 'active', data.unread_admin ? 1 : 0, data.unread_user ? 1 : 0,
+            data.last_message || '', JSON.stringify(data.messages || []),
+            data.created_at ? new Date(data.created_at) : new Date(),
+            data.updated_at ? new Date(data.updated_at) : new Date()
           ]
         );
       }
@@ -1368,6 +1489,7 @@ export const adminStore = {
     }
 
     writeDb(store, true);
+    syncToMySQL('chat_sessions', 'update', session);
     return { session, message: msgItem };
   },
 
@@ -1398,6 +1520,7 @@ export const adminStore = {
     session.unread_user = true;
 
     writeDb(store, true);
+    syncToMySQL('chat_sessions', 'update', session);
     return { session, message: msgItem };
   },
 
@@ -1409,6 +1532,7 @@ export const adminStore = {
     if (reader === 'admin') session.unread_admin = false;
     if (reader === 'user') session.unread_user = false;
     writeDb(store, true);
+    syncToMySQL('chat_sessions', 'update', session);
     return true;
   },
 
@@ -1420,6 +1544,7 @@ export const adminStore = {
     session.status = 'closed';
     session.updated_at = new Date().toISOString();
     writeDb(store, true);
+    syncToMySQL('chat_sessions', 'update', session);
     return true;
   },
 
@@ -1430,6 +1555,7 @@ export const adminStore = {
     store.chat_sessions = store.chat_sessions.filter(s => s.id !== sessionId);
     if (store.chat_sessions.length < initialLen) {
       writeDb(store, true);
+      syncToMySQL('chat_sessions', 'delete', { id: sessionId });
       return true;
     }
     return false;
