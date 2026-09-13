@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
+import { sendPaymentAlertSignal } from '@/lib/email';
 import fs from 'fs';
 import path from 'path';
 
@@ -89,6 +90,19 @@ export async function POST(request: Request) {
       proof_url: proofUrl,
       description
     });
+
+    // Notify administrators asynchronously
+    try {
+      sendPaymentAlertSignal({
+        id: payment.id,
+        student_name: student?.full_name || 'Prospective Candidate',
+        student_email: student?.email || '',
+        amount: payment.amount,
+        operator: payment.operator,
+        transaction_id: payment.transaction_id || payment.reference,
+        status: 'Pending Verification (Proof Uploaded)'
+      }).catch(err => console.warn('Payment notification signal notice:', err));
+    } catch {}
 
     return NextResponse.json({
       success: true,

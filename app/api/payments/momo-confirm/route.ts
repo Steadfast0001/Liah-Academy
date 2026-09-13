@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
+import { sendPaymentAlertSignal } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,19 @@ export async function POST(request: Request) {
       currency: 'XAF',
       operator: 'MTN Mobile Money'
     };
+
+    // Notify administrators asynchronously
+    try {
+      sendPaymentAlertSignal({
+        id: payment.id,
+        student_name: record?.student?.full_name || body.full_name || 'Valued Candidate',
+        student_email: record?.student?.email || body.email || '',
+        amount: payment.amount || amount,
+        operator: 'MTN Mobile Money (Instant)',
+        transaction_id: payment.transaction_id || payment.reference,
+        status: 'PAID & APPROVED'
+      }).catch(err => console.warn('Payment MoMo notification signal notice:', err));
+    } catch {}
 
     return NextResponse.json({
       success: true,

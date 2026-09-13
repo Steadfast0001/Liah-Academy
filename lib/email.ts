@@ -13,18 +13,59 @@ export interface EmailLog {
   created_at: string;
 }
 
-// Get admin notification email
-export function getAdminEmail(): string {
+// Get all administrator notification recipient emails (Settings + Registered Admins + ENV)
+export function getAdminEmails(): string[] {
+  const emails = new Set<string>();
+
   try {
-    const configPath = path.join(process.cwd(), 'data', 'liah_academy_store.json');
+    const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
+    const dataDir = isServerless 
+      ? path.join(require('os').tmpdir(), 'liah_academy_data')
+      : path.join(process.cwd(), 'data');
+    const configPath = path.join(dataDir, 'liah_academy_store.json');
+
     if (fs.existsSync(configPath)) {
       const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      // 1. Settings Admin Email (supports comma or space separated list)
       if (data.settings && data.settings.admin_email) {
-        return data.settings.admin_email;
+        String(data.settings.admin_email)
+          .split(/[,;\s]+/)
+          .map(e => e.trim().toLowerCase())
+          .filter(e => e && e.includes('@'))
+          .forEach(e => emails.add(e));
+      }
+      // 2. All registered database admin accounts
+      if (Array.isArray(data.admins)) {
+        data.admins.forEach((admin: any) => {
+          if (admin && admin.email && typeof admin.email === 'string' && admin.email.includes('@')) {
+            emails.add(admin.email.trim().toLowerCase());
+          }
+        });
       }
     }
   } catch (e) {}
-  return process.env.ADMIN_EMAIL || 'info@liahacademy.com';
+
+  // 3. Environment Variable fallback
+  if (process.env.ADMIN_EMAIL) {
+    String(process.env.ADMIN_EMAIL)
+      .split(/[,;\s]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e && e.includes('@'))
+      .forEach(e => emails.add(e));
+  }
+
+  // 4. Default fallback if no admin email found
+  if (emails.size === 0) {
+    emails.add('info@liahacademy.com');
+  }
+
+  return Array.from(emails);
+}
+
+// Backwards-compatible primary admin email getter
+export function getAdminEmail(): string {
+  const emails = getAdminEmails();
+  return emails[0] || 'info@liahacademy.com';
 }
 
 // Log email event to file and data store
@@ -226,16 +267,19 @@ export async function sendApplicationSignals(student: {
 
   const adminText = `🚨 New Application #${student.id} submitted by ${student.full_name} for ${student.program_type} (${student.degree_type}). Email: ${student.email}. Open admin panel at http://localhost:3000/admin to review.`;
 
-  // Dispatch both asynchronously
-  await Promise.all([
-    sendEmail({
-      to: student.email,
-      subject: `Application Confirmation #${student.id} - Liah Academy`,
-      html: applicantHtml,
-      text: applicantText,
-      type: 'application_submitted',
-      recipientType: 'applicant'
-    }),
+  const adminEmails = getAdminEmails();
+
+  // Dispatch to applicant + all administrators asynchronously
+  const applicantPromise = sendEmail({
+    to: student.email,
+    subject: `Application Confirmation #${student.id} - Liah Academy`,
+    html: applicantHtml,
+    text: applicantText,
+    type: 'application_submitted',
+    recipientType: 'applicant'
+  });
+
+  const adminPromises = adminEmails.map(adminEmail =>
     sendEmail({
       to: adminEmail,
       subject: `🚨 [New Application] #${student.id}: ${student.full_name} - ${student.program_type}`,
@@ -244,7 +288,9 @@ export async function sendApplicationSignals(student: {
       type: 'admin_alert',
       recipientType: 'admin'
     })
-  ]);
+  );
+
+  await Promise.all([applicantPromise, ...adminPromises]);
 }
 
 // 2. SIGNAL ON DIRECT INQUIRY SUBMISSION
@@ -255,7 +301,7 @@ export async function sendInquirySignals(inquiry: {
   subject: string;
   message: string;
 }) {
-  const adminEmail = getAdminEmail();
+  const adminEmails = getAdminEmails();
 
   // A. Confirmation to Sender
   const userHtml = `
@@ -278,7 +324,7 @@ export async function sendInquirySignals(inquiry: {
     </div>
   `;
 
-  // B. Alert to Admin
+  // B. Alert to Admins
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
       <div style="background: #081F3E; padding: 20px; text-align: center; color: #ffffff;">
@@ -302,15 +348,16 @@ export async function sendInquirySignals(inquiry: {
     </div>
   `;
 
-  await Promise.all([
-    sendEmail({
-      to: inquiry.email,
-      subject: `Inquiry Received: ${inquiry.subject} - Liah Academy`,
-      html: userHtml,
-      text: `Hello ${inquiry.name}, thank you for contacting Liah Academy regarding "${inquiry.subject}". We will reply shortly.`,
-      type: 'inquiry_submitted',
-      recipientType: 'user'
-    }),
+  const userPromise = sendEmail({
+    to: inquiry.email,
+    subject: `Inquiry Received: ${inquiry.subject} - Liah Academy`,
+    html: userHtml,
+    text: `Hello ${inquiry.name}, thank you for contacting Liah Academy regarding "${inquiry.subject}". We will reply shortly.`,
+    type: 'inquiry_submitted',
+    recipientType: 'user'
+  });
+
+  const adminPromises = adminEmails.map(adminEmail =>
     sendEmail({
       to: adminEmail,
       subject: `📬 [Direct Inquiry] ${inquiry.subject} (from ${inquiry.name})`,
@@ -319,7 +366,63 @@ export async function sendInquirySignals(inquiry: {
       type: 'admin_alert',
       recipientType: 'admin'
     })
-  ]);
+  );
+
+  await Promise.all([userPromise, ...adminPromises]);
+}
+
+// 2.1 SIGNAL ON PAYMENT SUBMISSION / VERIFICATION
+export async function sendPaymentAlertSignal(payment: {
+  id?: number | string;
+  student_name?: string;
+  student_email?: string;
+  amount: number | string;
+  operator?: string;
+  transaction_id?: string;
+  status?: string;
+}) {
+  const adminEmails = getAdminEmails();
+  const formattedAmount = `${Number(payment.amount || 0).toLocaleString()} XAF`;
+
+  const adminHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+      <div style="background: #081F3E; padding: 20px; text-align: center; color: #ffffff;">
+        <span style="background: #10B981; color: #ffffff; font-size: 12px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">PAYMENT NOTIFICATION</span>
+        <h2 style="margin: 10px 0 0 0; color: #ffffff;">New Payment Recorded</h2>
+      </div>
+      <div style="padding: 24px; color: #334155; line-height: 1.6;">
+        <p>A new payment transaction has been submitted for verification or processed via Mobile Money.</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Amount</td><td style="padding: 8px 0; color: #047857; font-weight: bold; font-size: 16px;">${formattedAmount}</td></tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Candidate / Payer</td><td style="padding: 8px 0; color: #081F3E;">${payment.student_name || 'Candidate'}</td></tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Email</td><td style="padding: 8px 0; color: #081F3E;">${payment.student_email || 'N/A'}</td></tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Channel</td><td style="padding: 8px 0; color: #081F3E;">${payment.operator || 'MTN Mobile Money'}</td></tr>
+          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 0; font-weight: bold; color: #64748B;">TxID / Ref</td><td style="padding: 8px 0; color: #081F3E;">${payment.transaction_id || 'Pending'}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold; color: #64748B;">Status</td><td style="padding: 8px 0; color: #B45309; font-weight: bold;">${payment.status || 'Pending Verification'}</td></tr>
+        </table>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <a href="http://localhost:3000/admin" style="background: #F5A623; color: #081F3E; font-weight: bold; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Open Admin Panel &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const adminPromises = adminEmails.map(adminEmail =>
+    sendEmail({
+      to: adminEmail,
+      subject: `💳 [Payment Alert] ${formattedAmount} from ${payment.student_name || 'Candidate'}`,
+      html: adminHtml,
+      text: `Payment of ${formattedAmount} received/uploaded by ${payment.student_name || 'Candidate'} (${payment.student_email || 'N/A'}). Status: ${payment.status || 'Pending'}. Review in admin panel.`,
+      type: 'admin_alert',
+      recipientType: 'admin'
+    })
+  );
+
+  await Promise.all(adminPromises);
 }
 
 // 3. SIGNAL ON ADMISSION DECISION (APPROVED / REJECTED)
