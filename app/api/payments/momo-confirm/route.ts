@@ -39,10 +39,12 @@ export async function POST(request: Request) {
     });
 
     const payment = record?.payment || {
+      id: 0,
       reference: `MOMO-MTN-${Date.now()}`,
       amount,
       currency: 'XAF',
-      operator: 'MTN Mobile Money'
+      operator: 'MTN Mobile Money',
+      transaction_id: `MTN-USSD-${Date.now()}`
     };
 
     // Notify administrators asynchronously
