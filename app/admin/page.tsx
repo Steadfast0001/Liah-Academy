@@ -84,8 +84,30 @@ interface NewsItem {
   content?: string;
 }
 
+interface LiveChatMessage {
+  id: string;
+  sender: 'user' | 'bot' | 'agent';
+  sender_name?: string;
+  text: string;
+  timestamp: string;
+}
+
+interface LiveChatSession {
+  id: string;
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+  status: 'active' | 'closed';
+  unread_admin: boolean;
+  unread_user: boolean;
+  last_message: string;
+  updated_at: string;
+  created_at: string;
+  messages: LiveChatMessage[];
+}
+
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'media' | 'courses' | 'news' | 'settings' | 'admins'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'chat' | 'media' | 'courses' | 'news' | 'settings' | 'admins'>('overview');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -99,6 +121,15 @@ export default function AdminDashboardPage() {
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+
+  // Live Chat Management States
+  const [chatSessions, setChatSessions] = useState<LiveChatSession[]>([]);
+  const [selectedChatSession, setSelectedChatSession] = useState<LiveChatSession | null>(null);
+  const [adminChatInput, setAdminChatInput] = useState('');
+  const [adminChatSubmitting, setAdminChatSubmitting] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [chatActionLoading, setChatActionLoading] = useState(false);
+  const [chatFilter, setChatFilter] = useState<'all' | 'active' | 'unread'>('all');
   
   // Site Settings state
   const [settings, setSettings] = useState({
@@ -292,14 +323,15 @@ export default function AdminDashboardPage() {
     setLoading(true);
     const headers = getAuthHeaders(explicitToken);
     try {
-      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes] = await Promise.all([
+      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes, chatRes] = await Promise.all([
         fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/inquiries', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/media', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/content', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/emails', { headers, credentials: 'include' }).then(r => r.json()),
-        fetch('/api/admin/admins', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
+        fetch('/api/admin/admins', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
       ]);
 
       if (statsRes.success) {
@@ -318,6 +350,10 @@ export default function AdminDashboardPage() {
       }
       if (emailsRes.success) setEmailLogs(emailsRes.data || []);
       if (adminsRes.success) setAdminUsers(adminsRes.data || []);
+      if (chatRes.success) {
+        setChatSessions(chatRes.sessions || []);
+        setUnreadChatCount(chatRes.unreadCount || 0);
+      }
     } catch (err) {
       console.error('Error fetching admin data:', err);
       showNotification('Failed to load dashboard data. Please refresh.', 'error');
@@ -356,7 +392,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const interval = setInterval(() => {
-      // Background silent polling to ensure paid statuses sync in real-time
+      // Background silent polling to ensure paid statuses & live chats sync in real-time
       const headers = getAuthHeaders();
       fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) {
@@ -367,7 +403,18 @@ export default function AdminDashboardPage() {
       fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) setApplications(res.data || []);
       }).catch(() => {});
-    }, 8000);
+      fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
+        if (res.success && Array.isArray(res.sessions)) {
+          setChatSessions(res.sessions);
+          setUnreadChatCount(res.unreadCount || 0);
+          setSelectedChatSession(prev => {
+            if (!prev) return null;
+            const fresh = res.sessions.find((s: any) => s.id === prev.id);
+            return fresh || prev;
+          });
+        }
+      }).catch(() => {});
+    }, 5000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
@@ -701,6 +748,123 @@ export default function AdminDashboardPage() {
       setReplySubmitting(false);
     }
   };
+
+  // Live Chat Management Actions
+  const refreshLiveChatSessions = async () => {
+    setChatActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/chat', { headers: getAuthHeaders(), credentials: 'include' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.sessions)) {
+        setChatSessions(data.sessions);
+        setUnreadChatCount(data.unreadCount || 0);
+        if (selectedChatSession) {
+          const updated = data.sessions.find((s: any) => s.id === selectedChatSession.id);
+          if (updated) setSelectedChatSession(updated);
+        }
+      }
+    } catch {
+      showNotification('Error refreshing live chat sessions.', 'error');
+    } finally {
+      setChatActionLoading(false);
+    }
+  };
+
+  const handleSelectChatSession = async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/admin/chat?sessionId=${sessionId}`, { headers: getAuthHeaders(), credentials: 'include' });
+      const data = await res.json();
+      if (data.success && data.session) {
+        setSelectedChatSession(data.session);
+        setChatSessions(prev => prev.map(s => s.id === sessionId ? { ...s, unread_admin: false } : s));
+        setUnreadChatCount(prev => Math.max(0, prev - 1));
+      }
+    } catch {
+      showNotification('Error loading chat session.', 'error');
+    }
+  };
+
+  const handleSendLiveAdminChatReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedChatSession || !adminChatInput.trim()) return;
+
+    const textToSend = adminChatInput.trim();
+    setAdminChatSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/chat', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          sessionId: selectedChatSession.id,
+          text: textToSend
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAdminChatInput('');
+        if (data.data?.session) {
+          setSelectedChatSession(data.data.session);
+          setChatSessions(prev => prev.map(s => s.id === selectedChatSession.id ? data.data.session : s));
+        }
+      } else {
+        showNotification(data.message || 'Failed to send chat reply.', 'error');
+      }
+    } catch {
+      showNotification('Error sending live chat reply.', 'error');
+    } finally {
+      setAdminChatSubmitting(false);
+    }
+  };
+
+  const handleCloseLiveChatSession = async (sessionId: string) => {
+    try {
+      const res = await fetch('/api/admin/chat', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ sessionId, action: 'close' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Chat session resolved and closed.');
+        setChatSessions(prev => prev.map(s => s.id === sessionId ? { ...s, status: 'closed' } : s));
+        if (selectedChatSession && selectedChatSession.id === sessionId) {
+          setSelectedChatSession({ ...selectedChatSession, status: 'closed' });
+        }
+      }
+    } catch {
+      showNotification('Error closing chat session.', 'error');
+    }
+  };
+
+  const handleDeleteLiveChatSession = async (sessionId: string) => {
+    if (!confirm('Permanently delete this live chat conversation?')) return;
+    try {
+      const res = await fetch(`/api/admin/chat?sessionId=${sessionId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Chat conversation deleted.');
+        setChatSessions(prev => prev.filter(s => s.id !== sessionId));
+        if (selectedChatSession && selectedChatSession.id === sessionId) {
+          setSelectedChatSession(null);
+        }
+      }
+    } catch {
+      showNotification('Error deleting chat session.', 'error');
+    }
+  };
+
+  // Filtered Chat Sessions
+  const filteredChatSessions = chatSessions.filter(s => {
+    if (chatFilter === 'active') return s.status === 'active';
+    if (chatFilter === 'unread') return s.unread_admin;
+    return true;
+  });
 
   // 2. INQUIRY ACTIONS
   const deleteInquiry = async (id: number) => {
@@ -1521,6 +1685,43 @@ export default function AdminDashboardPage() {
           >
             <Mail size={16} /> Direct Inquiries ({inquiries.length})
           </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('chat');
+              refreshLiveChatSessions();
+            }}
+            style={{
+              padding: '12px 18px',
+              borderRadius: '8px 8px 0 0',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              border: 'none',
+              background: activeTab === 'chat' ? '#081F3E' : 'transparent',
+              color: activeTab === 'chat' ? '#F5A623' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              position: 'relative'
+            }}
+          >
+            <MessageSquare size={16} /> Live Chat ({chatSessions.length})
+            {unreadChatCount > 0 && (
+              <span style={{
+                background: '#EF4444',
+                color: '#FFFFFF',
+                borderRadius: '10px',
+                padding: '2px 6px',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                lineHeight: 1
+              }}>
+                {unreadChatCount}
+              </span>
+            )}
+          </button>
+
 
           <button
             onClick={() => setActiveTab('media')}
@@ -3045,6 +3246,311 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB: LIVE CHAT OPERATOR CONSOLE */}
+        {/* ======================================================== */}
+        {activeTab === 'chat' && (
+          <div>
+            <div className="section-header" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h2>Live Chat &amp; Interactive Student Desk</h2>
+                  <p className="sub-header">Reply directly to website visitors and prospective students in real-time as they chat on the portal.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => refreshLiveChatSessions()}
+                    className="btn btn-secondary"
+                    style={{ padding: '8px 14px', fontSize: '0.82rem', color: '#081F3E', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <RefreshCw size={14} className={chatActionLoading ? 'spin' : ''} /> Refresh Conversations
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '20px', minHeight: '600px' }}>
+              {/* Left Column: Conversations List */}
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '16px', display: 'flex', flexDirection: 'column', height: '650px' }}>
+                <div style={{ paddingBottom: '12px', borderBottom: '1px solid #E2E8F0', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#081F3E' }}>
+                      Conversations ({chatSessions.length})
+                    </span>
+                    {unreadChatCount > 0 && (
+                      <span style={{ background: '#EF4444', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px' }}>
+                        {unreadChatCount} Unread
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {(['all', 'active', 'unread'] as const).map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setChatFilter(f)}
+                        style={{
+                          flex: 1,
+                          padding: '5px 8px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          textTransform: 'capitalize',
+                          cursor: 'pointer',
+                          background: chatFilter === f ? '#081F3E' : '#F1F5F9',
+                          color: chatFilter === f ? '#F5A623' : '#64748B'
+                        }}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Session list items */}
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {filteredChatSessions.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.85rem' }}>
+                      No chat conversations matching filter.
+                    </div>
+                  ) : (
+                    filteredChatSessions.map(session => {
+                      const isSelected = selectedChatSession?.id === session.id;
+                      return (
+                        <div
+                          key={session.id}
+                          onClick={() => handleSelectChatSession(session.id)}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            background: isSelected ? 'rgba(8, 31, 62, 0.06)' : session.unread_admin ? '#FEF3C7' : '#F8FAFC',
+                            border: isSelected ? '1.5px solid #081F3E' : session.unread_admin ? '1px solid #F59E0B' : '1px solid #E2E8F0',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.86rem', color: '#081F3E', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {session.user_name || 'Website Visitor'}
+                              {session.unread_admin && (
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+                              )}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                              {new Date(session.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '0.78rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {session.last_message || 'Started a conversation'}
+                          </p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
+                              #{session.id.replace('chat_', '').slice(0, 10)}
+                            </span>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 800,
+                              background: session.status === 'active' ? '#D1FAE5' : '#F1F5F9',
+                              color: session.status === 'active' ? '#065F46' : '#64748B'
+                            }}>
+                              {session.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Live Conversation Window */}
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: 0, display: 'flex', flexDirection: 'column', height: '650px', overflow: 'hidden' }}>
+                {selectedChatSession ? (
+                  <>
+                    {/* Header */}
+                    <div style={{ padding: '16px 20px', background: '#081F3E', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#FFFFFF', fontWeight: 800 }}>
+                            {selectedChatSession.user_name || 'Website Visitor'}
+                          </h3>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 800,
+                            background: selectedChatSession.status === 'active' ? '#10B981' : '#64748B',
+                            color: '#FFFFFF'
+                          }}>
+                            {selectedChatSession.status === 'active' ? '🟢 LIVE VISITOR' : 'CLOSED'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
+                          Session: <code>{selectedChatSession.id}</code> &bull; Started {new Date(selectedChatSession.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {selectedChatSession.status === 'active' && (
+                          <button
+                            onClick={() => handleCloseLiveChatSession(selectedChatSession.id)}
+                            style={{ background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            ✓ Mark Resolved
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteLiveChatSession(selectedChatSession.id)}
+                          style={{ background: '#EF4444', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                          title="Delete Chat Session"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Messages Body */}
+                    <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {(!selectedChatSession.messages || selectedChatSession.messages.length === 0) ? (
+                        <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: '40px' }}>
+                          No messages yet in this session.
+                        </div>
+                      ) : (
+                        selectedChatSession.messages.map((m, idx) => (
+                          <div
+                            key={m.id || idx}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: m.sender === 'agent' ? 'flex-end' : 'flex-start',
+                              marginBottom: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                color: m.sender === 'agent' ? '#059669' : m.sender === 'user' ? '#1E40AF' : '#D97706'
+                              }}>
+                                {m.sender === 'agent' ? `👩‍💼 ${m.sender_name || 'Admin Officer'}` : m.sender === 'user' ? `👤 ${m.sender_name || 'Visitor'}` : '🤖 Liah Assist AI'}
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+                                {m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                maxWidth: '75%',
+                                padding: '10px 14px',
+                                borderRadius: '12px',
+                                fontSize: '0.88rem',
+                                lineHeight: '1.5',
+                                whiteSpace: 'pre-line',
+                                background: m.sender === 'agent' ? '#10B981' : m.sender === 'user' ? '#081F3E' : '#FFFFFF',
+                                color: m.sender === 'agent' || m.sender === 'user' ? '#FFFFFF' : '#1E293B',
+                                border: m.sender === 'bot' ? '1px solid #E2E8F0' : 'none',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                              }}
+                            >
+                              {m.text}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Quick Response Templates & Reply Box */}
+                    <div style={{ padding: '14px 18px', background: '#FFFFFF', borderTop: '1px solid #E2E8F0' }}>
+                      {/* Quick Templates */}
+                      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setAdminChatInput("Hello! I'm an Admissions Officer at Liah Academy. How can I assist you with your registration today?")}
+                          style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', color: '#081F3E' }}
+                        >
+                          👋 Greeting
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminChatInput("Our Higher National Diploma (HND) programs are 250,000 XAF per year with flexible installment plans. Application fee is 15,000 XAF via MTN MoMo (*126*14*670265493*15000#).")}
+                          style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', color: '#081F3E' }}
+                        >
+                          💰 Tuition & MoMo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminChatInput("You can submit your application and upload your GCE / transcripts directly on the Admissions page: /admissions.")}
+                          style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', color: '#081F3E' }}
+                        >
+                          📋 Apply Link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminChatInput("Our campus is located in Backweri Town, Buea, Southwest Region, Cameroon. We invite you for a campus tour Monday to Saturday!")}
+                          style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', color: '#081F3E' }}
+                        >
+                          📍 Campus Buea
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleSendLiveAdminChatReply} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                        <textarea
+                          rows={2}
+                          required
+                          placeholder="Type live reply to user in real-time..."
+                          value={adminChatInput}
+                          onChange={(e) => setAdminChatInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendLiveAdminChatReply(e);
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #CBD5E1',
+                            fontSize: '0.88rem',
+                            lineHeight: '1.4',
+                            resize: 'none',
+                            outline: 'none'
+                          }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={adminChatSubmitting || !adminChatInput.trim()}
+                          className="btn btn-primary"
+                          style={{
+                            padding: '10px 18px',
+                            fontSize: '0.85rem',
+                            height: '42px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Send size={15} /> {adminChatSubmitting ? 'Sending...' : 'Send Live Reply'}
+                        </button>
+                      </form>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: '40px' }}>
+                    <MessageSquare size={48} color="#CBD5E1" style={{ marginBottom: '14px' }} />
+                    <h3 style={{ margin: '0 0 6px 0', color: '#081F3E', fontSize: '1.1rem' }}>No Conversation Selected</h3>
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>Select a visitor from the left panel to read the conversation and respond live.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

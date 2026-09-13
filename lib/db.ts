@@ -463,6 +463,28 @@ export interface EmailLog {
   created_at: string;
 }
 
+export interface ChatMessageItem {
+  id: string;
+  sender: 'user' | 'bot' | 'agent';
+  sender_name?: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface ChatSession {
+  id: string;
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+  status: 'active' | 'closed';
+  unread_admin: boolean;
+  unread_user: boolean;
+  last_message: string;
+  updated_at: string;
+  created_at: string;
+  messages: ChatMessageItem[];
+}
+
 export interface AdminUser {
   id: number;
   full_name: string;
@@ -484,6 +506,7 @@ export interface Schema {
   settings: SiteSettings;
   email_logs: EmailLog[];
   admins: AdminUser[];
+  chat_sessions?: ChatSession[];
   _metadata?: {
     version: string;
     last_updated: string;
@@ -717,6 +740,7 @@ const initialData: Schema = {
   },
   email_logs: [],
   admins: [],
+  chat_sessions: [],
   _metadata: {
     version: '2.2.0',
     last_updated: new Date().toISOString(),
@@ -783,6 +807,7 @@ export function readDb(): Schema {
     if (!parsed.settings) { parsed.settings = initialData.settings; modified = true; }
     if (!parsed.email_logs) { parsed.email_logs = []; modified = true; }
     if (!parsed.admins) { parsed.admins = []; modified = true; }
+    if (!parsed.chat_sessions) { parsed.chat_sessions = []; modified = true; }
     if (!parsed._metadata) {
       parsed._metadata = { version: '2.2.0', last_updated: new Date().toISOString(), total_writes: 0 };
       modified = true;
@@ -1278,6 +1303,136 @@ export const adminStore = {
   getEmailLogs: (): EmailLog[] => {
     const store = readDb();
     return store.email_logs || [];
+  },
+
+  // Live Chat Management
+  getChatSessions: (): ChatSession[] => {
+    const store = readDb();
+    return [...(store.chat_sessions || [])].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  },
+
+  getChatSession: (id: string): ChatSession | undefined => {
+    const store = readDb();
+    return (store.chat_sessions || []).find(s => s.id === id);
+  },
+
+  saveChatMessage: (
+    sessionId: string,
+    message: { sender: 'user' | 'bot' | 'agent'; text: string; sender_name?: string; id?: string; timestamp?: string },
+    sessionMeta?: { user_name?: string; user_email?: string; user_phone?: string }
+  ): { session: ChatSession; message: ChatMessageItem } => {
+    const store = readDb();
+    if (!store.chat_sessions) store.chat_sessions = [];
+
+    let session = store.chat_sessions.find(s => s.id === sessionId);
+    const now = new Date().toISOString();
+
+    const msgItem: ChatMessageItem = {
+      id: message.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      sender: message.sender,
+      sender_name: message.sender_name || (message.sender === 'user' ? (sessionMeta?.user_name || 'Visitor') : message.sender === 'agent' ? 'Liah Support' : 'Liah Assist AI'),
+      text: message.text,
+      timestamp: message.timestamp || now
+    };
+
+    if (!session) {
+      session = {
+        id: sessionId,
+        user_name: sessionMeta?.user_name || 'Website Visitor',
+        user_email: sessionMeta?.user_email || '',
+        user_phone: sessionMeta?.user_phone || '',
+        status: 'active',
+        unread_admin: message.sender === 'user',
+        unread_user: message.sender === 'agent',
+        last_message: message.text,
+        created_at: now,
+        updated_at: now,
+        messages: [msgItem]
+      };
+      store.chat_sessions.unshift(session);
+    } else {
+      if (!session.messages) session.messages = [];
+      session.messages.push(msgItem);
+      session.last_message = message.text;
+      session.updated_at = now;
+      if (sessionMeta?.user_name && session.user_name === 'Website Visitor') session.user_name = sessionMeta.user_name;
+      if (sessionMeta?.user_email && !session.user_email) session.user_email = sessionMeta.user_email;
+      if (sessionMeta?.user_phone && !session.user_phone) session.user_phone = sessionMeta.user_phone;
+      if (message.sender === 'user') {
+        session.unread_admin = true;
+        session.status = 'active';
+      } else if (message.sender === 'agent') {
+        session.unread_admin = false;
+        session.unread_user = true;
+      }
+    }
+
+    writeDb(store, true);
+    return { session, message: msgItem };
+  },
+
+  sendAdminChatReply: (
+    sessionId: string,
+    text: string,
+    adminName: string = 'Liah Support Specialist'
+  ): { session: ChatSession | null; message: ChatMessageItem | null } => {
+    const store = readDb();
+    if (!store.chat_sessions) return { session: null, message: null };
+    const session = store.chat_sessions.find(s => s.id === sessionId);
+    if (!session) return { session: null, message: null };
+
+    const now = new Date().toISOString();
+    const msgItem: ChatMessageItem = {
+      id: `msg_adm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      sender: 'agent',
+      sender_name: adminName,
+      text: text.trim(),
+      timestamp: now
+    };
+
+    if (!session.messages) session.messages = [];
+    session.messages.push(msgItem);
+    session.last_message = text.trim();
+    session.updated_at = now;
+    session.unread_admin = false;
+    session.unread_user = true;
+
+    writeDb(store, true);
+    return { session, message: msgItem };
+  },
+
+  markChatSessionRead: (sessionId: string, reader: 'admin' | 'user'): boolean => {
+    const store = readDb();
+    if (!store.chat_sessions) return false;
+    const session = store.chat_sessions.find(s => s.id === sessionId);
+    if (!session) return false;
+    if (reader === 'admin') session.unread_admin = false;
+    if (reader === 'user') session.unread_user = false;
+    writeDb(store, true);
+    return true;
+  },
+
+  closeChatSession: (sessionId: string): boolean => {
+    const store = readDb();
+    if (!store.chat_sessions) return false;
+    const session = store.chat_sessions.find(s => s.id === sessionId);
+    if (!session) return false;
+    session.status = 'closed';
+    session.updated_at = new Date().toISOString();
+    writeDb(store, true);
+    return true;
+  },
+
+  deleteChatSession: (sessionId: string): boolean => {
+    const store = readDb();
+    if (!store.chat_sessions) return false;
+    const initialLen = store.chat_sessions.length;
+    store.chat_sessions = store.chat_sessions.filter(s => s.id !== sessionId);
+    if (store.chat_sessions.length < initialLen) {
+      writeDb(store, true);
+      return true;
+    }
+    return false;
   }
 };
 

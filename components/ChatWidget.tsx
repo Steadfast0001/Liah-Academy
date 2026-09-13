@@ -25,8 +25,10 @@ interface StudentData {
 
 interface ChatMessage {
   id: string;
-  sender: 'bot' | 'user';
+  sender: 'bot' | 'user' | 'agent';
+  sender_name?: string;
   text: string;
+  timestamp?: string;
   actionType?: string;
   studentData?: StudentData;
   showPaymentDirectives?: boolean;
@@ -44,6 +46,7 @@ export default function ChatWidget() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'pay' | 'apply' | 'track' | 'programs'>('chat');
   const [input, setInput] = useState('');
+  const [sessionId, setSessionId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -96,6 +99,70 @@ export default function ChatWidget() {
       scrollToBottom();
     }
   }, [messages, isTyping, showChatPinPrompt, chatMomoReceipt, shortCodeDialed, activeTab]);
+
+  // Initialize or restore chat session
+  useEffect(() => {
+    let sid = '';
+    try {
+      sid = localStorage.getItem('liah_chat_session_id') || '';
+      if (!sid) {
+        sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        localStorage.setItem('liah_chat_session_id', sid);
+      }
+    } catch {
+      sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    }
+    setSessionId(sid);
+
+    // Fetch existing messages from persistent session
+    fetch(`/api/chat?sessionId=${sid}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
+          const loaded: ChatMessage[] = data.messages.map((m: any) => ({
+            id: m.id,
+            sender: m.sender,
+            sender_name: m.sender_name,
+            text: m.text,
+            timestamp: m.timestamp
+          }));
+          setMessages(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Poll for live replies from Admissions / Support specialists
+  useEffect(() => {
+    if (!isOpen || !sessionId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/chat?sessionId=${sessionId}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
+          setMessages(prev => {
+            const hasNewMessages = data.messages.length !== prev.length || 
+              data.messages.some((m: any) => !prev.find(p => p.id === m.id));
+            if (hasNewMessages) {
+              return data.messages.map((m: any) => {
+                const existing = prev.find(p => p.id === m.id);
+                return existing || {
+                  id: m.id,
+                  sender: m.sender,
+                  sender_name: m.sender_name,
+                  text: m.text,
+                  timestamp: m.timestamp
+                };
+              });
+            }
+            return prev;
+          });
+        }
+      } catch {}
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isOpen, sessionId]);
 
   // Global hotkey Ctrl+J / Cmd+J
   useEffect(() => {
@@ -239,13 +306,24 @@ export default function ChatWidget() {
     setIsTyping(true);
 
     try {
+      const activeSid = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('liah_chat_session_id') : '') || '';
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ 
+          query,
+          sessionId: activeSid,
+          userName: applyName || '',
+          userEmail: applyEmail || ''
+        })
       });
       const data = await res.json();
       
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        try { localStorage.setItem('liah_chat_session_id', data.sessionId); } catch {}
+      }
+
       setIsTyping(false);
       const botMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -489,55 +567,144 @@ export default function ChatWidget() {
             <>
               {/* Messages Body */}
               <div className="chat-messages-container">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`chat-msg ${msg.sender === 'user' ? 'user' : 'bot'}`}
-                  >
-                    {msg.sender === 'bot' && (
-                      <div className="bot-icon-circle">
-                        <Bot size={14} />
-                      </div>
-                    )}
-                    <div className="chat-bubble-content">
-                      <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
-                        {msg.text}
-                      </div>
-
-                      {/* Render Verified Student Dossier Card */}
-                      {msg.studentData && (
-                        <div className="chat-dossier-card">
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <div style={{ fontWeight: 800, color: '#F5A623', fontSize: '0.85rem' }}>
-                              Verified Dossier #{msg.studentData.id}
-                            </div>
-                            <span style={{ 
-                              fontSize: '0.7rem', 
-                              padding: '2px 6px', 
-                              borderRadius: '4px', 
-                              background: msg.studentData.payment_status === 'Paid' ? '#10B981' : '#F59E0B', 
-                              color: '#FFFFFF',
-                              fontWeight: 700
-                            }}>
-                              {msg.studentData.payment_status === 'Paid' ? 'PAID' : 'PAYMENT PENDING'}
+                {messages.map((msg) => {
+                  if (msg.sender === 'agent') {
+                    return (
+                      <div
+                        key={msg.id}
+                        className="chat-msg agent"
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          marginBottom: '14px',
+                          alignItems: 'flex-start',
+                          animation: 'fadeIn 0.3s ease'
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: '#10B981',
+                            color: '#FFFFFF',
+                            borderRadius: '50%',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            fontSize: '0.8rem',
+                            fontWeight: 800,
+                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+                          }}
+                        >
+                          👩‍💼
+                        </div>
+                        <div
+                          style={{
+                            background: '#FFFFFF',
+                            border: '1.5px solid #10B981',
+                            borderRadius: '12px',
+                            borderTopLeftRadius: '2px',
+                            padding: '10px 14px',
+                            maxWidth: '85%',
+                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.12)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', borderBottom: '1px solid #E2E8F0', paddingBottom: '4px' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                              {msg.sender_name || 'Admissions Officer'} (Live Support)
                             </span>
+                            {msg.timestamp && (
+                              <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
                           </div>
-                          
-                          <div style={{ fontSize: '0.78rem', color: '#CBD5E1', lineHeight: '1.6' }}>
-                            <div><strong>Name:</strong> {msg.studentData.full_name}</div>
-                            <div><strong>Program:</strong> {msg.studentData.program_type} ({msg.studentData.degree_type})</div>
-                            <div><strong>Admission:</strong> <span style={{ color: '#FDE047', fontWeight: 700 }}>{msg.studentData.admission_status}</span></div>
+                          <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', color: '#0F172A', fontSize: '0.9rem' }}>
+                            {msg.text}
                           </div>
+                        </div>
+                      </div>
+                    );
+                  }
 
-                          {msg.studentData.payment_status !== 'Paid' && (
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`chat-msg ${msg.sender === 'user' ? 'user' : 'bot'}`}
+                    >
+                      {msg.sender === 'bot' && (
+                        <div className="bot-icon-circle">
+                          <Bot size={14} />
+                        </div>
+                      )}
+                      <div className="chat-bubble-content">
+                        <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+                          {msg.text}
+                        </div>
+
+                        {/* Render Verified Student Dossier Card */}
+                        {msg.studentData && (
+                          <div className="chat-dossier-card">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <div style={{ fontWeight: 800, color: '#F5A623', fontSize: '0.85rem' }}>
+                                Verified Dossier #{msg.studentData.id}
+                              </div>
+                              <span style={{ 
+                                fontSize: '0.7rem', 
+                                padding: '2px 6px', 
+                                borderRadius: '4px', 
+                                background: msg.studentData.payment_status === 'Paid' ? '#10B981' : '#F59E0B', 
+                                color: '#FFFFFF',
+                                fontWeight: 700
+                              }}>
+                                {msg.studentData.payment_status === 'Paid' ? 'PAID' : 'PAYMENT PENDING'}
+                              </span>
+                            </div>
+                            
+                            <div style={{ fontSize: '0.78rem', color: '#CBD5E1', lineHeight: '1.6' }}>
+                              <div><strong>Name:</strong> {msg.studentData.full_name}</div>
+                              <div><strong>Program:</strong> {msg.studentData.program_type} ({msg.studentData.degree_type})</div>
+                              <div><strong>Admission:</strong> <span style={{ color: '#FDE047', fontWeight: 700 }}>{msg.studentData.admission_status}</span></div>
+                            </div>
+
+                            {msg.studentData.payment_status !== 'Paid' && (
+                              <button
+                                onClick={() => {
+                                  setStudentIdTag(String(msg.studentData?.id));
+                                  setActiveTab('pay');
+                                }}
+                                style={{
+                                  width: '100%',
+                                  marginTop: '10px',
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  background: '#F5A623',
+                                  color: '#081F3E',
+                                  fontWeight: 800,
+                                  fontSize: '0.78rem',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                <CreditCard size={14} /> Pay Application Fee (10,000 XAF)
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Direct Links inside Chat */}
+                        {(msg.showPaymentDirectives || msg.actionType === 'payment_form') && (
+                          <div style={{ marginTop: '8px' }}>
                             <button
-                              onClick={() => {
-                                setStudentIdTag(String(msg.studentData?.id));
-                                setActiveTab('pay');
-                              }}
+                              onClick={() => setActiveTab('pay')}
                               style={{
                                 width: '100%',
-                                marginTop: '10px',
                                 padding: '8px 12px',
                                 borderRadius: '6px',
                                 background: '#F5A623',
@@ -552,40 +719,14 @@ export default function ChatWidget() {
                                 gap: '6px'
                               }}
                             >
-                              <CreditCard size={14} /> Pay Application Fee (10,000 XAF)
+                              <Smartphone size={14} /> Open MTN MoMo Payment Panel
                             </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Direct Links inside Chat */}
-                      {(msg.showPaymentDirectives || msg.actionType === 'payment_form') && (
-                        <div style={{ marginTop: '8px' }}>
-                          <button
-                            onClick={() => setActiveTab('pay')}
-                            style={{
-                              width: '100%',
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              background: '#F5A623',
-                              color: '#081F3E',
-                              fontWeight: 800,
-                              fontSize: '0.78rem',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            <Smartphone size={14} /> Open MTN MoMo Payment Panel
-                          </button>
-                        </div>
-                      )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {isTyping && (
                   <div className="chat-msg bot" style={{ display: 'flex', gap: '4px', padding: '10px 14px' }}>
                     <span style={{ animation: 'pulse 1s infinite' }}>●</span>

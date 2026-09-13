@@ -3,6 +3,34 @@ import { adminStore } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get('sessionId');
+
+    if (!sessionId) {
+      return NextResponse.json({ success: true, messages: [] });
+    }
+
+    const session = adminStore.getChatSession(sessionId);
+    if (!session) {
+      return NextResponse.json({ success: true, messages: [] });
+    }
+
+    // Mark as read by user
+    adminStore.markChatSessionRead(sessionId, 'user');
+
+    return NextResponse.json({
+      success: true,
+      sessionId: session.id,
+      status: session.status,
+      messages: session.messages || []
+    });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     let body: any = {};
@@ -12,11 +40,25 @@ export async function POST(request: Request) {
       body = {};
     }
     const query = typeof body?.query === 'string' ? body.query : '';
+    const incomingSessionId = typeof body?.sessionId === 'string' ? body.sessionId.trim() : '';
+    const sessionId = incomingSessionId || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const userName = typeof body?.userName === 'string' ? body.userName.trim() : '';
+    const userEmail = typeof body?.userEmail === 'string' ? body.userEmail.trim() : '';
+    const userPhone = typeof body?.userPhone === 'string' ? body.userPhone.trim() : '';
+
     if (!query || !query.trim()) {
       return NextResponse.json({ 
+        sessionId,
         response: 'Hello! I am Liah Assist AI 🤖. How can I help you today with admissions, degree programs, or tuition payments?' 
       });
     }
+
+    // 1. Record User Message in Chat Session
+    adminStore.saveChatMessage(
+      sessionId,
+      { sender: 'user', text: query.trim(), sender_name: userName || 'Website Visitor' },
+      { user_name: userName, user_email: userEmail, user_phone: userPhone }
+    );
 
     const q = query.toLowerCase().trim();
 
@@ -24,6 +66,23 @@ export async function POST(request: Request) {
     const emailMatch = query.match(/[\w.-]+@[\w.-]+\.\w+/i);
     const idMatch = query.match(/(?:id|#|student\s*id|application\s*id)\s*[:#]?\s*(\d{1,6})/i);
     const isStatusQuery = q.includes('status') || q.includes('track') || q.includes('check') || q.includes('dossier') || q.includes('application') || q.includes('my admission');
+
+    const makeBotResponse = (payload: {
+      response: string;
+      actionType?: string;
+      studentData?: any;
+      prefillData?: any;
+    }) => {
+      adminStore.saveChatMessage(
+        sessionId,
+        { sender: 'bot', text: payload.response, sender_name: 'Liah Assist AI' }
+      );
+      return NextResponse.json({
+        success: true,
+        sessionId,
+        ...payload
+      });
+    };
 
     if ((emailMatch || idMatch || isStatusQuery) && (emailMatch || idMatch)) {
       let student = null;
@@ -38,7 +97,7 @@ export async function POST(request: Request) {
       }
 
       if (student) {
-        return NextResponse.json({
+        return makeBotResponse({
           response: `I found the application dossier for **${student.full_name}**! Here are your live enrollment details:`,
           actionType: 'status_card',
           studentData: {
@@ -55,7 +114,7 @@ export async function POST(request: Request) {
           }
         });
       } else {
-        return NextResponse.json({
+        return makeBotResponse({
           response: `I couldn't find an application matching **${emailMatch ? emailMatch[0] : (idMatch ? idMatch[1] : query)}**. Please ensure you registered on the Admissions portal, or you can start a new application right now!`,
           actionType: 'apply_action'
         });
@@ -74,7 +133,7 @@ export async function POST(request: Request) {
         } catch {}
       }
 
-      return NextResponse.json({
+      return makeBotResponse({
         response: `Here is the official MTN Mobile Money instant payment short code: **\*126\*14\*670265493\*Amount#**.\n\nSelect your fee amount below, then tap **"Pay Now — Open MTN MoMo"** to dial the code and enter your secret PIN on your phone:`,
         actionType: 'payment_form',
         prefillData: matchedStudent ? {
@@ -215,13 +274,13 @@ How can I help you today?`
     });
 
     if (bestIntent && maxScore > 0) {
-      return NextResponse.json({ 
+      return makeBotResponse({ 
         response: bestIntent.response,
         actionType: bestIntent.actionType || 'none'
       });
     }
 
-    return NextResponse.json({
+    return makeBotResponse({
       response: `Thank you for asking! For detailed admissions inquiries, course registration, or fee payments, you can chat with me, email **info@liahacademy.com**, or call/WhatsApp **+237 652 154 095** / **+237 699 526 607**.`,
       actionType: 'general_action'
     });
