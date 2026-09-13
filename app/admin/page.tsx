@@ -9,7 +9,7 @@ import {
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
-  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck
+  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare
 } from 'lucide-react';
 import { exportApplicantsToCSVString } from '@/lib/csv';
 
@@ -173,6 +173,19 @@ export default function AdminDashboardPage() {
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [newAdminForm, setNewAdminForm] = useState({ full_name: '', email: '', password: '', role: 'Admin' as 'Admin' | 'SuperAdmin' });
   const [adminActionLoading, setAdminActionLoading] = useState(false);
+
+  // In-Portal Direct Reply Modal States
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyForm, setReplyForm] = useState({
+    recipient: '',
+    recipientName: '',
+    phone: '',
+    subject: '',
+    message: '',
+    inquiryId: undefined as number | undefined,
+    studentId: undefined as number | undefined
+  });
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
 
   const getAuthHeaders = (explicitToken?: string) => {
@@ -619,6 +632,74 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     showNotification('Sanitized applicants exported to CSV successfully!');
+  };
+
+  // Direct In-Portal Reply Handlers
+  const openReplyModal = (opts: {
+    recipient: string;
+    recipientName: string;
+    phone?: string;
+    subject?: string;
+    message?: string;
+    inquiryId?: number;
+    studentId?: number;
+  }) => {
+    setReplyForm({
+      recipient: opts.recipient || '',
+      recipientName: opts.recipientName || '',
+      phone: opts.phone || '',
+      subject: opts.subject || 'Liah Academy - In response to your inquiry',
+      message: opts.message || `Dear ${opts.recipientName || 'Valued Candidate'},\n\nThank you for reaching out to Liah Academy. `,
+      inquiryId: opts.inquiryId,
+      studentId: opts.studentId
+    });
+    setShowReplyModal(true);
+  };
+
+  const handleSendEmailReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!replyForm.recipient || !replyForm.subject || !replyForm.message) {
+      showNotification('Please fill in recipient email, subject, and message.', 'error');
+      return;
+    }
+
+    setReplySubmitting(true);
+    try {
+      const res = await fetch('/api/admin/reply', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          recipient: replyForm.recipient,
+          recipientName: replyForm.recipientName,
+          subject: replyForm.subject,
+          message: replyForm.message,
+          inquiryId: replyForm.inquiryId,
+          studentId: replyForm.studentId
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showNotification(`Reply dispatched to ${replyForm.recipient} and recorded in Outbox!`);
+        setShowReplyModal(false);
+        if (replyForm.inquiryId) {
+          setInquiries(prev => prev.map(inq => inq.id === replyForm.inquiryId ? { ...inq, status: 'replied' } : inq));
+        }
+        // Refresh email logs
+        try {
+          const storedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
+          const logRes = await fetch('/api/admin/emails', { headers: getAuthHeaders(storedToken || '') });
+          const logData = await logRes.json();
+          if (logData.success) setEmailLogs(logData.data);
+        } catch {}
+      } else {
+        showNotification(data.message || 'Failed to send reply.', 'error');
+      }
+    } catch {
+      showNotification('Error connecting to email dispatcher service.', 'error');
+    } finally {
+      setReplySubmitting(false);
+    }
   };
 
   // 2. INQUIRY ACTIONS
@@ -2820,20 +2901,51 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
 
-                  <div style={{ marginTop: '28px', display: 'flex', gap: '10px' }}>
+                  <div style={{ marginTop: '28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => updateAppStatus(selectedApp.id, 'Approved')}
+                        disabled={actionLoading}
+                        style={{ flex: 1, padding: '12px', background: '#10B981', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        ✓ Approve Applicant
+                      </button>
+                      <button
+                        onClick={() => updateAppStatus(selectedApp.id, 'Rejected')}
+                        disabled={actionLoading}
+                        style={{ flex: 1, padding: '12px', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        ✕ Reject Applicant
+                      </button>
+                    </div>
+
                     <button
-                      onClick={() => updateAppStatus(selectedApp.id, 'Approved')}
-                      disabled={actionLoading}
-                      style={{ flex: 1, padding: '12px', background: '#10B981', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                      type="button"
+                      onClick={() => openReplyModal({
+                        recipient: selectedApp.email,
+                        recipientName: selectedApp.full_name,
+                        phone: selectedApp.phone,
+                        subject: `Liah Academy Application Update - ${selectedApp.program_type}`,
+                        studentId: selectedApp.id,
+                        message: `Dear ${selectedApp.full_name},\n\nWe are writing from Liah Academy regarding your application #${selectedApp.id} for the ${selectedApp.program_type} (${selectedApp.degree_type}) program.\n\n`
+                      })}
+                      style={{
+                        width: '100%',
+                        padding: '11px',
+                        background: '#081F3E',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.86rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
                     >
-                      ✓ Approve Applicant
-                    </button>
-                    <button
-                      onClick={() => updateAppStatus(selectedApp.id, 'Rejected')}
-                      disabled={actionLoading}
-                      style={{ flex: 1, padding: '12px', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      ✕ Reject Applicant
+                      <Mail size={15} /> Send Custom Message / Direct Reply
                     </button>
                   </div>
                 </div>
@@ -2849,7 +2961,7 @@ export default function AdminDashboardPage() {
           <div>
             <div className="section-header" style={{ marginBottom: '24px' }}>
               <h2>Direct Inquiries from Contact Form</h2>
-              <p className="sub-header">Review inquiries submitted by prospective students and corporate software partners.</p>
+              <p className="sub-header">Review inquiries submitted by prospective students and corporate software partners, and dispatch direct responses via email or WhatsApp.</p>
             </div>
 
             {inquiries.length === 0 ? (
@@ -2866,9 +2978,16 @@ export default function AdminDashboardPage() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
-                          INQUIRY #{inq.id}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                            INQUIRY #{inq.id}
+                          </span>
+                          {inq.status === 'replied' && (
+                            <span style={{ fontSize: '0.75rem', background: '#D1FAE5', color: '#065F46', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                              ✓ REPLIED
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ color: '#081F3E', margin: '6px 0 2px 0', fontSize: '1.2rem' }}>
                           {inq.subject}
                         </h3>
@@ -2876,17 +2995,44 @@ export default function AdminDashboardPage() {
                           From: <strong>{inq.name}</strong> (<a href={`mailto:${inq.email}`} style={{ color: '#081F3E' }}>{inq.email}</a>) &bull; {new Date(inq.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <a 
-                          href={`mailto:${inq.email}?subject=Re: ${encodeURIComponent(inq.subject)}`}
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button 
+                          type="button"
+                          onClick={() => openReplyModal({
+                            recipient: inq.email,
+                            recipientName: inq.name,
+                            subject: inq.subject.startsWith('Re:') ? inq.subject : `Re: ${inq.subject}`,
+                            inquiryId: inq.id,
+                            message: `Dear ${inq.name},\n\nThank you for reaching out to Liah Academy regarding "${inq.subject}".\n\n`
+                          })}
                           className="btn btn-primary"
-                          style={{ padding: '8px 14px', fontSize: '0.82rem' }}
+                          style={{ padding: '8px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
-                          <Mail size={14} /> Reply via Email
+                          <Mail size={14} /> Reply from Panel
+                        </button>
+                        <a 
+                          href={`https://wa.me/237699526607?text=${encodeURIComponent(`Hello ${inq.name}, thank you for contacting Liah Academy regarding: "${inq.subject}". How can we assist you today?`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ 
+                            background: '#25D366', 
+                            color: '#FFFFFF', 
+                            padding: '8px 12px', 
+                            borderRadius: '6px', 
+                            fontSize: '0.82rem', 
+                            fontWeight: 700, 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '6px',
+                            textDecoration: 'none' 
+                          }}
+                        >
+                          <MessageSquare size={14} /> WhatsApp
                         </a>
                         <button
                           onClick={() => deleteInquiry(inq.id)}
                           style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                          title="Delete Inquiry"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -4319,6 +4465,224 @@ export default function AdminDashboardPage() {
                   Close Document
                 </button>
               </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Direct Reply & Messaging Modal */}
+        {showReplyModal && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(8,31,62,0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10002,
+              backdropFilter: 'blur(6px)',
+              padding: '20px'
+            }}
+          >
+            <div 
+              className="admin-modal-card"
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                maxWidth: '680px',
+                width: '100%',
+                padding: '28px',
+                boxShadow: '0 25px 70px rgba(0,0,0,0.35)',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                position: 'relative'
+              }}
+            >
+              {/* Close Button */}
+              <button 
+                type="button"
+                onClick={() => setShowReplyModal(false)}
+                aria-label="Close Reply Modal"
+                style={{
+                  position: 'absolute',
+                  top: '18px',
+                  right: '18px',
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748B',
+                  fontSize: '1rem',
+                  fontWeight: 700
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ marginBottom: '16px' }}>
+                <span className="course-badge" style={{ background: 'rgba(8,31,62,0.08)', color: '#081F3E', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Mail size={13} /> Official Admin Dispatch
+                </span>
+                <h3 style={{ color: '#081F3E', marginTop: '6px', fontSize: '1.25rem', fontWeight: 800 }}>
+                  Direct Response &amp; Outbox Dispatch
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Sending to: <strong style={{ color: '#081F3E' }}>{replyForm.recipientName || 'Candidate'}</strong> &bull; <code>{replyForm.recipient}</code>
+                </p>
+              </div>
+
+              {/* Quick Template Buttons */}
+              <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', marginBottom: '18px', border: '1px solid #E2E8F0' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', display: 'block', marginBottom: '8px' }}>
+                  ⚡ Quick Response Templates:
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyForm(prev => ({
+                        ...prev,
+                        subject: 'Liah Academy - In response to your inquiry',
+                        message: `Dear ${prev.recipientName || 'Valued Candidate'},\n\nThank you for your interest in Liah Academy of Technology and Management.\n\nOur next admission cohort is actively open for enrollment in Buea. We offer accredited HND, Bachelor of Technology (B.Tech), and Professional Certification programs in Software Engineering, Cybersecurity, AI & Data Science, Network Engineering, and Project Management.\n\nTuition fees and semester schedules can be reviewed on our website, and registrations can be completed online.\n\nPlease let us know if you have any questions or if you would like to schedule a campus tour.`
+                      }));
+                    }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', color: '#081F3E' }}
+                  >
+                    General Inquiry
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyForm(prev => ({
+                        ...prev,
+                        subject: 'Admission Offer & Enrollment Steps – Liah Academy',
+                        message: `Dear ${prev.recipientName || 'Valued Candidate'},\n\nCongratulations! We are pleased to inform you that your application for admission to Liah Academy has been reviewed and approved.\n\nTo finalize your seat reservation and laboratory workstation allocation, please log in to the student portal and complete the initial registration deposit.\n\nCampus Address: Backweri Town, Buea, Southwest Region, Cameroon.\nWe look forward to welcoming you to our academic community.`
+                      }));
+                    }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', color: '#081F3E' }}
+                  >
+                    Admission Offer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyForm(prev => ({
+                        ...prev,
+                        subject: 'Payment Verification & Mobile Money Instructions – Liah Academy',
+                        message: `Dear ${prev.recipientName || 'Valued Candidate'},\n\nWe have received your payment submission. Registration and tuition deposits can be paid via MTN Mobile Money (*126*14*670265493*AMOUNT#) or directly at the Finance Office on campus in Buea.\n\nOnce submitted, your payment receipt is automatically verified by the Registry Office within 24 hours.`
+                      }));
+                    }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', color: '#081F3E' }}
+                  >
+                    Payment Instructions
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyForm(prev => ({
+                        ...prev,
+                        subject: 'Action Required: Additional Application Documents – Liah Academy',
+                        message: `Dear ${prev.recipientName || 'Valued Candidate'},\n\nThank you for applying to Liah Academy. To complete your admission file, please log into your Admissions portal and upload clear copies of your National ID / Birth Certificate and official academic transcripts / certificates.\n\nFeel free to contact us on WhatsApp (+237 699 526 607) if you encounter any difficulties.`
+                      }));
+                    }}
+                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', color: '#081F3E' }}
+                  >
+                    Document Request
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <form onSubmit={handleSendEmailReply} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>
+                    Recipient Email
+                  </label>
+                  <input 
+                    type="email"
+                    required
+                    value={replyForm.recipient}
+                    onChange={(e) => setReplyForm({ ...replyForm, recipient: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.9rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>
+                    Email Subject Line
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={replyForm.subject}
+                    onChange={(e) => setReplyForm({ ...replyForm, subject: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.9rem', fontWeight: 600 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>
+                    Message Body
+                  </label>
+                  <textarea 
+                    required
+                    rows={8}
+                    value={replyForm.message}
+                    onChange={(e) => setReplyForm({ ...replyForm, message: e.target.value })}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', fontSize: '0.9rem', lineHeight: '1.6', resize: 'vertical' }}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+                  <a
+                    href={`https://wa.me/${replyForm.phone ? replyForm.phone.replace(/[^0-9]/g, '') : '237699526607'}?text=${encodeURIComponent(replyForm.message)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#25D366',
+                      color: '#FFFFFF',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <MessageSquare size={16} /> Reply on WhatsApp
+                  </a>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowReplyModal(false)}
+                      style={{ background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '8px', padding: '10px 18px', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={replySubmitting}
+                      className="btn btn-primary"
+                      style={{ padding: '10px 24px', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <Send size={15} /> {replySubmitting ? 'Dispatching Reply...' : 'Send Email Reply'}
+                    </button>
+                  </div>
+                </div>
+              </form>
 
             </div>
           </div>

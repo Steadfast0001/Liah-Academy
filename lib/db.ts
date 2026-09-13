@@ -1084,6 +1084,17 @@ export const adminStore = {
     return [...(store.inquiries || [])].reverse();
   },
 
+  updateInquiry: (id: number | string, updates: Partial<Inquiry>): Inquiry | null => {
+    const store = readDb();
+    if (!store.inquiries) return null;
+    const inquiry = store.inquiries.find(i => i.id === parseInt(String(id)));
+    if (!inquiry) return null;
+    if (updates.status) inquiry.status = updates.status;
+    writeDb(store, true);
+    syncToMySQL('inquiries', 'update', inquiry);
+    return inquiry;
+  },
+
   deleteInquiry: (id: number | string): boolean => {
     const store = readDb();
     store.inquiries = (store.inquiries || []).filter(i => i.id !== parseInt(String(id)));
