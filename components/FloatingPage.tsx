@@ -830,7 +830,7 @@ export default function FloatingPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <a
-                    href="https://wa.me/237652154095?text=Hello%20Liah%20Academy%2C%20I%20am%20inquiring%20about%20admissions."
+                    href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%2C%20I%20am%20inquiring%20about%20admissions."
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -847,7 +847,7 @@ export default function FloatingPage() {
                       textDecoration: 'none'
                     }}
                   >
-                    <MessageCircle size={16} /> Open Direct WhatsApp (+237 652 154 095)
+                    <MessageCircle size={16} /> Open Direct WhatsApp (+237 699 526 607)
                   </a>
 
                   <a

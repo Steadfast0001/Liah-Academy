@@ -87,7 +87,7 @@ export default function ContactPage() {
                     <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Telephone &amp; WhatsApp</h4>
                     <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>+237 652 154 095 / +237 699 526 607</p>
                     <a
-                      href="https://wa.me/237652154095?text=Hello%20Liah%20Academy%20Admissions"
+                      href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions"
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

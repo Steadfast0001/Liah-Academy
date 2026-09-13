@@ -151,9 +151,10 @@ Liah Academy is located in **Backweri Town, Buea, Southwest Region, Cameroon**, 
       {
         keywords: ['contact', 'phone', 'call', 'email', 'whatsapp', 'reach', 'talk', 'human', 'support', 'help', 'number'],
         response: `📞 **Contact Liah Academy Admissions**:
-• **Phone / WhatsApp**: +237 652 154 095 / +237 699 526 607
-• **Email**: info@liahacademy.com / admissions@liahacademy.com
-• **Campus**: Backweri Town, Buea, Cameroon
+• **WhatsApp Direct**: [+237 699 526 607](https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions)
+• **Campus Phone**: +237 670 265 493 / +237 652 154 095 / +237 699 526 607
+• **Email**: info@liahacademy.com
+• **Campus**: Backweri Town, Buea, Southwest Region, Cameroon
 • **Hours**: Monday – Saturday, 8:00 AM – 5:00 PM WAT`,
         actionType: 'general_action'
       },
@@ -166,7 +167,7 @@ Every student at Liah Academy is guaranteed practical work experience in our **C
       {
         keywords: ['scholarship', 'financial', 'aid', 'reduction', 'merit', 'help', 'grant', 'discount'],
         response: `🎓 **Scholarships & Financial Grants**:
-We provide merit-based awards and need-based fee reductions for promising students in Cameroon and across Africa. Contact **info@liahacademy.com** or WhatsApp **+237 652 154 095** to submit your scholarship request!`,
+We provide merit-based awards and need-based fee reductions for promising students in Cameroon and across Africa. Contact **info@liahacademy.com** or WhatsApp **[+237 699 526 607](https://wa.me/237699526607)** to submit your scholarship request!`,
         actionType: 'general_action'
       },
       {

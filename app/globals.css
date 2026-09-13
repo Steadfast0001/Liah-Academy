@@ -1735,6 +1735,505 @@ h4 {
   }
 }
 
+/* =========================================================
+   FLOATING ACTION BUTTONS: WHATSAPP, LIVE CHAT & BACK-TO-TOP
+   ========================================================= */
+
+/* 1. FLOATING WHATSAPP BUTTON */
+.whatsapp-floating-wrapper {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  z-index: 9998;
+}
+
+.whatsapp-floating-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-decoration: none;
+}
+
+.whatsapp-floating-btn:hover {
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.6);
+  color: #FFFFFF;
+}
+
+.whatsapp-icon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.whatsapp-pulse-ring {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid #25D366;
+  opacity: 0.8;
+  animation: waPulse 2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes waPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.whatsapp-online-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+}
+
+.whatsapp-tooltip {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  background: #081F3E;
+  color: #FFFFFF;
+  padding: 8px 14px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  pointer-events: none;
+  border: 1px solid rgba(37, 211, 102, 0.35);
+}
+
+.whatsapp-tooltip::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent #081F3E;
+}
+
+.whatsapp-tooltip.visible,
+.whatsapp-floating-btn:hover .whatsapp-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+.whatsapp-tooltip-title {
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #25D366;
+}
+
+.whatsapp-tooltip-sub {
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+/* 2. FLOATING LIVE CHAT BUTTON */
+.chat-widget-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(135deg, #F5A623 0%, #D97706 100%);
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9998;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.chat-widget-bubble:hover {
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 0 10px 25px rgba(245, 166, 35, 0.6);
+}
+
+.live-chat-pulse-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.chat-bubble-tooltip {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  background: #081F3E;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: #CBD5E1;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  pointer-events: none;
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+
+.chat-bubble-tooltip::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent #081F3E;
+}
+
+.chat-widget-bubble:hover .chat-bubble-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* 3. LIVE CHAT MODAL WINDOW */
+.chat-modal-window {
+  position: fixed;
+  bottom: 94px;
+  right: 24px;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  height: 580px;
+  max-height: calc(100vh - 120px);
+  background: #081F3E;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 166, 35, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  animation: chatModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chatModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-header {
+  background: linear-gradient(135deg, #041021 0%, #081F3E 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chat-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background: #F5A623;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-avatar .online-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: #10B981;
+  border: 2px solid #081F3E;
+  border-radius: 50%;
+}
+
+.chat-header-title {
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.chat-header-status {
+  color: #94A3B8;
+  margin: 2px 0 0 0;
+}
+
+.chat-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #CBD5E1;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chat-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+/* Chat Messages */
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #06172E;
+}
+
+.chat-msg {
+  display: flex;
+  gap: 8px;
+  max-width: 86%;
+}
+
+.chat-msg.bot {
+  align-self: flex-start;
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.bot-icon-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #F5A623;
+  color: #081F3E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.chat-bubble-content {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.chat-msg.bot .chat-bubble-content {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-left-radius: 2px;
+}
+
+.chat-msg.user .chat-bubble-content {
+  background: linear-gradient(135deg, #F5A623 0%, #E28704 100%);
+  color: #081F3E;
+  font-weight: 600;
+  border-top-right-radius: 2px;
+}
+
+.chat-dossier-card {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(4, 16, 33, 0.8);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 8px;
+}
+
+/* Quick Replies */
+.chat-quick-replies {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  overflow-x: auto;
+  background: #041021;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  scrollbar-width: none;
+}
+
+.quick-reply-chip {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  color: #FDE047;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-reply-chip:hover {
+  background: #F5A623;
+  color: #081F3E;
+}
+
+/* Chat Input Row */
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #041021;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chat-text-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 8px 14px;
+  color: #FFFFFF;
+  font-size: 0.84rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-text-input:focus {
+  border-color: #F5A623;
+}
+
+.chat-send-btn {
+  width: 36px;
+  height: 36px;
+  background: #F5A623;
+  color: #081F3E;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-send-btn:hover {
+  transform: scale(1.08);
+  background: #FBBF24;
+}
+
+/* 4. BACK TO TOP BUTTON */
+.back-to-top-btn {
+  position: fixed;
+  bottom: 168px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  background: #081F3E;
+  color: #F5A623;
+  border: 1.5px solid rgba(245, 166, 35, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9997;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.back-to-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top-btn:hover {
+  background: #F5A623;
+  color: #081F3E;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(245, 166, 35, 0.4);
+}
+
+/* MOBILE SCREEN POSITIONING */
+@media (max-width: 640px) {
+  .whatsapp-floating-wrapper {
+    bottom: 84px;
+    right: 16px;
+  }
+  .whatsapp-floating-btn {
+    width: 50px;
+    height: 50px;
+  }
+  .chat-widget-bubble {
+    bottom: 18px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+  .back-to-top-btn {
+    bottom: 148px;
+    right: 20px;
+    width: 38px;
+    height: 38px;
+  }
+  .chat-modal-window {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    height: 88vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
 
 
 

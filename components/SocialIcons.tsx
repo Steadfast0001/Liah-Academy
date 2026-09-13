@@ -32,9 +32,28 @@ export function LinkedInIcon({ size = 18 }: { size?: number }) {
   );
 }
 
+export function WhatsAppIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.882 2.796.882 3.183 0 5.769-2.587 5.77-5.766.001-3.181-2.585-5.769-5.77-5.769zm10.218 5.841c-.004 5.626-4.577 10.198-10.218 10.198-1.782 0-3.465-.461-4.945-1.282l-5.617 1.472 1.498-5.474c-.899-1.536-1.378-3.3-1.378-5.114 0-5.626 4.574-10.198 10.217-10.198 2.726 0 5.289 1.062 7.218 2.991 1.928 1.93 2.989 4.492 2.985 7.218zm-3.693 4.22c-.225-.113-1.332-.657-1.538-.733-.207-.075-.357-.113-.508.113-.15.225-.583.733-.715.883-.131.151-.263.169-.488.056s-.95-.351-1.81-1.118c-.669-.597-1.121-1.334-1.252-1.56-.131-.225-.014-.347.098-.459.102-.101.225-.264.338-.396.113-.131.15-.225.225-.376.075-.151.038-.282-.019-.395-.056-.113-.508-1.223-.696-1.674-.183-.44-.369-.38-.508-.387l-.433-.008c-.15 0-.395.056-.601.282-.207.225-.789.771-.789 1.88 0 1.109.807 2.18 1.2 2.708.394.527 2.062 3.149 4.996 4.417.698.302 1.243.482 1.668.618.701.223 1.339.191 1.844.116.562-.084 1.727-.706 1.971-1.388.244-.683.244-1.268.17-1.388-.073-.12-.262-.188-.487-.301z"/>
+    </svg>
+  );
+}
+
 export default function SocialLinksList({ iconSize = 18 }: { iconSize?: number }) {
   return (
     <div className="social-links-grid" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <a 
+        href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions%2C%20I%20would%20like%20to%20make%20an%20inquiry." 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="social-circle-link whatsapp" 
+        aria-label="Chat with us on WhatsApp"
+        title="WhatsApp Admissions (+237 699 526 607)"
+        style={{ color: '#25D366' }}
+      >
+        <WhatsAppIcon size={iconSize} />
+      </a>
       <a 
         href="https://www.facebook.com/photo/?fbid=747845957358700&set=a.467739685369330" 
         target="_blank" 

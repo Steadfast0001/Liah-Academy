@@ -8,6 +8,7 @@ import {
   ChevronRight, RefreshCw, ShieldCheck, Copy, Check, MessageCircle, 
   HelpCircle, GraduationCap, Search, MapPin, Phone, Maximize2, Minimize2, Sparkles, ArrowRight
 } from 'lucide-react';
+import { WhatsAppIcon } from './SocialIcons';
 
 interface StudentData {
   id: number;
@@ -343,15 +344,22 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Unified Single Circular Golden Floating Button (Bottom-Right, Matching Image 1) */}
+      {/* Unified Single Circular Golden Floating Live Chat Button */}
       <div
         className="chat-widget-bubble"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open Liah Assistant &amp; Student Desk"
+        aria-label="Open Live Chat &amp; Student Desk"
         role="button"
         tabIndex={0}
+        title="Live Chat &amp; Admissions Assistant"
       >
         {isOpen ? <X size={26} color="#081F3E" /> : <MessageSquare size={26} color="#081F3E" />}
+        <span className="live-chat-pulse-dot" />
+        
+        {/* Floating Tooltip Label */}
+        <div className="chat-bubble-tooltip">
+          <span style={{ fontWeight: 800 }}>Live Chat</span> &bull; 24/7
+        </div>
       </div>
 
       {/* Floating Panel (Positioned on the Right) */}
@@ -380,12 +388,36 @@ export default function ChatWidget() {
                 <span className="online-badge" />
               </div>
               <div>
-                <h4 className="chat-header-title" style={{ fontSize: '0.95rem', fontWeight: 800 }}>Liah Assistant</h4>
-                <p className="chat-header-status" style={{ fontSize: '0.72rem' }}>24/7 Admissions, MoMo &amp; Student Desk</p>
+                <h4 className="chat-header-title" style={{ fontSize: '0.95rem', fontWeight: 800 }}>Liah Live Chat &amp; Desk</h4>
+                <p className="chat-header-status" style={{ fontSize: '0.72rem' }}>24/7 Admissions, MoMo &amp; Student Portal</p>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Direct WhatsApp Contact Button */}
+              <a
+                href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions%2C%20I%20would%20like%20to%20inquire%20about%20admissions."
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: '#25D366',
+                  color: '#FFFFFF',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 6px rgba(37, 211, 102, 0.4)'
+                }}
+                title="Open WhatsApp Chat (+237 699 526 607)"
+              >
+                <WhatsAppIcon size={14} />
+                <span>WhatsApp</span>
+              </a>
+
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
                 style={{

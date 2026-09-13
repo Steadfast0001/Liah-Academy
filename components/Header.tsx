@@ -238,7 +238,7 @@ export default function Header() {
                   <UserCheck size={16} color="#F5A623" /> Student Portal Login
                 </Link>
                 <a
-                  href="https://wa.me/237652154095?text=Hello%20Liah%20Academy%20Admissions"
+                  href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
