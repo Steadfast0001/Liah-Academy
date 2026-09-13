@@ -38,15 +38,6 @@ const feeOptions = [
   { label: 'Application Fee (Certifications)', amount: 25000, desc: 'Professional Certifications Application Fee (25,000 XAF)' },
 ];
 
-const quickChips = [
-  { label: '💳 Pay via MTN MoMo (*126*14*)', query: 'I want to pay my fees via MTN Mobile Money' },
-  { label: '🔍 Check Application Status', query: 'Check my application status' },
-  { label: '📚 Degree Programs', query: 'What degree programs and courses are offered?' },
-  { label: '💰 Tuition & Discounts', query: 'What are the tuition fees and discounts?' },
-  { label: '📝 How to Apply', query: 'What are the admission requirements and how do I apply?' },
-  { label: '📍 Buea Campus Map', query: 'Where is the campus located in Buea?' },
-  { label: '📞 Contact / WhatsApp', query: 'How can I contact Liah Academy admissions?' }
-];
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -605,18 +596,6 @@ export default function ChatWidget() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Action Chips */}
-              <div className="chat-quick-replies">
-                {quickChips.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    className="quick-reply-chip"
-                    onClick={() => handleSendMessage(chip.query)}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
 
               {/* Bottom Input Row */}
               <div className="chat-input-row">

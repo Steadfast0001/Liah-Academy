@@ -2089,34 +2089,6 @@ h4 {
   border-radius: 8px;
 }
 
-/* Quick Replies */
-.chat-quick-replies {
-  display: flex;
-  gap: 6px;
-  padding: 8px 14px;
-  overflow-x: auto;
-  background: #041021;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  scrollbar-width: none;
-}
-
-.quick-reply-chip {
-  background: rgba(245, 166, 35, 0.12);
-  border: 1px solid rgba(245, 166, 35, 0.3);
-  color: #FDE047;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.73rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.quick-reply-chip:hover {
-  background: #F5A623;
-  color: #081F3E;
-}
 
 /* Chat Input Row */
 .chat-input-row {
