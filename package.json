@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
+    "fix-perms": "node scripts/fix-perms.js",
     "start": "next start",
     "setup": "node scripts/setup.js",
     "lint": "next lint"
