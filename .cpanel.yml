@@ -2,8 +2,16 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/rhibwcnc/liahacademy.com
-    - /bin/cp -R * $DEPLOYPATH/
-    - /bin/cp -R .next $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/chmod -R 755 $DEPLOYPATH/.next 2>/dev/null || true
+    - /bin/cp -R app $DEPLOYPATH/
+    - /bin/cp -R components $DEPLOYPATH/
+    - /bin/cp -R data $DEPLOYPATH/
+    - /bin/cp -R lib $DEPLOYPATH/
+    - /bin/cp -R public $DEPLOYPATH/
+    - /bin/cp -R scripts $DEPLOYPATH/
+    - /bin/cp -R .next $DEPLOYPATH/
+    - /bin/cp server.js $DEPLOYPATH/
+    - /bin/cp package.json $DEPLOYPATH/
+    - /bin/cp package-lock.json $DEPLOYPATH/
+    - /bin/cp next.config.mjs $DEPLOYPATH/
     - /bin/mkdir -p $DEPLOYPATH/tmp
     - /bin/touch $DEPLOYPATH/tmp/restart.txt
