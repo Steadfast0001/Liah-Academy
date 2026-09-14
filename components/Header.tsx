@@ -48,19 +48,24 @@ export default function Header() {
     setAboutDropdownOpen(false);
   };
 
+  // Do not render public site header inside the Admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <>
       <header className="site-header">
         <div className="header-container">
           {/* Logo */}
           <Link href="/" className="logo-link" onClick={closeAll}>
-            <div className="site-logo-wrap">
+            <div className="site-logo-wrap" style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Image
                 src="/assets/images/logo.png"
                 alt="Liah Academy Logo"
-                fill
-                sizes="(max-width: 640px) 58px, 68px"
-                style={{ objectFit: 'contain' }}
+                width={68}
+                height={68}
+                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '68px', maxWidth: '68px' }}
                 priority
               />
             </div>

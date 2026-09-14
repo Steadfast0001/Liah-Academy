@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { WhatsAppIcon } from './SocialIcons';
 
 export default function WhatsAppButton() {
+  const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const phoneNumber = '237699526607';
   const defaultMessage = 'Hello Liah Academy Admissions, I would like to inquire about programs and admission.';
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
+
+  // Do not render floating widget inside the Admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <div className="whatsapp-floating-wrapper">

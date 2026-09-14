@@ -81,15 +81,6 @@ export default function SocialLinksList({ iconSize = 18 }: { iconSize?: number }
       >
         <TikTokIcon size={iconSize} />
       </a>
-      <a 
-        href="https://linkedin.com" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        className="social-circle-link" 
-        aria-label="LinkedIn"
-      >
-        <LinkedInIcon size={iconSize} />
-      </a>
     </div>
   );
 }

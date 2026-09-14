@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
   MessageSquare, X, Send, Bot, CheckCircle, AlertCircle, 
   Smartphone, Loader2, CreditCard, User, BookOpen, ExternalLink,
@@ -42,6 +43,7 @@ const feeOptions = [
 
 
 export default function ChatWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'pay' | 'apply' | 'track' | 'programs'>('chat');
@@ -410,6 +412,11 @@ export default function ChatWidget() {
 
   const currentPayAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
   const activeShortCode = `*126*14*670265493*${currentPayAmount || 15000}#`;
+
+  // Do not render live chat widget inside Admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <>

@@ -1,11 +1,20 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import SocialLinksList from './SocialIcons';
 
 export default function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  // Do not render public footer inside the Admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <footer className="site-footer">
@@ -14,12 +23,13 @@ export default function Footer() {
           {/* Brand Column */}
           <div>
             <Link href="/" className="logo-link" style={{ marginBottom: '20px' }}>
-              <div className="site-logo-wrap" style={{ width: '64px', height: '64px' }}>
+              <div className="site-logo-wrap" style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Image
                   src="/assets/images/logo.png"
                   alt="Liah Academy Logo"
-                  fill
-                  style={{ objectFit: 'contain' }}
+                  width={64}
+                  height={64}
+                  style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '64px', maxWidth: '64px' }}
                 />
               </div>
               <span className="logo-text" style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>

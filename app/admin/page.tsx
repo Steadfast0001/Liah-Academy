@@ -8,7 +8,7 @@ import {
   Trash2, Mail, Video, Image as ImageIcon, BookOpen, 
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
-  ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
+  ChevronLeft, ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
   Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare
 } from 'lucide-react';
 import { exportApplicantsToCSVString } from '@/lib/csv';
@@ -153,6 +153,17 @@ export default function AdminDashboardPage() {
   // Multi-Selection & Bulk Deletion States
   const [selectedAppIds, setSelectedAppIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  // Scroll Refs & Helper for Mobile Arrows
+  const quickActionsRef = React.useRef<HTMLDivElement>(null);
+  const navTabsRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollContainer = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200;
+      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Document & Payment Proof Preview Modal States
   const [previewProofItem, setPreviewProofItem] = useState<Application | null>(null);
@@ -1618,17 +1629,28 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Navigation Tabs */}
-        <div 
-          className="admin-nav-tabs"
-          style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            borderBottom: '1px solid rgba(15,23,42,0.1)', 
-            marginBottom: '32px',
-            overflowX: 'auto',
-            paddingBottom: '4px'
-          }}
-        >
+        <div className="admin-nav-tabs-wrapper">
+          <button 
+            type="button"
+            onClick={() => scrollContainer(navTabsRef, 'left')}
+            className="admin-scroll-arrow admin-scroll-arrow-left nav-tabs-arrow"
+            aria-label="Scroll tabs left"
+            title="Scroll left"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div 
+            className="admin-nav-tabs"
+            ref={navTabsRef}
+            style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              borderBottom: '1px solid rgba(15,23,42,0.1)', 
+              marginBottom: '32px',
+              overflowX: 'auto',
+              paddingBottom: '4px'
+            }}
+          >
           <button
             onClick={() => setActiveTab('overview')}
             style={{
@@ -1817,6 +1839,16 @@ export default function AdminDashboardPage() {
           >
             <Settings size={16} /> Universal Settings
           </button>
+          </div>
+          <button 
+            type="button"
+            onClick={() => scrollContainer(navTabsRef, 'right')}
+            className="admin-scroll-arrow admin-scroll-arrow-right nav-tabs-arrow"
+            aria-label="Scroll tabs right"
+            title="Scroll right"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
 
         {/* ======================================================== */}
@@ -1824,95 +1856,101 @@ export default function AdminDashboardPage() {
         {/* ======================================================== */}
         {activeTab === 'overview' && (
           <div>
-            <div 
-              className="admin-stats-grid"
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
-                gap: '20px', 
-                marginBottom: '36px' 
-              }}
-            >
-              <div className="premium-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+            <div className="admin-stats-grid">
+              <div className="premium-card admin-stat-card">
+                <span className="stat-label">
                   Total Applications
                 </span>
-                <h2 style={{ color: '#081F3E', fontSize: '2.4rem', fontWeight: 800, margin: '8px 0' }}>
+                <h2 className="stat-value">
                   {stats?.total_applications ?? applications.length}
                 </h2>
-                <span style={{ fontSize: '0.8rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Clock size={14} /> Real-time active database
+                <span className="stat-sub" style={{ color: '#B45309' }}>
+                  <Clock size={13} style={{ flexShrink: 0 }} /> Real-time active database
                 </span>
               </div>
 
-              <div className="premium-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="premium-card admin-stat-card">
+                <span className="stat-label" style={{ color: '#059669' }}>
                   Paid Deposits (MoMo)
                 </span>
-                <h2 style={{ color: '#059669', fontSize: '2.4rem', fontWeight: 800, margin: '8px 0' }}>
+                <h2 className="stat-value" style={{ color: '#059669' }}>
                   {applications.filter(a => a.payment_status === 'Paid').length}
                 </h2>
-                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 700 }}>
+                <span className="stat-sub" style={{ color: '#059669', fontWeight: 700 }}>
                   {(applications.filter(a => a.payment_status === 'Paid').reduce((sum, a) => sum + (a.payment_amount || (a.degree_type?.includes('Cert') ? 25000 : 15000)), 0)).toLocaleString()} XAF cleared
                 </span>
               </div>
 
-              <div className="premium-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-                <span style={{ fontSize: '0.8rem', color: '#D97706', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="premium-card admin-stat-card">
+                <span className="stat-label" style={{ color: '#D97706' }}>
                   Pending Payments
                 </span>
-                <h2 style={{ color: '#D97706', fontSize: '2.4rem', fontWeight: 800, margin: '8px 0' }}>
+                <h2 className="stat-value" style={{ color: '#D97706' }}>
                   {applications.filter(a => a.payment_status !== 'Paid').length}
                 </h2>
-                <span style={{ fontSize: '0.8rem', color: '#D97706' }}>Awaiting deposit</span>
+                <span className="stat-sub" style={{ color: '#D97706' }}>
+                  Awaiting deposit
+                </span>
               </div>
 
-              <div className="premium-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="premium-card admin-stat-card">
+                <span className="stat-label" style={{ color: '#64748B' }}>
                   Approved
                 </span>
-                <h2 style={{ color: '#10B981', fontSize: '2.4rem', fontWeight: 800, margin: '8px 0' }}>
+                <h2 className="stat-value" style={{ color: '#10B981' }}>
                   {applications.filter(a => a.admission_status === 'Approved').length}
                 </h2>
-                <span style={{ fontSize: '0.8rem', color: '#10B981' }}>Offer letters sent</span>
+                <span className="stat-sub" style={{ color: '#10B981' }}>
+                  Offer letters sent
+                </span>
               </div>
 
-              <div className="premium-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="premium-card admin-stat-card">
+                <span className="stat-label" style={{ color: '#64748B' }}>
                   Direct Inquiries
                 </span>
-                <h2 style={{ color: '#081F3E', fontSize: '2.4rem', fontWeight: 800, margin: '8px 0' }}>
+                <h2 className="stat-value" style={{ color: '#081F3E' }}>
                   {inquiries.length}
                 </h2>
-                <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Website messages</span>
+                <span className="stat-sub" style={{ color: '#64748B' }}>
+                  Website messages
+                </span>
               </div>
             </div>
 
-            {/* Quick Actions Bar */}
-            <div 
-              style={{ 
-                background: '#FFFFFF', 
-                borderRadius: '12px', 
-                padding: '20px 24px', 
-                marginBottom: '32px',
-                display: 'flex',
-                gap: '16px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-                border: '1px solid rgba(15,23,42,0.06)'
-              }}
-            >
-              <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.92rem' }}>Quick Actions:</span>
-              <button onClick={() => openCourseModal()} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.82rem' }}>
-                <Plus size={14} /> Add Academic Course
-              </button>
-              <button onClick={() => openNewsModal()} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.82rem', background: '#081F3E', color: '#F5A623' }}>
-                <Plus size={14} /> Publish Announcement
-              </button>
-              <button onClick={exportApplicantsCSV} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.82rem', color: '#081F3E' }}>
-                <Download size={14} /> Export Applicants (CSV)
-              </button>
+            {/* Quick Actions Bar with Mobile Left/Right Arrows */}
+            <div className="admin-quick-actions-card">
+              <div className="admin-scroll-wrapper">
+                <button 
+                  type="button"
+                  onClick={() => scrollContainer(quickActionsRef, 'left')}
+                  className="admin-scroll-arrow admin-scroll-arrow-left"
+                  aria-label="Scroll actions left"
+                  title="Scroll left"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="admin-quick-actions-track" ref={quickActionsRef}>
+                  <button onClick={() => openCourseModal()} className="btn btn-primary admin-action-btn">
+                    <Plus size={15} /> Add Academic Course
+                  </button>
+                  <button onClick={() => openNewsModal()} className="btn btn-primary admin-action-btn admin-action-dark">
+                    <Plus size={15} /> Publish Announcement
+                  </button>
+                  <button onClick={exportApplicantsCSV} className="btn admin-action-btn admin-action-light">
+                    <Download size={15} /> Export Applicants (CSV)
+                  </button>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => scrollContainer(quickActionsRef, 'right')}
+                  className="admin-scroll-arrow admin-scroll-arrow-right"
+                  aria-label="Scroll actions right"
+                  title="Scroll right"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Recent Activity Dual Grid */}
@@ -3272,12 +3310,12 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '20px', minHeight: '600px' }}>
-              {/* Left Column: Conversations List */}
-              <div className="premium-card" style={{ background: '#FFFFFF', padding: '16px', display: 'flex', flexDirection: 'column', height: '650px' }}>
-                <div style={{ paddingBottom: '12px', borderBottom: '1px solid #E2E8F0', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#081F3E' }}>
+            <div className="admin-livechat-container">
+              {/* Left Column: Conversations List (Card 1) */}
+              <div className="admin-livechat-sidebar">
+                <div style={{ paddingBottom: '14px', borderBottom: '1px solid #E2E8F0', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#081F3E' }}>
                       Conversations ({chatSessions.length})
                     </span>
                     {unreadChatCount > 0 && (
@@ -3288,22 +3326,24 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Filter Pills */}
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     {(['all', 'active', 'unread'] as const).map(f => (
                       <button
                         key={f}
+                        type="button"
                         onClick={() => setChatFilter(f)}
                         style={{
                           flex: 1,
-                          padding: '5px 8px',
-                          borderRadius: '6px',
+                          padding: '7px 10px',
+                          borderRadius: '8px',
                           border: 'none',
-                          fontSize: '0.75rem',
+                          fontSize: '0.8rem',
                           fontWeight: 700,
                           textTransform: 'capitalize',
                           cursor: 'pointer',
                           background: chatFilter === f ? '#081F3E' : '#F1F5F9',
-                          color: chatFilter === f ? '#F5A623' : '#64748B'
+                          color: chatFilter === f ? '#F5A623' : '#64748B',
+                          transition: 'all 0.15s ease'
                         }}
                       >
                         {f}
@@ -3313,7 +3353,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Session list items */}
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {filteredChatSessions.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94A3B8', fontSize: '0.85rem' }}>
                       No chat conversations matching filter.
@@ -3326,39 +3366,41 @@ export default function AdminDashboardPage() {
                           key={session.id}
                           onClick={() => handleSelectChatSession(session.id)}
                           style={{
-                            padding: '12px 14px',
-                            borderRadius: '10px',
+                            padding: '14px 16px',
+                            borderRadius: '12px',
                             cursor: 'pointer',
-                            background: isSelected ? 'rgba(8, 31, 62, 0.06)' : session.unread_admin ? '#FEF3C7' : '#F8FAFC',
+                            background: isSelected ? 'rgba(8, 31, 62, 0.05)' : session.unread_admin ? '#FEF3C7' : '#FFFFFF',
                             border: isSelected ? '1.5px solid #081F3E' : session.unread_admin ? '1px solid #F59E0B' : '1px solid #E2E8F0',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                             transition: 'all 0.15s ease'
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 800, fontSize: '0.86rem', color: '#081F3E', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#081F3E', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {session.user_name || 'Website Visitor'}
                               {session.unread_admin && (
                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
                               )}
                             </span>
-                            <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                            <span style={{ fontSize: '0.76rem', color: '#94A3B8', fontWeight: 600 }}>
                               {new Date(session.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                          <p style={{ margin: '0 0 6px 0', fontSize: '0.78rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {session.last_message || 'Started a conversation'}
+                          <p style={{ margin: '0 0 10px 0', fontSize: '0.8rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+                            {session.last_message || 'STARTED A CONVERSATION'}
                           </p>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
+                            <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
                               #{session.id.replace('chat_', '').slice(0, 10)}
                             </span>
                             <span style={{
-                              fontSize: '0.68rem',
-                              padding: '1px 6px',
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
                               borderRadius: '4px',
                               fontWeight: 800,
+                              letterSpacing: '0.04em',
                               background: session.status === 'active' ? '#D1FAE5' : '#F1F5F9',
-                              color: session.status === 'active' ? '#065F46' : '#64748B'
+                              color: session.status === 'active' ? '#059669' : '#64748B'
                             }}>
                               {session.status.toUpperCase()}
                             </span>
@@ -3370,31 +3412,53 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Right Column: Live Conversation Window */}
-              <div className="premium-card" style={{ background: '#FFFFFF', padding: 0, display: 'flex', flexDirection: 'column', height: '650px', overflow: 'hidden' }}>
+              {/* Right Column: Live Conversation Window (Card 2) */}
+              <div className="admin-livechat-window">
                 {selectedChatSession ? (
                   <>
                     {/* Header */}
                     <div style={{ padding: '16px 20px', background: '#081F3E', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#FFFFFF', fontWeight: 800 }}>
-                            {selectedChatSession.user_name || 'Website Visitor'}
-                          </h3>
-                          <span style={{
-                            fontSize: '0.7rem',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontWeight: 800,
-                            background: selectedChatSession.status === 'active' ? '#10B981' : '#64748B',
-                            color: '#FFFFFF'
-                          }}>
-                            {selectedChatSession.status === 'active' ? '🟢 LIVE VISITOR' : 'CLOSED'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedChatSession(null)}
+                          className="admin-chat-back-btn"
+                          title="Back to conversation list"
+                          style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <ChevronLeft size={14} /> Back
+                        </button>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#FFFFFF', fontWeight: 800 }}>
+                              {selectedChatSession.user_name || 'Website Visitor'}
+                            </h3>
+                            <span style={{
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 800,
+                              background: selectedChatSession.status === 'active' ? '#10B981' : '#64748B',
+                              color: '#FFFFFF'
+                            }}>
+                              {selectedChatSession.status === 'active' ? '🟢 LIVE VISITOR' : 'CLOSED'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
+                            Session: <code>{selectedChatSession.id}</code> &bull; Started {new Date(selectedChatSession.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
-                          Session: <code>{selectedChatSession.id}</code> &bull; Started {new Date(selectedChatSession.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -3543,10 +3607,12 @@ export default function AdminDashboardPage() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: '40px' }}>
-                    <MessageSquare size={48} color="#CBD5E1" style={{ marginBottom: '14px' }} />
-                    <h3 style={{ margin: '0 0 6px 0', color: '#081F3E', fontSize: '1.1rem' }}>No Conversation Selected</h3>
-                    <p style={{ margin: 0, fontSize: '0.85rem' }}>Select a visitor from the left panel to read the conversation and respond live.</p>
+                  <div className="admin-livechat-empty">
+                    <MessageSquare size={54} strokeWidth={1.5} color="#CBD5E1" style={{ marginBottom: '16px' }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#081F3E', fontSize: '1.25rem', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>No Conversation Selected</h3>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748B', maxWidth: '320px', lineHeight: 1.5, textAlign: 'center' }}>
+                      Select a visitor from the left panel to read the conversation and respond live.
+                    </p>
                   </div>
                 )}
               </div>
@@ -3624,14 +3690,14 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Media Gallery Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+            <div className="admin-media-grid">
               {mediaList.map((m) => (
                 <div 
                   key={m.id}
-                  className="premium-card"
+                  className="premium-card admin-media-card"
                   style={{ padding: 0, overflow: 'hidden', background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}
                 >
-                  <div style={{ position: 'relative', width: '100%', height: '180px', background: '#081F3E' }}>
+                  <div className="admin-media-thumb" style={{ position: 'relative', width: '100%', height: '180px', background: '#081F3E' }}>
                     {m.type === 'video' ? (
                       <video 
                         src={m.src} 
@@ -3644,18 +3710,18 @@ export default function AdminDashboardPage() {
                         alt={m.title} 
                         fill 
                         style={{ objectFit: 'cover' }}
-                        sizes="300px" 
+                        sizes="(max-width: 768px) 50vw, 300px" 
                       />
                     )}
                     <span style={{ 
                       position: 'absolute', 
-                      top: '10px', 
-                      left: '10px', 
+                      top: '8px', 
+                      left: '8px', 
                       background: m.type === 'video' ? '#F5A623' : '#081F3E',
                       color: m.type === 'video' ? '#081F3E' : '#FFF',
-                      fontSize: '0.72rem',
+                      fontSize: '0.65rem',
                       fontWeight: 800,
-                      padding: '3px 8px',
+                      padding: '2px 6px',
                       borderRadius: '4px',
                       textTransform: 'uppercase'
                     }}>
@@ -3663,26 +3729,26 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
 
-                  <div style={{ padding: '18px 20px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div className="admin-media-body" style={{ padding: '16px 18px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <h4 style={{ color: '#081F3E', fontSize: '1rem', fontWeight: 800, marginBottom: '4px' }}>
+                      <h4 className="admin-media-title" style={{ color: '#081F3E', fontSize: '0.98rem', fontWeight: 800, margin: '0 0 4px 0' }}>
                         {m.title}
                       </h4>
-                      <p style={{ color: '#64748B', fontSize: '0.78rem', margin: '0 0 10px 0' }}>
-                        Path: <code>{m.src}</code> ({m.size})
+                      <p className="admin-media-path" style={{ color: '#64748B', fontSize: '0.74rem', margin: '0 0 8px 0', wordBreak: 'break-all' }}>
+                        Path: <code style={{ fontSize: '0.72rem' }}>{m.src}</code> ({m.size})
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '10px' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '8px', marginTop: '6px' }}>
+                      <span className="admin-media-category" style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 700 }}>
                         {m.category}
                       </span>
                       <button 
                         onClick={() => deleteMedia(m.id)}
-                        style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: '4px' }}
                         title="Delete asset"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -3713,42 +3779,43 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+            <div className="admin-courses-grid">
               {courses.map((c) => (
-                <div key={c.id} className="premium-card" style={{ background: '#FFFFFF', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div key={c.id} className="premium-card admin-course-card" style={{ background: '#FFFFFF', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
+                      <span className="admin-course-badge" style={{ fontSize: '0.75rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
                         {c.degree_type}
                       </span>
-                      <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '1.05rem' }}>
+                      <span className="admin-course-fee" style={{ fontWeight: 800, color: '#081F3E', fontSize: '1.02rem' }}>
                         {c.tuition_fee ? `${c.tuition_fee.toLocaleString()} XAF` : '250,000 XAF'}
                       </span>
                     </div>
-                    <h3 style={{ color: '#081F3E', fontSize: '1.15rem', fontWeight: 800, marginBottom: '8px' }}>{c.title}</h3>
-                    <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: '14px' }}>
+                    <h3 className="admin-course-title" style={{ color: '#081F3E', fontSize: '1.1rem', fontWeight: 800, margin: '0 0 8px 0' }}>{c.title}</h3>
+                    <p className="admin-course-desc" style={{ color: '#64748B', fontSize: '0.86rem', lineHeight: '1.55', margin: '0 0 12px 0' }}>
                       {c.description}
                     </p>
                     {c.modules && (
-                      <div style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.78rem', color: '#081F3E', marginBottom: '12px' }}>
+                      <div className="admin-course-modules" style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.78rem', color: '#081F3E', marginBottom: '12px' }}>
                         <strong>Modules:</strong> {c.modules}
                       </div>
                     )}
-                    <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
+                    <div className="admin-course-meta" style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
                       Duration: <strong>{c.duration}</strong> &bull; Track: <strong>{c.program_type}</strong>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #F1F5F9', paddingTop: '14px', marginTop: '16px' }}>
+                  <div className="admin-course-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #F1F5F9', paddingTop: '14px', marginTop: '16px' }}>
                     <button
                       onClick={() => openCourseModal(c)}
-                      className="btn btn-secondary"
+                      className="btn btn-secondary admin-course-btn"
                       style={{ padding: '6px 12px', fontSize: '0.8rem', color: '#081F3E' }}
                     >
                       <Edit size={14} /> Edit Track
                     </button>
                     <button
                       onClick={() => deleteCourse(c.id)}
+                      className="admin-course-delete-btn"
                       style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer' }}
                     >
                       <Trash2 size={14} />
