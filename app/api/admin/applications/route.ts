@@ -61,26 +61,26 @@ export async function PUT(request: Request) {
       }
     }
 
-    // If status changed to Approved or Rejected, trigger decision email notification
+    // If status changed to Approved or Rejected, trigger decision email notification asynchronously
     if (
       notify_applicant !== false && 
       ((nextAdmission && nextAdmission !== previous.admission_status && (nextAdmission === 'Approved' || nextAdmission === 'Rejected')) ||
        (payment_status === 'Paid' && previous.payment_status !== 'Paid'))
     ) {
-      try {
-        if (updated) {
-          await sendDecisionSignal({
-            id: updated.id,
-            full_name: updated.full_name,
-            email: updated.email,
-            program_type: updated.program_type,
-            degree_type: updated.degree_type
-          }, 'Approved');
-        }
-      } catch (mailErr) {
-        console.warn('Decision email signal notice:', mailErr);
+      const decisionType = (nextAdmission === 'Rejected') ? 'Rejected' : 'Approved';
+      if (updated) {
+        sendDecisionSignal({
+          id: updated.id,
+          full_name: updated.full_name,
+          email: updated.email,
+          program_type: updated.program_type,
+          degree_type: updated.degree_type
+        }, decisionType as 'Approved' | 'Rejected').catch(mailErr => {
+          console.warn('Decision email signal notice:', mailErr);
+        });
       }
     }
+
 
     return NextResponse.json({
       success: true,

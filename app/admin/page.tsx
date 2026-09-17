@@ -9,8 +9,9 @@ import {
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronLeft, ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
-  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare
+  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2
 } from 'lucide-react';
+
 import { exportApplicantsToCSVString } from '@/lib/csv';
 
 interface Application {
@@ -110,7 +111,9 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'chat' | 'media' | 'courses' | 'news' | 'settings' | 'admins'>('overview');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [updatingAppId, setUpdatingAppId] = useState<number | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
 
   // Data States
   const [stats, setStats] = useState<any>(null);
@@ -436,7 +439,17 @@ export default function AdminDashboardPage() {
 
   // 1. APPLICATION ACTIONS
   const updateAppStatus = async (id: number, newStatus: 'Approved' | 'Rejected' | 'Under Review') => {
-    setActionLoading(true);
+    const prevApp = applications.find(a => a.id === id);
+    const prevStatus = prevApp?.admission_status;
+
+    // Instant Optimistic State Update for zero latency
+    setUpdatingAppId(id);
+    setApplications(prev => prev.map(a => a.id === id ? { ...a, admission_status: newStatus } : a));
+    if (selectedApp && selectedApp.id === id) {
+      setSelectedApp(prev => prev ? { ...prev, admission_status: newStatus } : null);
+    }
+    showNotification(`Applicant #${id} marked as "${newStatus}".`);
+
     try {
       const res = await fetch('/api/admin/applications', {
         method: 'PUT',
@@ -445,24 +458,34 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({ id, admission_status: newStatus })
       });
       const data = await res.json();
-      if (data.success) {
-        showNotification(`Application #${id} has been marked as ${newStatus}. Email signal sent!`);
-        setApplications(prev => prev.map(a => a.id === id ? { ...a, admission_status: newStatus } : a));
-        if (selectedApp && selectedApp.id === id) {
-          setSelectedApp({ ...selectedApp, admission_status: newStatus });
+      if (!data.success) {
+        // Rollback on server failure
+        if (prevStatus) {
+          setApplications(prev => prev.map(a => a.id === id ? { ...a, admission_status: prevStatus } : a));
+          if (selectedApp && selectedApp.id === id) {
+            setSelectedApp(prev => prev ? { ...prev, admission_status: prevStatus } : null);
+          }
         }
+        showNotification(data.message || 'Status update failed.', 'error');
+      } else {
         fetch('/api/admin/emails', { headers: getAuthHeaders(), credentials: 'include' }).then(r => r.json()).then(res => {
           if (res.success) setEmailLogs(res.data || []);
-        });
-      } else {
-        showNotification(data.message || 'Update failed', 'error');
+        }).catch(() => {});
       }
-    } catch {
-      showNotification('Error updating application.', 'error');
+    } catch (err: any) {
+      // Rollback on network error
+      if (prevStatus) {
+        setApplications(prev => prev.map(a => a.id === id ? { ...a, admission_status: prevStatus } : a));
+        if (selectedApp && selectedApp.id === id) {
+          setSelectedApp(prev => prev ? { ...prev, admission_status: prevStatus } : null);
+        }
+      }
+      showNotification('Network communication error updating status.', 'error');
     } finally {
-      setActionLoading(false);
+      setUpdatingAppId(null);
     }
   };
+
 
   const togglePaymentStatus = async (id: number, currentPayment: string) => {
     const nextPayment = currentPayment === 'Paid' ? 'Pending' : 'Paid';
@@ -2692,49 +2715,64 @@ export default function AdminDashboardPage() {
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', alignItems: 'center' }}>
                                 {app.admission_status !== 'Approved' && (
                                   <button
-                                    onClick={() => updateAppStatus(app.id, 'Approved')}
-                                    disabled={actionLoading}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateAppStatus(app.id, 'Approved');
+                                    }}
+                                    disabled={updatingAppId === app.id}
                                     style={{
-                                      background: '#10B981',
+                                      background: updatingAppId === app.id ? '#6EE7B7' : '#10B981',
                                       color: '#FFFFFF',
                                       border: 'none',
-                                      padding: '6px 10px',
+                                      padding: '7px 11px',
                                       borderRadius: '6px',
-                                      fontWeight: 700,
-                                      fontSize: '0.76rem',
-                                      cursor: 'pointer',
+                                      fontWeight: 800,
+                                      fontSize: '0.78rem',
+                                      cursor: updatingAppId === app.id ? 'wait' : 'pointer',
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '4px'
+                                      justifyContent: 'center',
+                                      gap: '4px',
+                                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+                                      transition: 'all 0.15s ease'
                                     }}
                                     title="Approve applicant"
                                   >
-                                    <Check size={13} />
+                                    {updatingAppId === app.id ? <Loader2 size={13} className="spin" /> : <Check size={13} strokeWidth={2.8} />}
                                   </button>
                                 )}
 
                                 {app.admission_status !== 'Rejected' && (
                                   <button
-                                    onClick={() => updateAppStatus(app.id, 'Rejected')}
-                                    disabled={actionLoading}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateAppStatus(app.id, 'Rejected');
+                                    }}
+                                    disabled={updatingAppId === app.id}
                                     style={{
-                                      background: '#EF4444',
+                                      background: updatingAppId === app.id ? '#FCA5A5' : '#EF4444',
                                       color: '#FFFFFF',
                                       border: 'none',
-                                      padding: '6px 10px',
+                                      padding: '7px 11px',
                                       borderRadius: '6px',
-                                      fontWeight: 700,
-                                      fontSize: '0.76rem',
-                                      cursor: 'pointer',
+                                      fontWeight: 800,
+                                      fontSize: '0.78rem',
+                                      cursor: updatingAppId === app.id ? 'wait' : 'pointer',
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '4px'
+                                      justifyContent: 'center',
+                                      gap: '4px',
+                                      boxShadow: '0 2px 6px rgba(239, 68, 68, 0.3)',
+                                      transition: 'all 0.15s ease'
                                     }}
                                     title="Reject applicant"
                                   >
-                                    <X size={13} />
+                                    {updatingAppId === app.id ? <Loader2 size={13} className="spin" /> : <X size={13} strokeWidth={2.8} />}
                                   </button>
                                 )}
+
 
                                 <button
                                   onClick={() => setSelectedApp(app)}
@@ -3140,23 +3178,52 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
 
-                  <div style={{ marginTop: '28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ marginTop: '28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button
+                        type="button"
                         onClick={() => updateAppStatus(selectedApp.id, 'Approved')}
-                        disabled={actionLoading}
-                        style={{ flex: 1, padding: '12px', background: '#10B981', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                        disabled={updatingAppId === selectedApp.id}
+                        style={{ 
+                          flex: 1, 
+                          padding: '12px', 
+                          background: updatingAppId === selectedApp.id ? '#6EE7B7' : '#10B981', 
+                          color: '#FFF', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          fontWeight: 800, 
+                          cursor: updatingAppId === selectedApp.id ? 'wait' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
                       >
-                        ✓ Approve Applicant
+                        {updatingAppId === selectedApp.id ? <Loader2 size={16} className="spin" /> : '✓ Approve Applicant'}
                       </button>
                       <button
+                        type="button"
                         onClick={() => updateAppStatus(selectedApp.id, 'Rejected')}
-                        disabled={actionLoading}
-                        style={{ flex: 1, padding: '12px', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+                        disabled={updatingAppId === selectedApp.id}
+                        style={{ 
+                          flex: 1, 
+                          padding: '12px', 
+                          background: updatingAppId === selectedApp.id ? '#FCA5A5' : '#EF4444', 
+                          color: '#FFF', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          fontWeight: 800, 
+                          cursor: updatingAppId === selectedApp.id ? 'wait' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
                       >
-                        ✕ Reject Applicant
+                        {updatingAppId === selectedApp.id ? <Loader2 size={16} className="spin" /> : '✕ Reject Applicant'}
                       </button>
                     </div>
+
 
                     <button
                       type="button"
