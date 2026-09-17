@@ -138,6 +138,7 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!isOpen || !sessionId) return;
     const interval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await fetch(`/api/chat?sessionId=${sessionId}`);
         const data = await res.json();
@@ -161,10 +162,11 @@ export default function ChatWidget() {
           });
         }
       } catch {}
-    }, 3500);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [isOpen, sessionId]);
+
 
   // Global hotkey Ctrl+J / Cmd+J
   useEffect(() => {

@@ -76,31 +76,38 @@ export default function HomePage() {
   // Auto-play video when scrolled into view and pause when scrolled past
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const playPromise = video.play();
-            if (playPromise !== undefined) {
-              playPromise
-                .then(() => setIsPlaying(true))
-                .catch(() => {});
-            }
-          } else {
-            video.pause();
-            setIsPlaying(false);
-          }
-        });
-      },
-      { threshold: 0.35 }
-    );
+    let observer: IntersectionObserver | null = null;
+    try {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            try {
+              if (entry.isIntersecting) {
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                  playPromise
+                    .then(() => setIsPlaying(true))
+                    .catch(() => {});
+                }
+              } else {
+                video.pause();
+                setIsPlaying(false);
+              }
+            } catch {}
+          });
+        },
+        { threshold: 0.35 }
+      );
 
-    observer.observe(video);
+      observer.observe(video);
+    } catch {}
 
     return () => {
-      observer.disconnect();
+      if (observer) {
+        try { observer.disconnect(); } catch {}
+      }
     };
   }, []);
 
@@ -262,31 +269,31 @@ export default function HomePage() {
       </section>
 
       {/* 2. STATS ROW */}
-      <section className="bg-light-section" style={{ padding: '40px 0', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', background: '#FFFFFF' }}>
+      <section className="bg-light-section stats-section" style={{ padding: '40px 0', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', background: '#FFFFFF' }}>
         <div className="container">
-          <div className="grid-4" style={{ textAlign: 'center' }}>
-            <div>
-              <h3 style={{ fontSize: '38px', fontWeight: 800, color: '#081F3E' }}>2024</h3>
-              <p style={{ color: '#64748B', fontWeight: 600, fontSize: '0.85rem', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Year Established</p>
+          <div className="stats-row-grid">
+            <div className="stat-item">
+              <h3 className="stat-number">2024</h3>
+              <p className="stat-label">Year Established</p>
             </div>
-            <div>
-              <h3 style={{ fontSize: '38px', fontWeight: 800, color: '#081F3E' }}>500+</h3>
-              <p style={{ color: '#64748B', fontWeight: 600, fontSize: '0.85rem', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trained Graduates</p>
+            <div className="stat-item">
+              <h3 className="stat-number">500+</h3>
+              <p className="stat-label">Trained Graduates</p>
             </div>
-            <div>
-              <h3 style={{ fontSize: '38px', fontWeight: 800, color: '#081F3E' }}>95%</h3>
-              <p style={{ color: '#64748B', fontWeight: 600, fontSize: '0.85rem', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Career Landing Rate</p>
+            <div className="stat-item">
+              <h3 className="stat-number">95%</h3>
+              <p className="stat-label">Career Landing Rate</p>
             </div>
-            <div>
-              <h3 style={{ fontSize: '38px', fontWeight: 800, color: '#081F3E' }}>100%</h3>
-              <p style={{ color: '#64748B', fontWeight: 600, fontSize: '0.85rem', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Practical &amp; Labs-Based</p>
+            <div className="stat-item">
+              <h3 className="stat-number">100%</h3>
+              <p className="stat-label">Practical &amp; Labs-Based</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* 3. VIDEO PRESENTATION: LIAH IN ACTION */}
-      <section className="section-padding" style={{ background: '#081F3E', color: '#F8FAFC' }}>
+      <section className="section-padding video-presentation-section" style={{ background: '#081F3E', color: '#F8FAFC' }}>
         <div className="container">
           <div className="section-header" style={{ textAlign: 'center', marginBottom: '36px' }}>
             <span style={{ 
@@ -313,6 +320,7 @@ export default function HomePage() {
           </div>
 
           <div 
+            className="video-player-wrapper"
             style={{ 
               maxWidth: '960px', 
               margin: '0 auto', 
@@ -374,7 +382,7 @@ export default function HomePage() {
               muted
               playsInline
               preload="metadata"
-              style={{ display: 'block', width: '100%', maxHeight: '540px', objectFit: 'cover' }}
+              style={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover' }}
             >
               <source src="/assets/videos/video.mp4" type="video/mp4" />
               Your browser does not support the video tag.
@@ -651,9 +659,9 @@ export default function HomePage() {
       </section>
 
       {/* 5. CORPORATE SERVICES DIVISION (Enterprise software & services from Buea) */}
-      <section className="section-padding" style={{ background: '#041021', color: '#F8FAFC', position: 'relative', overflow: 'hidden' }}>
+      <section className="corporate-section">
         {/* Animated WebThreads Interactive Canvas */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.9, pointerEvents: 'auto' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.9, pointerEvents: 'none' }}>
           <WebThreads
             color1="#5227FF"
             color2="#FF9FFC"
@@ -680,148 +688,68 @@ export default function HomePage() {
         </div>
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <div className="grid-2" style={{ alignItems: 'center', gap: '60px' }}>
+          <div className="corporate-grid">
             {/* Left Column: Heading, description and button */}
             <div>
-              <span style={{ 
-                display: 'inline-block', 
-                background: 'rgba(245, 166, 35, 0.15)', 
-                color: '#F5A623', 
-                padding: '4px 12px', 
-                borderRadius: '4px', 
-                fontFamily: 'var(--font-mono)', 
-                fontSize: '0.72rem', 
-                fontWeight: 800, 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.06em', 
-                marginBottom: '16px' 
-              }}>
+              <span className="corporate-badge">
                 CORPORATE DIVISION
               </span>
-              <h2 style={{ color: '#F8FAFC', fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', fontWeight: 800, lineHeight: '1.25', marginBottom: '20px' }}>
+              <h2 className="corporate-title">
                 Enterprise software &amp; services from Buea
               </h2>
-              <p style={{ color: '#94A3B8', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '32px' }}>
+              <p className="corporate-desc">
                 Liah Academy is both an academy and a company. Our professional services arm develops production applications, performs compliance audits, and provides technical consulting globally.
               </p>
               <a 
                 href={PARTNERSHIP_MAILTO_LINK}
-                className="btn" 
-                style={{ 
-                  background: '#F5A623', 
-                  color: '#081F3E', 
-                  padding: '14px 28px', 
-                  borderRadius: '8px', 
-                  fontWeight: 800, 
-                  fontSize: '0.95rem',
-                  display: 'inline-block',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 15px rgba(245, 166, 35, 0.35)'
-                }}
+                className="corporate-btn"
               >
                 Partner With Us
               </a>
             </div>
 
             {/* Right Column: 3 Service cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="corporate-cards-list">
               {/* Card 1 */}
-              <div style={{ 
-                background: 'rgba(8, 31, 62, 0.6)', 
-                border: '1px solid rgba(255, 255, 255, 0.08)', 
-                borderRadius: '12px', 
-                padding: '24px 28px',
-                display: 'flex',
-                gap: '18px',
-                alignItems: 'flex-start'
-              }}>
-                <div style={{ 
-                  width: '42px', 
-                  height: '42px', 
-                  borderRadius: '8px', 
-                  background: 'rgba(245, 166, 35, 0.15)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#F5A623',
-                  flexShrink: 0,
-                  marginTop: '2px'
-                }}>
+              <div className="corporate-card">
+                <div className="corporate-card-icon">
                   <Shield size={20} />
                 </div>
                 <div>
-                  <h4 style={{ color: '#F8FAFC', fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <h4 className="corporate-card-title">
                     Network Defense &amp; Infrastructure Audits
                   </h4>
-                  <p style={{ color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
+                  <p className="corporate-card-desc">
                     Secure your corporate assets. We perform detailed security evaluations, network setups, and vulnerability logs.
                   </p>
                 </div>
               </div>
 
               {/* Card 2 */}
-              <div style={{ 
-                background: 'rgba(8, 31, 62, 0.6)', 
-                border: '1px solid rgba(255, 255, 255, 0.08)', 
-                borderRadius: '12px', 
-                padding: '24px 28px',
-                display: 'flex',
-                gap: '18px',
-                alignItems: 'flex-start'
-              }}>
-                <div style={{ 
-                  width: '42px', 
-                  height: '42px', 
-                  borderRadius: '8px', 
-                  background: 'rgba(245, 166, 35, 0.15)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#F5A623',
-                  flexShrink: 0,
-                  marginTop: '2px'
-                }}>
+              <div className="corporate-card">
+                <div className="corporate-card-icon">
                   <Users size={20} />
                 </div>
                 <div>
-                  <h4 style={{ color: '#F8FAFC', fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <h4 className="corporate-card-title">
                     Corporate IT Training &amp; Bootcamps
                   </h4>
-                  <p style={{ color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
+                  <p className="corporate-card-desc">
                     Upskill your workforce with hands-on, academy-led masterclasses on cloud, cybersecurity, and data analysis.
                   </p>
                 </div>
               </div>
 
               {/* Card 3 */}
-              <div style={{ 
-                background: 'rgba(8, 31, 62, 0.6)', 
-                border: '1px solid rgba(255, 255, 255, 0.08)', 
-                borderRadius: '12px', 
-                padding: '24px 28px',
-                display: 'flex',
-                gap: '18px',
-                alignItems: 'flex-start'
-              }}>
-                <div style={{ 
-                  width: '42px', 
-                  height: '42px', 
-                  borderRadius: '8px', 
-                  background: 'rgba(245, 166, 35, 0.15)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#F5A623',
-                  flexShrink: 0,
-                  marginTop: '2px'
-                }}>
+              <div className="corporate-card">
+                <div className="corporate-card-icon">
                   <Code size={20} />
                 </div>
                 <div>
-                  <h4 style={{ color: '#F8FAFC', fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
+                  <h4 className="corporate-card-title">
                     Custom Software Engineering
                   </h4>
-                  <p style={{ color: '#94A3B8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
+                  <p className="corporate-card-desc">
                     We design and construct scalable enterprise software, mobile apps, and robust API frameworks for global companies.
                   </p>
                 </div>
@@ -858,23 +786,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid-3" style={{ alignItems: 'stretch' }}>
+          <div className="news-articles-grid">
             {newsArticles.map((article) => (
               <div 
                 key={article.id} 
-                className="premium-card" 
-                style={{ 
-                  borderRadius: '16px', 
-                  padding: '20px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  justifyContent: 'space-between',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                  border: '1px solid rgba(15, 23, 42, 0.08)'
-                }}
+                className="news-article-card"
               >
                 <div>
-                  <div style={{ position: 'relative', height: '240px', borderRadius: '10px', overflow: 'hidden', marginBottom: '18px' }}>
+                  <div className="news-article-img">
                     <Image 
                       src={article.image} 
                       alt={article.title} 
@@ -882,28 +801,20 @@ export default function HomePage() {
                       style={{ objectFit: 'cover' }} 
                     />
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                  <span className="news-article-date">
                     {article.date}
                   </span>
-                  <h3 style={{ color: '#081F3E', fontSize: '1.15rem', fontWeight: 700, lineHeight: '1.4', marginBottom: '10px' }}>
+                  <h3 className="news-article-title">
                     {article.title}
                   </h3>
-                  <p style={{ color: '#64748B', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: '20px' }}>
+                  <p className="news-article-excerpt">
                     {article.excerpt}
                   </p>
                 </div>
 
                 <Link 
                   href={article.link} 
-                  style={{ 
-                    color: '#B45309', 
-                    fontWeight: 700, 
-                    fontSize: '0.9rem', 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '4px',
-                    textDecoration: 'none'
-                  }}
+                  className="news-article-link"
                 >
                   Read Full Story &rarr;
                 </Link>
@@ -933,22 +844,11 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="grid-4" style={{ gap: '20px' }}>
+          <div className="partners-row-grid">
             {partners.map((partner, pIdx) => (
               <div 
                 key={pIdx} 
-                style={{ 
-                  background: 'rgba(8, 31, 62, 0.6)', 
-                  border: '1px solid rgba(245, 166, 35, 0.25)', 
-                  borderRadius: '10px', 
-                  padding: '24px 20px', 
-                  textAlign: 'center',
-                  color: '#93C5FD',
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  letterSpacing: '0.05em',
-                  fontFamily: 'var(--font-mono)'
-                }}
+                className="partner-badge-card"
               >
                 {partner}
               </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
+import { sanitizeInput } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,12 +40,13 @@ export async function POST(request: Request) {
     } catch {
       body = {};
     }
-    const query = typeof body?.query === 'string' ? body.query : '';
-    const incomingSessionId = typeof body?.sessionId === 'string' ? body.sessionId.trim() : '';
+    const query = sanitizeInput(body?.query);
+    const incomingSessionId = sanitizeInput(body?.sessionId);
     const sessionId = incomingSessionId || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    const userName = typeof body?.userName === 'string' ? body.userName.trim() : '';
-    const userEmail = typeof body?.userEmail === 'string' ? body.userEmail.trim() : '';
-    const userPhone = typeof body?.userPhone === 'string' ? body.userPhone.trim() : '';
+    const userName = sanitizeInput(body?.userName);
+    const userEmail = sanitizeInput(body?.userEmail);
+    const userPhone = sanitizeInput(body?.userPhone);
+
 
     if (!query || !query.trim()) {
       return NextResponse.json({ 

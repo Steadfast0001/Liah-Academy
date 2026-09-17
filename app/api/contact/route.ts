@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sendInquirySignals } from '@/lib/email';
+import { sanitizeInput } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, subject, message } = body;
+    const name = sanitizeInput(body.name);
+    const email = sanitizeInput(body.email);
+    const subject = sanitizeInput(body.subject) || 'General Inquiry';
+    const message = sanitizeInput(body.message);
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -17,7 +21,8 @@ export async function POST(request: Request) {
     const result = db.prepare(`
       INSERT INTO inquiries (name, email, subject, message)
       VALUES (?, ?, ?, ?)
-    `).run(name, email, subject || 'General Inquiry', message);
+    `).run(name, email, subject, message);
+
 
     const inquiryId = result.lastInsertRowid;
 

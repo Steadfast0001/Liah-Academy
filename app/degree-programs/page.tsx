@@ -34,7 +34,7 @@ export interface CurriculumTrack {
   }[];
 }
 
-export const curriculumTracksData: CurriculumTrack[] = [
+const curriculumTracksData: CurriculumTrack[] = [
   {
     id: 'devops',
     title: 'DevOps & Cloud Systems',

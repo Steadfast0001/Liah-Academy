@@ -1,15 +1,22 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sendApplicationSignals } from '@/lib/email';
-import { hashPassword } from '@/lib/security';
+import { hashPassword, sanitizeInput } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const fullname = body.fullname || body.full_name;
-    const { email, password, phone, degree_type, program_type, study_format, document_url, documents } = body;
+    const rawFullname = body.fullname || body.full_name;
+    const fullname = sanitizeInput(rawFullname);
+    const email = sanitizeInput(body.email)?.toLowerCase();
+    const password = body.password;
+    const phone = sanitizeInput(body.phone);
+    const degree_type = sanitizeInput(body.degree_type) || 'HND';
+    const program_type = sanitizeInput(body.program_type) || 'Software Engineering HND';
+    const study_format = sanitizeInput(body.study_format) || 'oncampus';
+    const { document_url, documents } = body;
 
     if (!fullname || !email || !password || !phone) {
       return NextResponse.json(
@@ -17,6 +24,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
 
     // Check if email already registered
     const existing = db.prepare('SELECT id FROM students WHERE email = ?').get(email) as { id: number } | undefined;

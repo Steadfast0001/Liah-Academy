@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // LIAH ACADEMY - PRODUCTION CPANEL SERVER (Phusion Passenger / Linux)
 // ============================================================================
 const http = require('http');
@@ -18,7 +18,7 @@ function log(msg, err) {
   console.log(line);
 }
 
-// 1. AUTO-FIX LINUX PERMISSIONS (Fixes EACCES: permission denied in .next)
+// 1. AUTO-FIX LINUX PERMISSIONS (Ensures .next, app, lib, components are readable)
 function fixPermissionsRecursive(dirPath) {
   try {
     fs.chmodSync(dirPath, 0o755);
@@ -37,11 +37,14 @@ function fixPermissionsRecursive(dirPath) {
   } catch (e) {}
 }
 
-const nextDir = path.join(appDir, '.next');
-if (fs.existsSync(nextDir)) {
-  fixPermissionsRecursive(nextDir);
-  log('Auto-repaired permissions on .next directory to 755/644');
+const keyDirs = ['.next', 'app', 'components', 'lib', 'public', 'data', 'scripts'];
+for (const dir of keyDirs) {
+  const target = path.join(appDir, dir);
+  if (fs.existsSync(target)) {
+    fixPermissionsRecursive(target);
+  }
 }
+log('Permissions self-healing completed for core directories');
 
 // 2. CHECK NEXT.JS RUNTIME
 let next;
@@ -63,12 +66,32 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
+// Block sensitive file requests directly
+const blockedPatterns = [
+  /^\/\.env/i,
+  /^\/\.git/i,
+  /^\/error_log\.txt/i,
+  /^\/stderr\.log/i,
+  /^\/ecosystem\.config\.js/i,
+  /^\/data\/.*\.sql$/i,
+  /^\/scripts\//i,
+];
+
 app.prepare()
   .then(() => {
     log('Next.js app.prepare() ready. Starting HTTP listener.');
     http.createServer((req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
+        const pathname = parsedUrl.pathname || '';
+
+        // Security check: block direct requests to sensitive internal files
+        if (blockedPatterns.some((pattern) => pattern.test(pathname))) {
+          res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('Access Denied');
+          return;
+        }
+
         handle(req, res, parsedUrl);
       } catch (err) {
         log('Request execution error on ' + req.url, err);
@@ -95,3 +118,4 @@ app.prepare()
       `);
     }).listen(port);
   });
+

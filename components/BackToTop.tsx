@@ -8,12 +8,8 @@ export default function BackToTop() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
-  // Do not render on admin portal
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   useEffect(() => {
+    if (pathname?.startsWith('/admin')) return;
     const handleScroll = () => {
       if (window.scrollY > 400) {
         setVisible(true);
@@ -24,7 +20,13 @@ export default function BackToTop() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [pathname]);
+
+  // Do not render on admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
 
   const scrollToTop = () => {
     window.scrollTo({

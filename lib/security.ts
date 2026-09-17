@@ -46,3 +46,40 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 export function needsRehash(storedHash: string): boolean {
   return !storedHash || !storedHash.startsWith('pbkdf2$');
 }
+
+/**
+ * Strips dangerous HTML tags and script injections from user input to prevent XSS.
+ */
+export function sanitizeInput(input: string | null | undefined): string {
+  if (!input || typeof input !== 'string') return '';
+  return input
+    .trim()
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/on\w+='[^']*'/gi, '')
+    .replace(/javascript:[^"']*/gi, '');
+}
+
+/**
+ * Recursively sanitizes all string properties in a payload object.
+ */
+export function sanitizeObject<T>(obj: T): T {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeObject(item)) as unknown as T;
+  }
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      result[key] = sanitizeInput(value);
+    } else if (typeof value === 'object' && value !== null) {
+      result[key] = sanitizeObject(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result as T;
+}
+
