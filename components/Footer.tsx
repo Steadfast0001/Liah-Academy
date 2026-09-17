@@ -91,9 +91,6 @@ export default function Footer() {
 
         <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <p style={{ margin: 0 }}>&copy; {currentYear} Liah Academy. All Rights Reserved. Built for high-performance scale.</p>
-          <Link href="/admin" style={{ color: '#F5A623', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            🔒 Admin Console
-          </Link>
         </div>
       </div>
     </footer>
