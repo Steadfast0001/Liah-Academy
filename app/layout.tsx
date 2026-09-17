@@ -32,6 +32,8 @@ export const metadata: Metadata = {
   }
 };
 
+import ErrorBoundary from '@/components/ErrorBoundary';
+
 export default function RootLayout({
   children,
 }: {
@@ -40,12 +42,29 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        {children}
-        <Footer />
-        <WhatsAppButton />
-        <ChatWidget />
-        <BackToTop />
+        <ErrorBoundary fallback={<div style={{ height: '70px', background: '#081F3E' }} />}>
+          <Header />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+
+        <ErrorBoundary fallback={null}>
+          <Footer />
+        </ErrorBoundary>
+
+        <ErrorBoundary fallback={null}>
+          <WhatsAppButton />
+        </ErrorBoundary>
+
+        <ErrorBoundary fallback={null}>
+          <ChatWidget />
+        </ErrorBoundary>
+
+        <ErrorBoundary fallback={null}>
+          <BackToTop />
+        </ErrorBoundary>
       </body>
     </html>
   );

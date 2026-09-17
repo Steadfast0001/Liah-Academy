@@ -2537,7 +2537,7 @@ export default function AdminDashboardPage() {
                                   </button>
 
                                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                    {app.documents && app.documents.length > 0 ? (
+                                    {Array.isArray(app.documents) && app.documents.length > 0 ? (
                                       app.documents.map((doc, dIdx) => (
                                         <button
                                           key={dIdx}
@@ -3058,7 +3058,7 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
 
-                    {selectedApp.documents && selectedApp.documents.length > 0 ? (
+                    {Array.isArray(selectedApp.documents) && selectedApp.documents.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {selectedApp.documents.map((doc, idx) => (
                           <div 
@@ -3549,7 +3549,7 @@ export default function AdminDashboardPage() {
 
                     {/* Messages Body */}
                     <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {(!selectedChatSession.messages || selectedChatSession.messages.length === 0) ? (
+                      {(!Array.isArray(selectedChatSession.messages) || selectedChatSession.messages.length === 0) ? (
                         <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: '40px' }}>
                           No messages yet in this session.
                         </div>
@@ -4486,7 +4486,7 @@ export default function AdminDashboardPage() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: '#FFFFFF', fontWeight: 800, fontSize: '0.8rem'
                             }}>
-                              {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              {(admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2).toUpperCase()}
                             </div>
                             <div>
                               <strong style={{ color: '#081F3E' }}>{admin.full_name}</strong>
@@ -4602,7 +4602,7 @@ export default function AdminDashboardPage() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: '#FFFFFF', fontWeight: 800, fontSize: '0.85rem'
                             }}>
-                              {admin.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              {(admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2).toUpperCase()}
                             </div>
                             <div>
                               <strong style={{ color: '#081F3E', display: 'block', fontSize: '0.95rem' }}>{admin.full_name}</strong>
