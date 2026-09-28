@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
+import { readDb, writeDb } from '@/lib/db';
 
 export interface EmailLog {
   id: string;
@@ -18,30 +17,22 @@ export function getAdminEmails(): string[] {
   const emails = new Set<string>();
 
   try {
-    const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
-    const dataDir = isServerless 
-      ? path.join(require('os').tmpdir(), 'liah_academy_data')
-      : path.join(process.cwd(), 'data');
-    const configPath = path.join(dataDir, 'liah_academy_store.json');
-
-    if (fs.existsSync(configPath)) {
-      const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-      // 1. Settings Admin Email (supports comma or space separated list)
-      if (data.settings && data.settings.admin_email) {
-        String(data.settings.admin_email)
-          .split(/[,;\s]+/)
-          .map(e => e.trim().toLowerCase())
-          .filter(e => e && e.includes('@'))
-          .forEach(e => emails.add(e));
-      }
-      // 2. All registered database admin accounts
-      if (Array.isArray(data.admins)) {
-        data.admins.forEach((admin: any) => {
-          if (admin && admin.email && typeof admin.email === 'string' && admin.email.includes('@')) {
-            emails.add(admin.email.trim().toLowerCase());
-          }
-        });
-      }
+    const store = readDb();
+    // 1. Settings Admin Email (supports comma or space separated list)
+    if (store.settings && store.settings.admin_email) {
+      String(store.settings.admin_email)
+        .split(/[,;\s]+/)
+        .map(e => e.trim().toLowerCase())
+        .filter(e => e && e.includes('@'))
+        .forEach(e => emails.add(e));
+    }
+    // 2. All registered database admin accounts
+    if (Array.isArray(store.admins)) {
+      store.admins.forEach((admin: any) => {
+        if (admin && admin.email && typeof admin.email === 'string' && admin.email.includes('@')) {
+          emails.add(admin.email.trim().toLowerCase());
+        }
+      });
     }
   } catch (e) {}
 
@@ -71,22 +62,7 @@ export function getAdminEmail(): string {
 // Log email event to file and data store
 export function logEmailEvent(log: Omit<EmailLog, 'id' | 'created_at'>) {
   try {
-    const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NEXT_RUNTIME === 'edge');
-    const dataDir = isServerless 
-      ? path.join(require('os').tmpdir(), 'liah_academy_data')
-      : path.join(process.cwd(), 'data');
-
-    if (!fs.existsSync(dataDir)) {
-      try { fs.mkdirSync(dataDir, { recursive: true }); } catch {}
-    }
-
-    const storePath = path.join(dataDir, 'liah_academy_store.json');
-    let store: any = { email_logs: [] };
-    if (fs.existsSync(storePath)) {
-      try {
-        store = JSON.parse(fs.readFileSync(storePath, 'utf-8'));
-      } catch {}
-    }
+    const store = readDb();
     if (!store.email_logs) store.email_logs = [];
 
     const newLog: EmailLog = {
@@ -96,20 +72,11 @@ export function logEmailEvent(log: Omit<EmailLog, 'id' | 'created_at'>) {
     };
 
     store.email_logs.unshift(newLog);
-    // Keep last 200 logs
-    if (store.email_logs.length > 200) {
-      store.email_logs = store.email_logs.slice(0, 200);
+    // Keep last 100 logs in-memory
+    if (store.email_logs.length > 100) {
+      store.email_logs = store.email_logs.slice(0, 100);
     }
-    try {
-      fs.writeFileSync(storePath, JSON.stringify(store, null, 2), 'utf-8');
-    } catch {}
-
-    // Also write to email_notifications.log text file if possible
-    try {
-      const logFilePath = path.join(dataDir, 'email_notifications.log');
-      const logLine = `[${newLog.created_at}] [${newLog.status.toUpperCase()}] TO: ${newLog.recipient} | TYPE: ${newLog.type} | SUBJECT: "${newLog.subject}"\n`;
-      fs.appendFileSync(logFilePath, logLine, 'utf-8');
-    } catch {}
+    writeDb(store, false);
 
     return newLog;
   } catch (err) {

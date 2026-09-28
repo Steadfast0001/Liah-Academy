@@ -405,18 +405,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const interval = setInterval(() => {
-      // Background silent polling to ensure paid statuses & live chats sync in real-time
+
+    // Chat polling every 4s for responsive real-time conversations
+    const chatInterval = setInterval(() => {
       const headers = getAuthHeaders();
-      fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
-        if (res.success) {
-          setStats(res.stats);
-          if (res.db_health) setDbHealth(res.db_health);
-        }
-      }).catch(() => {});
-      fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
-        if (res.success) setApplications(res.data || []);
-      }).catch(() => {});
       fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success && Array.isArray(res.sessions)) {
           setChatSessions(res.sessions);
@@ -428,8 +420,47 @@ export default function AdminDashboardPage() {
           });
         }
       }).catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
+    }, 4000);
+
+    // Applications & Stats polling every 10s to keep admin store synced with minimal overhead
+    const dataInterval = setInterval(() => {
+      const headers = getAuthHeaders();
+      fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
+        if (res.success) {
+          setStats(res.stats);
+          if (res.db_health) setDbHealth(res.db_health);
+        }
+      }).catch(() => {});
+      fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
+        if (res.success) setApplications(res.data || []);
+      }).catch(() => {});
+    }, 10000);
+
+    // Immediate sync when tab becomes visible or focused
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        const headers = getAuthHeaders();
+        fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
+          if (res.success) setApplications(res.data || []);
+        }).catch(() => {});
+        fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
+          if (res.success) {
+            setStats(res.stats);
+            if (res.db_health) setDbHealth(res.db_health);
+          }
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(chatInterval);
+      clearInterval(dataInterval);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
   }, [isAuthenticated]);
 
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {

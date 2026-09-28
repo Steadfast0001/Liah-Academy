@@ -17,80 +17,108 @@ export default function Footer() {
   }
 
   return (
-    <footer className="site-footer">
+    <footer className="york-footer">
       <div className="container">
-        <div className="footer-grid">
+        <div className="york-footer-grid">
           {/* Brand Column */}
-          <div>
-            <Link href="/" className="logo-link" style={{ marginBottom: '20px' }}>
-              <div className="site-logo-wrap" style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="york-footer-brand-col">
+            <Link href="/" className="logo-link" style={{ marginBottom: '16px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+              <div className="site-logo-wrap" style={{ position: 'relative', width: '56px', height: '56px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Image
                   src="/assets/images/logo.png"
                   alt="Liah Academy Logo"
-                  width={64}
-                  height={64}
-                  style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '64px', maxWidth: '64px' }}
+                  width={56}
+                  height={56}
+                  style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '56px', maxWidth: '56px' }}
                 />
               </div>
-              <span className="logo-text" style={{ fontSize: '1.45rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
-                Liah <span style={{ color: '#F5A623', marginLeft: '6px' }}>Academy</span>
+              <span className="logo-text" style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+                Liah <span style={{ color: '#F5A623', marginLeft: '4px' }}>Academy</span>
               </span>
             </Link>
-            <p style={{ fontSize: '0.95rem', lineHeight: '1.7', marginTop: '12px', color: '#CBD5E1' }}>
-              Buea&apos;s premier practical tech academy and software engineering company, training industry-ready tech specialists and building corporate-level solutions.
+            <p style={{ fontSize: '0.88rem', lineHeight: '1.65', marginTop: '12px', color: '#CBD5E1' }}>
+              Cameroon&apos;s premier practical tech academy and engineering institute in Silicon Mountain, Buea. Delivering career-focused diplomas, industry-certified tracks, and production software labs.
             </p>
-            <div style={{ marginTop: '20px' }}>
-              <SocialLinksList iconSize={18} />
+            <div style={{ marginTop: '18px' }}>
+              <SocialLinksList iconSize={16} />
             </div>
+          </div>
+
+          {/* Academic Programs */}
+          <div>
+            <h3 className="york-footer-heading">Programs</h3>
+            <ul className="york-footer-list">
+              <li><Link href="/programs/certifications">Certifications Programs</Link></li>
+              <li><Link href="/programs/hnd">HND Programs</Link></li>
+              <li><Link href="/programs/nd">ND Programs</Link></li>
+            </ul>
+          </div>
+
+          {/* Admissions */}
+          <div>
+            <h3 className="york-footer-heading">Admissions</h3>
+            <ul className="york-footer-list">
+              <li><Link href="/admissions#apply">Apply Now</Link></li>
+              <li><Link href="/portal">Student Portal</Link></li>
+              <li><Link href="/admissions">Tuition &amp; Fees</Link></li>
+              <li><Link href="/admissions#requirements">Entry Requirements</Link></li>
+              <li><Link href="/admissions#status">Application Status</Link></li>
+            </ul>
+          </div>
+
+          {/* About Us */}
+          <div>
+            <h3 className="york-footer-heading">About Us</h3>
+            <ul className="york-footer-list">
+              <li><Link href="/about">Who We Are</Link></li>
+              <li><Link href="/about#top-admin">Faculty &amp; Leadership</Link></li>
+              <li><Link href="/about#partnerships">Industry Partnerships</Link></li>
+              <li><Link href="/student-experience">Campus Facilities</Link></li>
+              <li><Link href="/about#highlights">News &amp; Media</Link></li>
+            </ul>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="footer-col-title">Academy Links</h3>
-            <ul className="footer-links">
-              <li><Link href="/about">About Liah</Link></li>
-              <li><Link href="/admissions">Admissions Portal</Link></li>
-              <li><Link href="/degree-programs">Degrees &amp; Programs</Link></li>
-              <li><Link href="/student-experience">Student Life</Link></li>
-              <li><Link href="/contact#inquiry">Direct Inquiry</Link></li>
-              <li><Link href="/contact">Campus Contact</Link></li>
+            <h3 className="york-footer-heading">Quick Links</h3>
+            <ul className="york-footer-list">
+              <li><Link href="/student-experience">Student Experience</Link></li>
+              <li><Link href="/contact#inquiry">Request Information</Link></li>
+              <li><Link href="/admissions#scholarships">Scholarships</Link></li>
+              <li><Link href="/contact">Campus Directions</Link></li>
+              <li><Link href="/contact#faq">Help &amp; FAQs</Link></li>
             </ul>
           </div>
 
-          {/* Academic Divisions */}
+          {/* Campus Contact */}
           <div>
-            <h3 className="footer-col-title">Programs</h3>
-            <ul className="footer-links">
-              <li><Link href="/degree-programs">Software Engineering (HND)</Link></li>
-              <li><Link href="/degree-programs">Cybersecurity &amp; Cloud Defense (HND)</Link></li>
-              <li><Link href="/degree-programs">DevOps &amp; Cloud Pipelines</Link></li>
-              <li><Link href="/degree-programs">Data Science &amp; ML Labs</Link></li>
-              <li><Link href="/about#partnerships">Corporate Innovations</Link></li>
-            </ul>
-          </div>
-
-          {/* Campus Contact Information */}
-          <div>
-            <h3 className="footer-col-title">Campus Contact</h3>
-            <ul className="footer-links" style={{ color: '#94A3B8', fontSize: '0.95rem' }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <MapPin size={18} color="#F5A623" style={{ flexShrink: 0, marginTop: '4px' }} />
+            <h3 className="york-footer-heading">Contact Us</h3>
+            <ul className="york-footer-list" style={{ fontSize: '0.86rem', color: '#CBD5E1' }}>
+              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <MapPin size={16} color="#F5A623" style={{ flexShrink: 0, marginTop: '3px' }} />
                 <span>Backweri Town, Buea, Southwest Region, Cameroon</span>
               </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Phone size={18} color="#F5A623" style={{ flexShrink: 0 }} />
-                <span>+237 652 154 095 / 699 526 607</span>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={16} color="#10B981" style={{ flexShrink: 0 }} />
+                <span>+237 652 154 095</span>
               </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Mail size={18} color="#F5A623" style={{ flexShrink: 0 }} />
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={16} color="#10B981" style={{ flexShrink: 0 }} />
+                <span>+237 699 526 607</span>
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Mail size={16} color="#F5A623" style={{ flexShrink: 0 }} />
                 <span>info@liahacademy.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <p style={{ margin: 0 }}>&copy; {currentYear} Liah Academy. All Rights Reserved. Built for high-performance scale.</p>
+        {/* Bottom Sub-Footer Bar */}
+        <div className="york-footer-bottom-bar" style={{ justifyContent: 'center', textAlign: 'center' }}>
+          <div>
+            &copy; {currentYear} Liah Academy - Institute of Higher Technology &amp; Innovation. All Rights Reserved.
+          </div>
         </div>
       </div>
     </footer>

@@ -2241,7 +2241,7 @@ h4 {
    ========================================================= */
 @page {
   size: A4 portrait;
-  margin: 6mm 8mm 6mm 8mm;
+  margin: 10mm;
 }
 
 @media print {
@@ -2251,74 +2251,85 @@ h4 {
 
   html, body {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #FFFFFF !important;
-    overflow: hidden !important;
-    page-break-before: avoid !important;
-    page-break-after: avoid !important;
-    break-before: avoid !important;
-    break-after: avoid !important;
+    color: #000000 !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything on the page completely */
-  body * {
+  /* Hide navigation, header, footer, floating buttons, chat, and non-print items */
+  header, footer, nav, .no-print, .whatsapp-floating-wrapper, .chat-widget-container, #hubspot-messages-iframe-container, .portal-dashboard-main {
+    display: none !important;
     visibility: hidden !important;
   }
 
-  /* Make ONLY the exact admission form card visible */
-  #admission-letter-card,
-  #admission-letter-card * {
-    visibility: visible !important;
+  /* Make modal container flow naturally on print page */
+  .admission-modal-backdrop {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
   }
 
-  /* Expand card to cleanly fill the printed A4 sheet */
-  #admission-letter-card {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
+  .admission-modal-wrapper {
+    position: static !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
     width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 20px 24px !important;
-    box-sizing: border-box !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Show and format ONLY the admission letter card */
+  #admission-letter-card {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 800px !important;
+    margin: 0 auto !important;
+    padding: 24px 28px !important;
     background: #FFFFFF !important;
     border: 2pt solid #081F3E !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    overflow: hidden !important;
     page-break-inside: avoid !important;
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
     break-inside: avoid !important;
-    break-after: avoid !important;
-    break-before: avoid !important;
   }
 
-  #admission-letter-card table,
-  #admission-letter-card .admission-doc-table {
+  #admission-letter-card * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #admission-letter-card table {
     display: table !important;
     width: 100% !important;
     border-collapse: collapse !important;
-    margin: 0 !important;
+    margin-bottom: 14px !important;
   }
 
-  #admission-letter-card table td,
-  #admission-letter-card .admission-doc-table td {
-    padding: 6px 10px !important;
+  #admission-letter-card table td {
+    padding: 8px 12px !important;
     font-size: 9.5pt !important;
-    line-height: 1.35 !important;
+    line-height: 1.4 !important;
   }
 
-  #admission-letter-card img,
-  #admission-letter-card .letterhead-logo {
+  #admission-letter-card img {
     max-height: 52px !important;
     width: auto !important;
   }
@@ -3195,4 +3206,758 @@ h4 {
     letter-spacing: 0 !important;
   }
 }
+
+/* ===================================================
+   YORKVILLE-INSPIRED ACADEMIC INTERFACE DESIGN SYSTEM
+   =================================================== */
+
+/* Top Utility Bar */
+.top-utility-bar {
+  background: #041021;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 0;
+  font-size: 0.82rem;
+  color: #94A3B8;
+}
+
+.top-utility-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-utility-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.top-utility-links a {
+  color: #CBD5E1;
+  font-size: 0.8rem;
+  transition: color 0.2s ease;
+}
+
+.top-utility-links a:hover {
+  color: #F5A623;
+}
+
+/* York Hero Section */
+.york-hero-section {
+  position: relative;
+  min-height: 540px;
+  height: 65vh;
+  max-height: 680px;
+  width: 100%;
+  overflow: hidden;
+  background: #041021;
+  display: flex;
+  align-items: center;
+}
+
+.york-hero-media-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.york-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(4, 16, 33, 0.92) 0%,
+    rgba(4, 16, 33, 0.75) 45%,
+    rgba(4, 16, 33, 0.3) 100%
+  );
+  z-index: 2;
+}
+
+.york-hero-content {
+  position: relative;
+  z-index: 3;
+  max-width: 680px;
+  padding: 40px 0;
+}
+
+.york-hero-kicker {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #F5A623;
+  margin-bottom: 14px;
+  display: inline-block;
+}
+
+.york-hero-title {
+  font-size: clamp(2rem, 4.2vw, 3.4rem);
+  line-height: 1.18;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+  font-family: var(--font-heading);
+}
+
+.york-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #0284C7;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+.york-hero-btn:hover {
+  background: #0369A1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+  color: #FFFFFF;
+}
+
+.york-hero-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+.york-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.york-dot.active {
+  background: #FFFFFF;
+  width: 24px;
+  border-radius: 6px;
+}
+
+/* Impact Statistics Bar */
+.stats-impact-bar {
+  background: #081F3E;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 34px 0;
+  color: #FFFFFF;
+}
+
+.stats-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  text-align: center;
+}
+
+.stats-impact-item {
+  padding: 0 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.stats-impact-item:last-child {
+  border-right: none;
+}
+
+.stats-impact-num {
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 800;
+  color: #F5A623;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.stats-impact-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #CBD5E1;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  line-height: 1.35;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+/* Mission & Value Prop Section */
+.york-mission-section {
+  padding: 70px 0 50px;
+  background: #FFFFFF;
+  text-align: center;
+}
+
+.york-mission-title {
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  font-weight: 800;
+  color: #081F3E;
+  margin-bottom: 18px;
+  letter-spacing: -0.02em;
+}
+
+.york-mission-text {
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  line-height: 1.75;
+  color: #475569;
+  max-width: 820px;
+  margin: 0 auto 30px;
+}
+
+.york-mission-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #081F3E;
+  color: #F5A623;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 12px 26px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.york-mission-btn:hover {
+  background: #041021;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+/* Academic Program Directory Columns */
+.york-programs-directory {
+  padding: 20px 0 70px;
+  background: #FFFFFF;
+}
+
+.york-programs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.york-program-col-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #081F3E;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.york-program-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.york-program-link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  color: #081F3E;
+  font-weight: 700;
+  font-size: 0.98rem;
+  transition: all 0.2s ease;
+}
+
+.york-program-link-item:hover {
+  background: #FFFDF5;
+  border-color: #F5A623;
+  color: #081F3E;
+  padding-left: 22px;
+}
+
+/* Laurel Ribbon / Accreditation Bar */
+.laurel-ribbon-section {
+  background: #081F3E;
+  border-top: 1px solid rgba(245, 166, 35, 0.3);
+  border-bottom: 1px solid rgba(245, 166, 35, 0.3);
+  padding: 30px 0;
+}
+
+.laurel-ribbon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.laurel-badge-item {
+  text-align: center;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.laurel-badge-icon {
+  color: #F5A623;
+}
+
+.laurel-badge-text {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #FFFFFF;
+  line-height: 1.35;
+}
+
+/* Alumni Showcase Section */
+.alumni-showcase-section {
+  padding: 70px 0;
+  background: #FFFFFF;
+}
+
+.alumni-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.alumni-title {
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 800;
+  color: #081F3E;
+}
+
+.alumni-cards-slider-wrap {
+  position: relative;
+}
+
+.alumni-cards-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 18px;
+}
+
+.alumni-portrait-card {
+  background: #F8FAFC;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.alumni-portrait-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(8, 31, 62, 0.12);
+  border-color: #F5A623;
+}
+
+.alumni-photo-box {
+  position: relative;
+  height: 220px;
+  width: 100%;
+  background: #041021;
+}
+
+.alumni-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  background: #F5A623;
+  color: #081F3E;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.5);
+  transition: all 0.2s ease;
+}
+
+.alumni-portrait-card:hover .alumni-play-btn {
+  background: #FFFFFF;
+  color: #081F3E;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.alumni-card-info {
+  padding: 14px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.alumni-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #081F3E;
+  margin-bottom: 4px;
+}
+
+.alumni-credential {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+/* Feature 3-Pillar Cards: "Your Path. Your Pace. Your Advantage." */
+.york-features-section {
+  padding: 70px 0;
+  background: #F8FAFC;
+}
+
+.york-features-header {
+  text-align: center;
+  margin-bottom: 44px;
+}
+
+.york-features-title {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: #081F3E;
+}
+
+.york-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.york-feature-box {
+  background: #FFFFFF;
+  border: 1.5px solid #10B981;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.york-feature-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.15);
+  border-color: #059669;
+}
+
+.york-feature-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ECFDF5;
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.york-feature-heading {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #10B981;
+  margin-bottom: 12px;
+}
+
+.york-feature-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #475569;
+}
+
+/* Full Width Support CTA Banner */
+.york-full-cta-banner {
+  background: #081F3E;
+  padding: 60px 0;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.york-full-cta-title {
+  font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-bottom: 24px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.york-full-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #FFFFFF;
+  border: 1.5px solid #FFFFFF;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.york-full-cta-btn:hover {
+  background: #FFFFFF;
+  color: #081F3E;
+}
+
+/* Latest News & Student Success Sections */
+.york-news-section {
+  padding: 70px 0;
+  background: #FFFFFF;
+}
+
+.york-news-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.york-news-title {
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 800;
+  color: #081F3E;
+}
+
+.york-view-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #081F3E;
+  color: #F5A623;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.york-view-more-btn:hover {
+  background: #041021;
+  color: #FFFFFF;
+}
+
+.york-news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+
+.york-news-card {
+  background: #FFFFFF;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.york-news-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(8, 31, 62, 0.08);
+  border-color: #F5A623;
+}
+
+.york-news-img-box {
+  position: relative;
+  height: 200px;
+  width: 100%;
+  background: #041021;
+}
+
+.york-news-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.york-news-category {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #F5A623;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.york-news-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #081F3E;
+  margin-bottom: 10px;
+}
+
+.york-news-card-excerpt {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #64748B;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+/* Multi-Column Academic Footer */
+.york-footer {
+  background: #081F3E;
+  color: #FFFFFF;
+  padding: 60px 0 24px;
+  border-top: 1px solid rgba(245, 166, 35, 0.2);
+}
+
+.york-footer-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 1.2fr;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+.york-footer-brand-col {
+  padding-right: 20px;
+}
+
+.york-footer-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #F5A623;
+  margin-bottom: 18px;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.york-footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.york-footer-list a {
+  color: #CBD5E1;
+  font-size: 0.88rem;
+  transition: color 0.2s ease;
+}
+
+.york-footer-list a:hover {
+  color: #F5A623;
+  padding-left: 2px;
+}
+
+.york-footer-bottom-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.82rem;
+  color: #94A3B8;
+}
+
+.york-footer-legal-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.york-footer-legal-links a {
+  color: #94A3B8;
+  font-size: 0.82rem;
+}
+
+.york-footer-legal-links a:hover {
+  color: #FFFFFF;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+  .stats-impact-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px 20px;
+  }
+  .stats-impact-item:nth-child(2) {
+    border-right: none;
+  }
+  .york-programs-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .laurel-ribbon-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .york-features-grid {
+    grid-template-columns: 1fr;
+  }
+  .york-news-grid {
+    grid-template-columns: 1fr;
+  }
+  .york-footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-impact-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .stats-impact-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 18px;
+  }
+  .stats-impact-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .laurel-ribbon-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .york-hero-section {
+    min-height: 480px;
+    height: auto;
+  }
+  .york-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
 

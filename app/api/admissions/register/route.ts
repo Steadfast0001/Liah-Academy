@@ -71,20 +71,22 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString()
     };
 
-    // Dispatch email signals in background (non-blocking)
-    try {
-      sendApplicationSignals({
-        id: studentId,
-        full_name: fullname,
-        email,
-        phone,
-        degree_type: degree_type || 'HND',
-        program_type: program_type || 'Software Engineering HND',
-        study_format: study_format || 'oncampus'
-      }).catch(mailErr => {
-        console.warn('Notification email dispatch notice:', mailErr);
-      });
-    } catch {}
+    // Dispatch email signals in background (completely non-blocking)
+    setImmediate(() => {
+      try {
+        sendApplicationSignals({
+          id: studentId,
+          full_name: fullname,
+          email,
+          phone,
+          degree_type: degree_type || 'HND',
+          program_type: program_type || 'Software Engineering HND',
+          study_format: study_format || 'oncampus'
+        }).catch(mailErr => {
+          console.warn('Notification email dispatch notice:', mailErr);
+        });
+      } catch {}
+    });
 
     return NextResponse.json({
       success: true,

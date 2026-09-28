@@ -11,6 +11,8 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
+  const [programsDropdownOpen, setProgramsDropdownOpen] = useState(false);
+  const [admissionsDropdownOpen, setAdmissionsDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Lock body scroll when mobile menu is open
@@ -46,6 +48,8 @@ export default function Header() {
   const closeAll = () => {
     setMobileMenuOpen(false);
     setAboutDropdownOpen(false);
+    setProgramsDropdownOpen(false);
+    setAdmissionsDropdownOpen(false);
   };
 
   // Do not render public site header inside the Admin portal
@@ -55,17 +59,39 @@ export default function Header() {
 
   return (
     <>
+      {/* Top Utility Bar */}
+      <div className="top-utility-bar">
+        <div className="container top-utility-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ color: '#F5A623', fontWeight: 700, letterSpacing: '0.04em' }}>
+              ✦ ADMISSIONS OPEN: FALL 2026 / SPRING 2027
+            </span>
+            <span style={{ color: '#64748B' }}>|</span>
+            <span style={{ color: '#94A3B8' }}>Bakweri Town Campus, Buea</span>
+          </div>
+          <div className="top-utility-links">
+            <Link href="/portal" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <UserCheck size={13} color="#F5A623" /> Student Portal
+            </Link>
+            <Link href="/contact#inquiry">Request Info</Link>
+            <a href="tel:+237699526607" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Phone size={13} color="#10B981" /> +237 699 526 607
+            </a>
+          </div>
+        </div>
+      </div>
+
       <header className="site-header">
         <div className="header-container">
           {/* Logo */}
           <Link href="/" className="logo-link" onClick={closeAll}>
-            <div className="site-logo-wrap" style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="site-logo-wrap" style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Image
                 src="/assets/images/logo.png"
                 alt="Liah Academy Logo"
-                width={68}
-                height={68}
-                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '68px', maxWidth: '68px' }}
+                width={64}
+                height={64}
+                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '64px', maxWidth: '64px' }}
                 priority
               />
             </div>
@@ -129,16 +155,67 @@ export default function Header() {
                 </Link>
               </li>
 
-              <li className={`menu-item ${isActive('/degree-programs') ? 'active' : ''}`}>
-                <Link href="/degree-programs" className="menu-link" onClick={closeAll}>
-                  Degree &amp; Programs
-                </Link>
+              {/* Programs dropdown */}
+              <li 
+                className={`menu-item has-dropdown ${isActive('/programs') ? 'active' : ''} ${programsDropdownOpen ? 'dropdown-open' : ''}`}
+                onMouseEnter={() => setProgramsDropdownOpen(true)}
+                onMouseLeave={() => setProgramsDropdownOpen(false)}
+              >
+                <div 
+                  className="menu-link" 
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onClick={() => setProgramsDropdownOpen(!programsDropdownOpen)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  Programs <ChevronDown size={14} style={{ transform: programsDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                </div>
+                <ul className="dropdown-menu">
+                  <li className="dropdown-item">
+                    <Link href="/programs/hnd" onClick={closeAll}>
+                      HND Programs
+                    </Link>
+                  </li>
+                  <li className="dropdown-item">
+                    <Link href="/programs/certifications" onClick={closeAll}>
+                      Certification Programs
+                    </Link>
+                  </li>
+                  <li className="dropdown-item">
+                    <Link href="/programs/nd" onClick={closeAll}>
+                      ND Programs
+                    </Link>
+                  </li>
+                </ul>
               </li>
 
-              <li className={`menu-item ${isActive('/admissions') ? 'active' : ''}`}>
-                <Link href="/admissions" className="menu-link" onClick={closeAll}>
-                  Admissions &amp; Portal
-                </Link>
+              {/* Admissions & Portal dropdown */}
+              <li 
+                className={`menu-item has-dropdown ${isActive('/admissions') ? 'active' : ''} ${admissionsDropdownOpen ? 'dropdown-open' : ''}`}
+                onMouseEnter={() => setAdmissionsDropdownOpen(true)}
+                onMouseLeave={() => setAdmissionsDropdownOpen(false)}
+              >
+                <div 
+                  className="menu-link" 
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onClick={() => setAdmissionsDropdownOpen(!admissionsDropdownOpen)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  Admissions &amp; Portal <ChevronDown size={14} style={{ transform: admissionsDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                </div>
+                <ul className="dropdown-menu">
+                  <li className="dropdown-item">
+                    <Link href="/admissions#requirements" onClick={closeAll}>
+                      Admission Requirement
+                    </Link>
+                  </li>
+                  <li className="dropdown-item">
+                    <Link href="/portal" onClick={closeAll}>
+                      Student Portal
+                    </Link>
+                  </li>
+                </ul>
               </li>
 
               <li className={`menu-item ${isActive('/student-experience') ? 'active' : ''}`}>
@@ -186,46 +263,13 @@ export default function Header() {
                   Contact
                 </Link>
               </li>
-
-              {/* Desktop Search Button */}
-              <li className="menu-item desktop-search-item">
-                <button
-                  className="menu-link"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search courses, tuition fees, degrees"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px'
-                  }}
-                  title="Search (Ctrl + K)"
-                >
-                  <Search size={16} color="#F5A623" />
-                  <span className="kbd-shortcut">⌘K</span>
-                </button>
-              </li>
-
-              {/* Primary Apply CTA */}
-              <li className="menu-item">
-                <Link 
-                  href="/admissions#apply" 
-                  className="menu-link nav-cta" 
-                  onClick={closeAll}
-                >
-                  Apply Now
-                </Link>
-              </li>
             </ul>
 
             {/* Mobile Drawer Bottom Quick Contacts */}
             <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} className="mobile-drawer-bottom">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <Link
-                  href="/admissions#portal"
+                  href="/portal"
                   onClick={closeAll}
                   style={{
                     display: 'flex',

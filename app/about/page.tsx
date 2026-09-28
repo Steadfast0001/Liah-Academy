@@ -17,7 +17,7 @@ const newsArticles = [
     category: 'Engineering & Tech',
     image: '/assets/images/flyer_engineering.png',
     desc: 'Official prospectus for Software Engineering, Computer Hardware, Network Security, and Web Graphic Design.',
-    link: '/degree-programs'
+    link: '/programs'
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const newsArticles = [
     category: 'Engineering & Tech',
     image: '/assets/images/flyer_engineering.png',
     desc: 'Specialized diploma training in Ethical Hacking, Linux Server Hardening, and Cloud Defense now accepting applicants.',
-    link: '/degree-programs'
+    link: '/programs'
   },
   {
     id: 3,
@@ -35,7 +35,7 @@ const newsArticles = [
     category: 'Certifications',
     image: '/assets/images/flyer_certification.png',
     desc: 'Fast-track corporate bootcamps: Data Science, DevOps Cloud Pipelines, and Industrial Web Engineering.',
-    link: '/degree-programs'
+    link: '/programs'
   }
 ];
 

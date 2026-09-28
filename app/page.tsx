@@ -4,13 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  Check, ArrowRight, UserPlus, Star, 
-  Terminal, Award, Sparkles, Shield, 
-  Users, Code, MessageSquare, Plus, ExternalLink,
-  MapPin, Volume2, VolumeX, Play, Pause
+  Check, ArrowRight, Star, 
+  Award, Shield, Users, Code, 
+  Play, Pause, ChevronRight, ChevronLeft,
+  X, CheckCircle, Sparkles, BookOpen, Layers, Monitor, Phone
 } from 'lucide-react';
-import { PARTNERSHIP_MAILTO_LINK } from '@/lib/constants';
-import WebThreads from '@/components/WebThreads';
 
 const heroSlides = [
   { type: 'video', src: '/assets/videos/1.mp4', position: 'center 20%' },
@@ -18,15 +16,62 @@ const heroSlides = [
   { type: 'video', src: '/assets/videos/video.mp4', position: 'center 20%' },
   { type: 'image', src: '/assets/images/female_student_practical_guide.jpg', position: 'center 10%' },
   { type: 'video', src: '/assets/videos/E1.mp4', position: 'center 20%' },
-  { type: 'image', src: '/assets/images/male_student_laptop.jpg', position: 'center 12%' },
-  { type: 'video', src: '/assets/videos/E2.mp4', position: 'center 20%' },
   { type: 'image', src: '/assets/images/two_students_laptop_guide.jpg', position: 'center 10%' }
+];
+
+const alumniStories = [
+  {
+    id: 1,
+    name: 'Elvis Tabi',
+    credential: 'HND Software Engineering',
+    role: 'Fullstack Engineer at FinTech',
+    image: '/assets/images/male_student_laptop.jpg',
+    videoSrc: '/assets/videos/1.mp4',
+    story: 'Liah Academy provided the exact practical coding foundation I needed. Within 3 months of completing the Software Engineering track, I landed a remote developer role.'
+  },
+  {
+    id: 2,
+    name: 'Nathalie Ewane',
+    credential: 'DevOps & Cloud Pipelines',
+    role: 'DevOps Apprentice & Cloud Admin',
+    image: '/assets/images/female_student_practical_guide.jpg',
+    videoSrc: '/assets/videos/video.mp4',
+    story: 'The fiber optic labs and 24/7 power backup meant zero downtime during our semester hackathons. Top-tier mentors who actually work on enterprise software.'
+  },
+  {
+    id: 3,
+    name: 'Roland Ashu',
+    credential: 'HND Cybersecurity & Defense',
+    role: 'Cybersecurity SOC Analyst',
+    image: '/assets/images/two_students_laptop_guide.jpg',
+    videoSrc: '/assets/videos/E1.mp4',
+    story: 'The hands-on SOC labs in Bakweri Town transformed theoretical networking into real defense experience. Unmatched tech academy in Cameroon.'
+  },
+  {
+    id: 4,
+    name: 'Sarah Mbella',
+    credential: 'Data Science & Machine Learning',
+    role: 'Data Analyst at TechVentures',
+    image: '/assets/images/campus_students_liah_shirts.jpg',
+    videoSrc: '/assets/videos/E2.mp4',
+    story: 'Working with live datasets and deploying production ML models gave me a strong portfolio that made interviews effortless.'
+  },
+  {
+    id: 5,
+    name: 'Nkenganyi Steadfast',
+    credential: 'HND Software Engineering',
+    role: 'Lead Architect & Tech Founder',
+    image: '/assets/images/image_1.jpg',
+    videoSrc: '/assets/videos/1.mp4',
+    story: 'The curriculum is built for the global software industry. You write real code, collaborate on GitHub, and deploy live applications from day one.'
+  }
 ];
 
 const newsArticles = [
   {
     id: 1,
     image: '/assets/images/flyer_engineering.png',
+    category: 'Engineering & Technology',
     date: 'August 19, 2026',
     title: 'Engineering & Technology Programs Catalog (HND & ND Programs)',
     excerpt: 'Full Academic Syllabus: School of Engineering and Technology. The School of Engineering and Technology at Liah Academy is admitting candidates across full-stack engineering and cloud defense.',
@@ -35,6 +80,7 @@ const newsArticles = [
   {
     id: 2,
     image: '/assets/images/flyer_engineering.png',
+    category: 'Cyber Defense',
     date: 'August 19, 2026',
     title: 'Advanced Cybersecurity & Cloud Defense HND Cohort Launched',
     excerpt: 'Ministry-Accredited Technical Diploma: School of Engineering & Technology. Liah Academy has opened admissions for specialized tracks in Ethical Hacking, Cloud Defense, and Network Architecture.',
@@ -43,6 +89,7 @@ const newsArticles = [
   {
     id: 3,
     image: '/assets/images/flyer_certification.png',
+    category: 'Professional Tracks',
     date: 'August 19, 2026',
     title: 'Liah Academy Certification Programs Admissions Now Open',
     excerpt: 'Admissions Announcement: Professional IT Certification Programs. Liah Academy is officially accepting applications for its high-impact IT Certification Programs in DevOps & Data Science.',
@@ -50,68 +97,39 @@ const newsArticles = [
   }
 ];
 
-const partners = [
-  'SILICON MOUNTAIN',
-  'MINESEC CERTIFIED',
-  'LINUX LABS',
-  'AWS ACADEMY'
+const studentSuccessStories = [
+  {
+    id: 1,
+    image: '/assets/images/female_student_practical_guide.jpg',
+    category: 'Alumni Spotlight',
+    title: 'From Bakweri Town Campus to High-Growth Tech: Jessica’s Software Engineering Journey',
+    excerpt: 'Discover how hands-on terminal training and fullstack TypeScript projects enabled Jessica to land an industry development role before graduation.',
+    link: '/student-experience'
+  },
+  {
+    id: 2,
+    image: '/assets/images/campus_students_liah_shirts.jpg',
+    category: 'Campus Milestone',
+    title: 'Liah Academy Celebrates 2026 Convocation & Industry Partner Placements',
+    excerpt: 'Over 85% of our graduating cohort secured direct corporate apprenticeships across Cameroon and Silicon Mountain tech companies.',
+    link: '/about#highlights'
+  },
+  {
+    id: 3,
+    image: '/assets/images/two_students_laptop_guide.jpg',
+    category: 'Tech Innovation',
+    title: 'Cybersecurity Students Build Open-Source Threat Analysis Tool for Local SMEs',
+    excerpt: 'Our student defense lab engineered a lightweight network monitoring tool now utilized by over 20 partner companies in Buea.',
+    link: '/student-experience'
+  }
 ];
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewName, setReviewName] = useState('');
-  const [reviewRole, setReviewRole] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [activeStory, setActiveStory] = useState<any | null>(null);
+  const [storyVideoPlaying, setStoryVideoPlaying] = useState(true);
 
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Auto-play video when scrolled into view and pause when scrolled past
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
-
-    let observer: IntersectionObserver | null = null;
-    try {
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            try {
-              if (entry.isIntersecting) {
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                  playPromise
-                    .then(() => setIsPlaying(true))
-                    .catch(() => {});
-                }
-              } else {
-                video.pause();
-                setIsPlaying(false);
-              }
-            } catch {}
-          });
-        },
-        { threshold: 0.35 }
-      );
-
-      observer.observe(video);
-    } catch {}
-
-    return () => {
-      if (observer) {
-        try { observer.disconnect(); } catch {}
-      }
-    };
-  }, []);
-
-  // Rotate hero slides
+  // Auto rotate hero slides
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
@@ -119,984 +137,585 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch reviews from API
-  useEffect(() => {
-    fetch('/api/reviews')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.data) {
-          setReviews(data.data);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reviewName || !reviewRole || !reviewComment) return;
-
-    setReviewSubmitting(true);
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: reviewName,
-          role: reviewRole,
-          rating: reviewRating,
-          comment: reviewComment
-        })
-      });
-      const data = await res.json();
-      setReviewSubmitting(false);
-
-      if (data.success && data.data) {
-        setReviews([data.data, ...reviews]);
-        setReviewSuccess(true);
-        setReviewName('');
-        setReviewRole('');
-        setReviewComment('');
-        setTimeout(() => {
-          setReviewSuccess(false);
-          setShowReviewForm(false);
-        }, 2000);
-      }
-    } catch {
-      setReviewSubmitting(false);
-    }
-  };
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  };
-
   return (
-    <main>
-      {/* 1. HERO SLIDESHOW SECTION */}
-      <section className="hero-slider-section">
-        <div className="slider-container">
-          {heroSlides.map((slide, idx) => (
-            <div
-              key={idx}
-              className={`slide ${idx === currentSlide ? 'active' : ''}`}
-              style={
-                slide.type === 'image'
-                  ? { 
-                      backgroundImage: `url('${slide.src}')`,
-                      backgroundPosition: slide.position || 'center 10%'
-                    }
-                  : {}
-              }
-            >
-              {slide.type === 'video' && (
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: slide.position || 'center 20%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                >
-                  <source src={slide.src} type="video/mp4" />
-                </video>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="slider-overlay" />
-
-        <div className="container hero-content">
-          <span className="hero-tag">
-            <Terminal size={14} /> BUEA&apos;S PREMIER TECH HUB
-          </span>
-          <h1 className="hero-title">
-            Forge Your Future in <span>Technology</span>
-          </h1>
-          <p className="hero-subtitle body-large">
-            Liah Academy combines academic excellence with corporate software innovation. Study from our state-of-the-art tech curriculum or hire our professional engineering teams.
-          </p>
-          <div className="hero-ctas">
-            <Link href="/admissions#apply" className="btn btn-primary">
-              <UserPlus size={18} /> Apply Now
-            </Link>
-            <Link href="/degree-programs" className="btn btn-secondary">
-              Explore Programs
-            </Link>
-          </div>
-        </div>
-
-        {/* Mission / Vision Glass Badges */}
-        <div className="hero-corner-box mission-box">
-          <h4 style={{ color: 'var(--color-primary-accent)', fontSize: '13px', textTransform: 'uppercase', marginBottom: '4px' }}>
-            <Award size={14} style={{ display: 'inline', marginRight: '6px' }} /> Our Mission
-          </h4>
-          <p style={{ fontSize: '12px', color: '#CBD5E1', margin: 0 }}>
-            To empower tech innovators through practical lab-based learning and build world-class digital solutions.
-          </p>
-        </div>
-
-        <div className="hero-corner-box vision-box">
-          <h4 style={{ color: 'var(--color-primary-accent)', fontSize: '13px', textTransform: 'uppercase', marginBottom: '4px' }}>
-            <Sparkles size={14} style={{ display: 'inline', marginRight: '6px' }} /> Our Vision
-          </h4>
-          <p style={{ fontSize: '12px', color: '#CBD5E1', margin: 0 }}>
-            To be the leading practical tech academy and engineering partner in Cameroon and Africa.
-          </p>
-        </div>
-      </section>
-
-      {/* 2. STATS ROW */}
-      <section className="bg-light-section stats-section" style={{ padding: '40px 0', borderBottom: '1px solid rgba(15, 23, 42, 0.08)', background: '#FFFFFF' }}>
-        <div className="container">
-          <div className="stats-row-grid">
-            <div className="stat-item">
-              <h3 className="stat-number">2024</h3>
-              <p className="stat-label">Year Established</p>
-            </div>
-            <div className="stat-item">
-              <h3 className="stat-number">500+</h3>
-              <p className="stat-label">Trained Graduates</p>
-            </div>
-            <div className="stat-item">
-              <h3 className="stat-number">95%</h3>
-              <p className="stat-label">Career Landing Rate</p>
-            </div>
-            <div className="stat-item">
-              <h3 className="stat-number">100%</h3>
-              <p className="stat-label">Practical &amp; Labs-Based</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. VIDEO PRESENTATION: LIAH IN ACTION */}
-      <section className="section-padding video-presentation-section" style={{ background: '#081F3E', color: '#F8FAFC' }}>
-        <div className="container">
-          <div className="section-header" style={{ textAlign: 'center', marginBottom: '36px' }}>
-            <span style={{ 
-              display: 'inline-block', 
-              background: 'rgba(245, 166, 35, 0.15)', 
-              color: '#F5A623', 
-              padding: '5px 14px', 
-              borderRadius: '4px', 
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.75rem', 
-              fontWeight: 800, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.08em', 
-              marginBottom: '12px' 
-            }}>
-              LIAH EXPERIENCE
-            </span>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', fontWeight: 800, color: '#F8FAFC', marginBottom: '12px' }}>
-              Liah Academy in Action
-            </h2>
-            <p className="sub-header" style={{ color: '#CBD5E1', maxWidth: '680px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Watch our campus walk-through, laboratory practicals, and see how our graduates forge careers in corporate technology.
-            </p>
-          </div>
-
-          <div 
-            className="video-player-wrapper"
-            style={{ 
-              maxWidth: '960px', 
-              margin: '0 auto', 
-              borderRadius: '16px', 
-              overflow: 'hidden', 
-              boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 30px rgba(245, 166, 35, 0.15)',
-              border: '1px solid rgba(245, 166, 35, 0.25)',
-              background: '#041021',
-              position: 'relative'
-            }}
-          >
-            {/* Overlay Video Controls Top Right */}
-            <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={togglePlay}
-                style={{ 
-                  background: 'rgba(8, 31, 62, 0.85)', 
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(245, 166, 35, 0.3)', 
-                  color: '#F5A623', 
-                  borderRadius: '6px', 
-                  padding: '8px 12px', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 700
-                }}
-              >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-              </button>
-              <button 
-                onClick={toggleMute}
-                style={{ 
-                  background: 'rgba(8, 31, 62, 0.85)', 
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(245, 166, 35, 0.3)', 
-                  color: '#F5A623', 
-                  borderRadius: '6px', 
-                  padding: '8px 12px', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 700
-                }}
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
-            </div>
-
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      
+      {/* ===================================================
+          1. HERO SECTION (Yorkville University Split Hero)
+          =================================================== */}
+      <section className="york-hero-section">
+        <div className="york-hero-media-wrap">
+          {heroSlides[currentSlide].type === 'video' ? (
             <video
-              ref={videoRef}
-              width="100%"
-              height="auto"
-              controls
+              key={heroSlides[currentSlide].src}
+              src={heroSlides[currentSlide].src}
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
-              style={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover' }}
-            >
-              <source src="/assets/videos/video.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: heroSlides[currentSlide].position
+              }}
+            />
+          ) : (
+            <Image
+              key={heroSlides[currentSlide].src}
+              src={heroSlides[currentSlide].src}
+              alt="Liah Academy Students"
+              fill
+              style={{
+                objectFit: 'cover',
+                objectPosition: heroSlides[currentSlide].position
+              }}
+              priority
+            />
+          )}
+        </div>
 
-            {/* Campus Tag Overlay Bottom Left */}
-            <div style={{ 
-              position: 'absolute', 
-              bottom: '20px', 
-              left: '20px', 
-              background: 'rgba(8, 31, 62, 0.85)', 
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(245, 166, 35, 0.3)', 
-              padding: '6px 14px', 
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#FFFFFF',
-              fontSize: '0.85rem',
-              fontWeight: 700
-            }}>
-              <MapPin size={16} color="#EF4444" />
-              <span>BUEA, CAMEROON</span>
+        <div className="york-hero-overlay" />
+
+        <div className="container" style={{ position: 'relative', zIndex: 3, width: '100%' }}>
+          <div className="york-hero-content">
+            <span className="york-hero-kicker">✦ ACHIEVE YOUR POSSIBLE</span>
+            <h1 className="york-hero-title">
+              Flexible, Career-focused Programs Designed to Help You Move Forward
+            </h1>
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+              <Link href="#programs" className="york-hero-btn">
+                Explore Programs <ArrowRight size={18} />
+              </Link>
+              <Link 
+                href="/admissions#apply" 
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.4)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  padding: '14px 26px',
+                  borderRadius: '6px',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                Apply Now
+              </Link>
             </div>
           </div>
         </div>
+
+        {/* Slide Indicators */}
+        <div className="york-hero-dots">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              className={`york-dot ${currentSlide === idx ? 'active' : ''}`}
+              onClick={() => setCurrentSlide(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
       </section>
 
-      {/* 4. ACADEMIC PATHWAYS DEGREE FORMATS */}
-      <section className="section-padding" style={{ background: '#FFFFFF' }}>
+      {/* ===================================================
+          2. IMPACT STATISTICS BAR (Immediately Under Hero)
+          =================================================== */}
+      <section className="stats-impact-bar">
         <div className="container">
-          <div className="section-header" style={{ textAlign: 'center', marginBottom: '50px' }}>
-            <span style={{ 
-              display: 'inline-block', 
-              background: '#FEF3C7', 
-              color: '#B45309', 
-              padding: '6px 14px', 
-              borderRadius: '20px', 
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.78rem', 
-              fontWeight: 800, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.08em', 
-              marginBottom: '14px' 
-            }}>
-              ACADEMIC PATHWAYS
-            </span>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', fontWeight: 800, color: '#081F3E', marginBottom: '14px' }}>
-              Select your academic pathway
-            </h2>
-            <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', color: '#475569', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Explore accredited national diploma programs and professional certification tracks custom built for career excellence.
-            </p>
-          </div>
-
-          <div className="grid-3" style={{ alignItems: 'stretch' }}>
-            {/* Card 1: Higher National Diploma */}
-            <div 
-              className="premium-card" 
-              style={{ 
-                borderTop: '5px solid #081F3E', 
-                borderRadius: '16px', 
-                padding: '36px 30px', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'space-between',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)'
-              }}
-            >
-              <div>
-                <span style={{ 
-                  display: 'inline-block', 
-                  background: '#FEF3C7', 
-                  color: '#B45309', 
-                  padding: '4px 10px', 
-                  borderRadius: '4px', 
-                  fontFamily: 'var(--font-mono)', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.06em', 
-                  marginBottom: '18px' 
-                }}>
-                  HND PROGRAM
-                </span>
-                <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
-                  Higher National Diploma
-                </h3>
-                <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A highly practical two-year program focusing directly on core technical competencies, software, and management.
-                </p>
-
-                <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 2 Years
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Software Engineering &amp; Networks
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Standard National Exams
-                    </li>
-                  </ul>
-                </div>
+          <div className="stats-impact-grid">
+            <div className="stats-impact-item">
+              <div className="stats-impact-num">2024</div>
+              <div className="stats-impact-label">
+                Year Established
               </div>
-
-              <Link 
-                href="/degree-programs" 
-                className="btn" 
-                style={{ 
-                  background: '#081F3E', 
-                  color: '#FFFFFF', 
-                  width: '100%', 
-                  padding: '14px', 
-                  borderRadius: '8px', 
-                  fontWeight: 700, 
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  textDecoration: 'none',
-                  display: 'block'
-                }}
-              >
-                View HND Programs
-              </Link>
             </div>
-
-            {/* Card 2: National Diploma (ND) - Highlighted */}
-            <div 
-              className="premium-card" 
-              style={{ 
-                borderTop: '5px solid #F5A623', 
-                borderRadius: '16px', 
-                padding: '36px 30px', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'space-between',
-                borderColor: 'rgba(245, 166, 35, 0.4)',
-                boxShadow: '0 15px 40px -10px rgba(245, 166, 35, 0.25)'
-              }}
-            >
-              <div>
-                <span style={{ 
-                  display: 'inline-block', 
-                  background: '#FEF3C7', 
-                  color: '#B45309', 
-                  padding: '4px 10px', 
-                  borderRadius: '4px', 
-                  fontFamily: 'var(--font-mono)', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.06em', 
-                  marginBottom: '18px' 
-                }}>
-                  TECHNICAL DIPLOMA
-                </span>
-                <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
-                  National Diploma (ND)
-                </h3>
-                <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  A one-year foundational diploma designed for rapid technical skills acquisition and direct career entry.
-                </p>
-
-                <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 1 Year
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Computer Engineering &amp; Web Design
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Direct Progression Pathway
-                    </li>
-                  </ul>
-                </div>
+            <div className="stats-impact-item">
+              <div className="stats-impact-num">500+</div>
+              <div className="stats-impact-label">
+                Trained Graduates
               </div>
-
-              <Link 
-                href="/degree-programs" 
-                className="btn" 
-                style={{ 
-                  background: '#F5A623', 
-                  color: '#081F3E', 
-                  width: '100%', 
-                  padding: '14px', 
-                  borderRadius: '8px', 
-                  fontWeight: 800, 
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  textDecoration: 'none',
-                  display: 'block',
-                  boxShadow: '0 4px 15px rgba(245, 166, 35, 0.35)'
-                }}
-              >
-                Explore ND Programs
-              </Link>
             </div>
-
-            {/* Card 3: Professional Certifications */}
-            <div 
-              className="premium-card" 
-              style={{ 
-                borderTop: '5px solid #081F3E', 
-                borderRadius: '16px', 
-                padding: '36px 30px', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'space-between',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)'
-              }}
-            >
-              <div>
-                <span style={{ 
-                  display: 'inline-block', 
-                  background: '#DCFCE7', 
-                  color: '#15803D', 
-                  padding: '4px 10px', 
-                  borderRadius: '4px', 
-                  fontFamily: 'var(--font-mono)', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.06em', 
-                  marginBottom: '18px' 
-                }}>
-                  CAREER CERTIFICATIONS
-                </span>
-                <h3 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, lineHeight: '1.3', marginBottom: '14px' }}>
-                  Professional Certifications
-                </h3>
-                <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: '1.65', marginBottom: '24px' }}>
-                  Accelerated career programs in DevOps, Data Science, and Full Stack Engineering for industry readiness.
-                </p>
-
-                <div style={{ borderTop: '1px solid rgba(15, 23, 42, 0.06)', paddingTop: '20px', marginBottom: '24px' }}>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Duration: 6 to 9 Months
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> DevOps &amp; Cloud Pipelines
-                    </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.92rem', color: '#081F3E', fontWeight: 600 }}>
-                      <Check size={16} color="#081F3E" strokeWidth={2.5} /> Direct Corporate Placement
-                    </li>
-                  </ul>
-                </div>
+            <div className="stats-impact-item">
+              <div className="stats-impact-num">95%</div>
+              <div className="stats-impact-label">
+                Career Landing Rate
               </div>
-
-              <Link 
-                href="/degree-programs" 
-                className="btn" 
-                style={{ 
-                  background: '#081F3E', 
-                  color: '#FFFFFF', 
-                  width: '100%', 
-                  padding: '14px', 
-                  borderRadius: '8px', 
-                  fontWeight: 700, 
-                  textAlign: 'center',
-                  fontSize: '0.95rem',
-                  textDecoration: 'none',
-                  display: 'block'
-                }}
-              >
-                View Certifications
-              </Link>
+            </div>
+            <div className="stats-impact-item">
+              <div className="stats-impact-num">100%</div>
+              <div className="stats-impact-label">
+                Practical &amp; Labs-Based
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. CORPORATE SERVICES DIVISION (Enterprise software & services from Buea) */}
-      <section className="corporate-section">
-        {/* Animated WebThreads Interactive Canvas */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.9, pointerEvents: 'none' }}>
-          <WebThreads
-            color1="#5227FF"
-            color2="#FF9FFC"
-            color3="#FFFFFF"
-            speed={0.2}
-            threadCount={6}
-            frequency={5}
-            spread={0.18}
-            taper={1}
-            position={0.5}
-            fanMode="center"
-            glow={0.02}
-            falloff={0.6}
-            thickness={1.1}
-            brightness={0.6}
-            opacity={1}
-            mirror
-            shimmer={false}
-            grain
-            grainIntensity={0.05}
-            mouseInteraction
-            mouseStrength={0.3}
-          />
+      {/* ===================================================
+          3. MISSION / VALUE PROPOSITION ("Achieve Your Possible")
+          =================================================== */}
+      <section className="york-mission-section">
+        <div className="container">
+          <h2 className="york-mission-title">Achieve Your Possible</h2>
+          <p className="york-mission-text">
+            Your ambition lives outside the boundaries of traditional education. You are building your life and career, often together. Discover flexible, industry-rooted programs that match your pace, fit your life, and help shape what comes next.
+          </p>
+          <Link href="/contact#inquiry" className="york-mission-btn">
+            Direct Inquiries <ArrowRight size={16} />
+          </Link>
         </div>
+      </section>
 
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <div className="corporate-grid">
-            {/* Left Column: Heading, description and button */}
+      {/* ===================================================
+          4. PROGRAM DIRECTORY COLUMNS (3 Academic Divisions)
+          =================================================== */}
+      <section id="programs" className="york-programs-directory" style={{ scrollMarginTop: '110px' }}>
+        <div className="container">
+          <div className="york-programs-grid">
+            {/* Division 1: HND Programs */}
             <div>
-              <span className="corporate-badge">
-                CORPORATE DIVISION
-              </span>
-              <h2 className="corporate-title">
-                Enterprise software &amp; services from Buea
-              </h2>
-              <p className="corporate-desc">
-                Liah Academy is both an academy and a company. Our professional services arm develops production applications, performs compliance audits, and provides technical consulting globally.
-              </p>
-              <a 
-                href={PARTNERSHIP_MAILTO_LINK}
-                className="corporate-btn"
-              >
-                Partner With Us
-              </a>
-            </div>
-
-            {/* Right Column: 3 Service cards */}
-            <div className="corporate-cards-list">
-              {/* Card 1 */}
-              <div className="corporate-card">
-                <div className="corporate-card-icon">
-                  <Shield size={20} />
-                </div>
-                <div>
-                  <h4 className="corporate-card-title">
-                    Network Defense &amp; Infrastructure Audits
-                  </h4>
-                  <p className="corporate-card-desc">
-                    Secure your corporate assets. We perform detailed security evaluations, network setups, and vulnerability logs.
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="corporate-card">
-                <div className="corporate-card-icon">
-                  <Users size={20} />
-                </div>
-                <div>
-                  <h4 className="corporate-card-title">
-                    Corporate IT Training &amp; Bootcamps
-                  </h4>
-                  <p className="corporate-card-desc">
-                    Upskill your workforce with hands-on, academy-led masterclasses on cloud, cybersecurity, and data analysis.
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="corporate-card">
-                <div className="corporate-card-icon">
-                  <Code size={20} />
-                </div>
-                <div>
-                  <h4 className="corporate-card-title">
-                    Custom Software Engineering
-                  </h4>
-                  <p className="corporate-card-desc">
-                    We design and construct scalable enterprise software, mobile apps, and robust API frameworks for global companies.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. NEWS, EVENTS & ANNOUNCEMENTS (Highlights) */}
-      <section className="section-padding" style={{ background: '#FFFFFF' }}>
-        <div className="container">
-          <div className="section-header" style={{ textAlign: 'center', marginBottom: '50px' }}>
-            <span style={{ 
-              display: 'inline-block', 
-              background: '#FEF3C7', 
-              color: '#B45309', 
-              padding: '6px 14px', 
-              borderRadius: '6px', 
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.75rem', 
-              fontWeight: 800, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.08em', 
-              marginBottom: '14px' 
-            }}>
-              HIGHLIGHTS
-            </span>
-            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', fontWeight: 800, color: '#081F3E', marginBottom: '14px' }}>
-              News, events &amp; announcements
-            </h2>
-            <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', color: '#475569', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Stay up-to-date with current events at Liah Academy, workshop schedules, and student competitions in Buea.
-            </p>
-          </div>
-
-          <div className="news-articles-grid">
-            {newsArticles.map((article) => (
-              <div 
-                key={article.id} 
-                className="news-article-card"
-              >
-                <div>
-                  <div className="news-article-img">
-                    <Image 
-                      src={article.image} 
-                      alt={article.title} 
-                      fill 
-                      style={{ objectFit: 'cover' }} 
-                    />
-                  </div>
-                  <span className="news-article-date">
-                    {article.date}
-                  </span>
-                  <h3 className="news-article-title">
-                    {article.title}
-                  </h3>
-                  <p className="news-article-excerpt">
-                    {article.excerpt}
-                  </p>
-                </div>
-
-                <Link 
-                  href={article.link} 
-                  className="news-article-link"
-                >
-                  Read Full Story &rarr;
+              <h3 className="york-program-col-title">
+                <Link href="/programs/hnd" style={{ color: '#003366', textDecoration: 'none' }}>
+                  HND Programs
+                </Link>
+                <BookOpen size={20} color="#0284C7" />
+              </h3>
+              <div className="york-program-links-list">
+                <Link href="/programs/hnd/software-engineering" className="york-program-link-item">
+                  <span>Software Engineering (HND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/hnd/web-graphic-design" className="york-program-link-item">
+                  <span>Web &amp; Graphic Design (HND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/hnd/digital-marketing" className="york-program-link-item">
+                  <span>Digital Marketing &amp; E-Commerce (HND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/hnd/network-maintenance" className="york-program-link-item">
+                  <span>Network &amp; Maintenance (HND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/hnd" style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                  Explore All HND Programs &rarr;
                 </Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 7. OUR NETWORK & PARTNERS */}
-      <section style={{ background: '#041021', padding: '60px 0', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <span style={{ 
-              display: 'inline-block', 
-              background: 'rgba(245, 166, 35, 0.15)', 
-              color: '#F5A623', 
-              padding: '4px 12px', 
-              borderRadius: '4px', 
-              fontFamily: 'var(--font-mono)', 
-              fontSize: '0.72rem', 
-              fontWeight: 800, 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.08em' 
-            }}>
-              OUR NETWORK &amp; PARTNERS
-            </span>
-          </div>
-
-          <div className="partners-row-grid">
-            {partners.map((partner, pIdx) => (
-              <div 
-                key={pIdx} 
-                className="partner-badge-card"
-              >
-                {partner}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 8. DUAL REVIEWS: GOOGLE REVIEWS & STUDENT REVIEWS */}
-      <section style={{ background: '#041021', padding: '0 0 90px 0' }}>
-        <div className="container">
-          <div className="grid-2" style={{ gap: '30px', alignItems: 'flex-start' }}>
-            
-            {/* LEFT CARD: Google Reviews */}
-            <div style={{ 
-              background: '#081F3E', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
-              borderRadius: '16px', 
-              padding: '32px 28px',
-              color: '#F8FAFC'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                  </svg>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>Google Reviews</h3>
-                </div>
-                <div style={{ 
-                  background: 'rgba(245, 166, 35, 0.15)', 
-                  border: '1px solid rgba(245, 166, 35, 0.3)', 
-                  color: '#F5A623', 
-                  padding: '4px 10px', 
-                  borderRadius: '6px', 
-                  fontSize: '0.85rem', 
-                  fontWeight: 700 
-                }}>
-                  4.9 ★ (125)
-                </div>
-              </div>
-
-              {/* Verified Review 1 */}
-              <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '18px', marginBottom: '18px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#FFFFFF' }}>Steddy Lyonga</h4>
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="#F5A623" color="#F5A623" />
-                    ))}
-                  </div>
-                </div>
-                <p style={{ color: '#CBD5E1', fontSize: '0.88rem', lineHeight: '1.6', margin: 0 }}>
-                  &ldquo;Liah Academy is Buea&apos;s leading tech hub. Their combined curriculum and company projects gave me hands-on database experience...&rdquo;
-                </p>
-              </div>
-
-              {/* Verified Review 2 */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#FFFFFF' }}>Mirabelle B.</h4>
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="#F5A623" color="#F5A623" />
-                    ))}
-                  </div>
-                </div>
-                <p style={{ color: '#CBD5E1', fontSize: '0.88rem', lineHeight: '1.6', margin: 0 }}>
-                  &ldquo;The cybersecurity labs at Liah are state-of-the-art. Instructors are developers themselves, so you learn real deployment workflows instead...&rdquo;
-                </p>
-              </div>
-
-              <a 
-                href="https://maps.app.goo.gl/eHgx8Triv6TKKcRf6" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  gap: '8px', 
-                  width: '100%', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  background: 'rgba(255, 255, 255, 0.05)', 
-                  border: '1px solid rgba(255, 255, 255, 0.15)', 
-                  color: '#F8FAFC', 
-                  textDecoration: 'none', 
-                  fontSize: '0.9rem', 
-                  fontWeight: 700 
-                }}
-              >
-                <span>G</span> Verify on Google
-              </a>
             </div>
 
-            {/* RIGHT CARD: Student Reviews */}
-            <div style={{ 
-              background: '#081F3E', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
-              borderRadius: '16px', 
-              padding: '32px 28px',
-              color: '#F8FAFC'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <MessageSquare size={22} color="#F5A623" />
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>Student Reviews</h3>
-                </div>
-                <button
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  style={{ 
-                    background: 'rgba(245, 166, 35, 0.2)', 
-                    border: '1px solid rgba(245, 166, 35, 0.4)', 
-                    color: '#F5A623', 
-                    padding: '6px 12px', 
-                    borderRadius: '6px', 
-                    fontSize: '0.85rem', 
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
+            {/* Division 2: Certification Programs */}
+            <div>
+              <h3 className="york-program-col-title">
+                <Link href="/programs/certifications" style={{ color: '#003366', textDecoration: 'none' }}>
+                  Certification Programs
+                </Link>
+                <Layers size={20} color="#0284C7" />
+              </h3>
+              <div className="york-program-links-list">
+                <Link href="/programs/certifications/data-science" className="york-program-link-item">
+                  <span>Data Science &amp; Machine Learning</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/certifications/devops" className="york-program-link-item">
+                  <span>DevOps &amp; Cloud Infrastructure</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/certifications/industrial-web-design" className="york-program-link-item">
+                  <span>Industrial Web Design</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/certifications/digital-marketing-seo" className="york-program-link-item">
+                  <span>Digital Marketing &amp; SEO</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/certifications" style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                  Explore All Certifications &rarr;
+                </Link>
+              </div>
+            </div>
+
+            {/* Division 3: ND Programs */}
+            <div>
+              <h3 className="york-program-col-title">
+                <Link href="/programs/nd" style={{ color: '#003366', textDecoration: 'none' }}>
+                  ND Programs
+                </Link>
+                <Award size={20} color="#0284C7" />
+              </h3>
+              <div className="york-program-links-list">
+                <Link href="/programs/nd/computer-engineering" className="york-program-link-item">
+                  <span>Computer Engineering (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/ict" className="york-program-link-item">
+                  <span>ICT &amp; Support (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/web-design" className="york-program-link-item">
+                  <span>Web Design (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/graphic-design-printing" className="york-program-link-item">
+                  <span>Graphic Design &amp; Printing (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/basic-computer" className="york-program-link-item">
+                  <span>Basic Computer Operations (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/office-automation" className="york-program-link-item">
+                  <span>Office Automation Secretaryship (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd/computerized-accounting" className="york-program-link-item">
+                  <span>Computerized Accounting (ND)</span>
+                  <ChevronRight size={18} color="#0284C7" />
+                </Link>
+                <Link href="/programs/nd" style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                  Explore All ND Programs &rarr;
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          5. LAUREL ACCREDITATION & HONORS RIBBON
+          =================================================== */}
+      <section className="laurel-ribbon-section">
+        <div className="container">
+          <div className="laurel-ribbon-grid">
+            <div className="laurel-badge-item">
+              <Award className="laurel-badge-icon" size={28} />
+              <span className="laurel-badge-text">MINESUP ACCREDITED TECHNICAL DIPLOMAS</span>
+            </div>
+            <div className="laurel-badge-item">
+              <Code className="laurel-badge-icon" size={28} />
+              <span className="laurel-badge-text">SILICON MOUNTAIN TECH ECOSYSTEM</span>
+            </div>
+            <div className="laurel-badge-item">
+              <Shield className="laurel-badge-icon" size={28} />
+              <span className="laurel-badge-text">24/7 DEDICATED FIBER OPTIC LABS</span>
+            </div>
+            <div className="laurel-badge-item">
+              <Users className="laurel-badge-icon" size={28} />
+              <span className="laurel-badge-text">CERTIFIED INDUSTRY PRACTITIONERS</span>
+            </div>
+            <div className="laurel-badge-item">
+              <Sparkles className="laurel-badge-icon" size={28} />
+              <span className="laurel-badge-text">HIGH GRADUATE EMPLOYABILITY &amp; REMOTE WORK</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          6. "OUR ALUMNI SAY IT BEST" (Testimonials Slider)
+          =================================================== */}
+      <section className="alumni-showcase-section">
+        <div className="container">
+          <div className="alumni-header">
+            <h2 className="alumni-title">Our Alumni Say It Best</h2>
+          </div>
+
+          <div className="alumni-cards-slider-wrap">
+            <div className="alumni-cards-track">
+              {alumniStories.map((alumnus) => (
+                <div
+                  key={alumnus.id}
+                  className="alumni-portrait-card"
+                  onClick={() => {
+                    setActiveStory(alumnus);
+                    setStoryVideoPlaying(true);
                   }}
                 >
-                  <Plus size={14} /> Write Review
-                </button>
-              </div>
-
-              {/* Review Form Modal/Drawer */}
-              {showReviewForm && (
-                <div style={{ 
-                  background: 'rgba(4, 16, 33, 0.95)', 
-                  border: '1px solid rgba(245, 166, 35, 0.3)', 
-                  borderRadius: '10px', 
-                  padding: '20px', 
-                  marginBottom: '20px' 
-                }}>
-                  <h4 style={{ color: '#F5A623', marginBottom: '12px', fontSize: '1rem' }}>Submit Student Feedback</h4>
-                  {reviewSuccess && (
-                    <div style={{ background: '#10B981', color: '#fff', padding: '8px 12px', borderRadius: '6px', marginBottom: '12px', fontSize: '0.85rem' }}>
-                      Thank you! Your feedback is posted.
-                    </div>
-                  )}
-                  <form onSubmit={handleReviewSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                      <div>
-                        <label htmlFor="review_author_name" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Your Name *</label>
-                        <input 
-                          id="review_author_name"
-                          name="review_author_name"
-                          type="text" 
-                          required 
-                          placeholder="Your Name *" 
-                          value={reviewName} 
-                          onChange={e => setReviewName(e.target.value)} 
-                          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="review_student_role" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Program / Role *</label>
-                        <input 
-                          id="review_student_role"
-                          name="review_student_role"
-                          type="text" 
-                          required 
-                          placeholder="e.g. Student (HND) *" 
-                          value={reviewRole} 
-                          onChange={e => setReviewRole(e.target.value)} 
-                          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }} 
-                        />
-                      </div>
-                    </div>
-                    <div style={{ marginBottom: '10px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Rating:</span>
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <Star 
-                          key={star} 
-                          size={18} 
-                          fill={star <= reviewRating ? '#F5A623' : 'none'} 
-                          color="#F5A623" 
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => setReviewRating(star)} 
-                        />
-                      ))}
-                    </div>
-                    <div style={{ marginBottom: '10px' }}>
-                      <label htmlFor="review_feedback_message" style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>Your Feedback *</label>
-                      <textarea 
-                        id="review_feedback_message"
-                        name="review_feedback_message"
-                        required 
-                        rows={2} 
-                        placeholder="Your feedback on Liah Academy..." 
-                        value={reviewComment} 
-                        onChange={e => setReviewComment(e.target.value)} 
-                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }}
-                      />
-                    </div>
-                    <button 
-                      type="submit" 
-                      disabled={reviewSubmitting}
-                      style={{ background: '#F5A623', color: '#081F3E', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
-                    >
-                      {reviewSubmitting ? 'Posting...' : 'Submit Review'}
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Student Review 1: steadfast (student) */}
-              <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '18px', marginBottom: '18px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#FFFFFF' }}>steadfast (student)</h4>
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="#F5A623" color="#F5A623" />
-                    ))}
-                  </div>
-                </div>
-                <p style={{ color: '#CBD5E1', fontSize: '0.88rem', lineHeight: '1.6', margin: 0 }}>
-                  &ldquo;i love the way liah trains students&rdquo;
-                </p>
-              </div>
-
-              {/* Live Student Reviews Stream from API */}
-              {reviews.filter(r => r.name !== 'steadfast (student)' && r.name !== 'Steddy Lyonga' && r.name !== 'Mirabelle B.').slice(0, 2).map((rev, rIdx) => (
-                <div key={rIdx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '14px', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#FFFFFF' }}>{rev.name}</h4>
-                    <div style={{ display: 'flex', gap: '2px' }}>
-                      {[...Array(rev.rating || 5)].map((_, i) => (
-                        <Star key={i} size={12} fill="#F5A623" color="#F5A623" />
-                      ))}
+                  <div className="alumni-photo-box">
+                    <Image
+                      src={alumnus.image}
+                      alt={alumnus.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <div className="alumni-play-btn" aria-label={`Play testimonial from ${alumnus.name}`}>
+                      <Play size={18} fill="#FFFFFF" />
                     </div>
                   </div>
-                  <p style={{ color: '#CBD5E1', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
-                    &ldquo;{rev.comment}&rdquo;
-                  </p>
+                  <div className="alumni-card-info">
+                    <div>
+                      <h4 className="alumni-name">{alumnus.name}</h4>
+                      <p className="alumni-credential">{alumnus.credential}</p>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: '#0284C7', fontWeight: 600, marginTop: '8px', display: 'inline-block' }}>
+                      Watch Story →
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       </section>
-    </main>
+
+      {/* ===================================================
+          7. "YOUR PATH. YOUR PACE. YOUR ADVANTAGE." (3 Feature Boxes)
+          =================================================== */}
+      <section className="york-features-section">
+        <div className="container">
+          <div className="york-features-header">
+            <h2 className="york-features-title">Your Path. Your Pace. Your Advantage.</h2>
+          </div>
+
+          <div className="york-features-grid">
+            <div className="york-feature-box">
+              <div className="york-feature-icon-badge">
+                <CheckCircle size={22} />
+              </div>
+              <h3 className="york-feature-heading">Learning That Fits Your Life</h3>
+              <p className="york-feature-desc">
+                Start when you&apos;re ready with year-round cohort intakes, on-campus study at Bakweri Town Campus, and project-based hands-on mentoring.
+              </p>
+            </div>
+
+            <div className="york-feature-box">
+              <div className="york-feature-icon-badge">
+                <Monitor size={22} />
+              </div>
+              <h3 className="york-feature-heading">Make Your Experience Count</h3>
+              <p className="york-feature-desc">
+                Graduate sooner and move forward faster with project-based labs, real client software builds, and hands-on terminal defense training.
+              </p>
+            </div>
+
+            <div className="york-feature-box">
+              <div className="york-feature-icon-badge">
+                <Code size={22} />
+              </div>
+              <h3 className="york-feature-heading">Get Career-Ready from Day One</h3>
+              <p className="york-feature-desc">
+                Build in-demand skills through industry-designed programs taught by active tech architects, software leads, and cyber professionals.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          8. FULL-WIDTH CALLOUT BANNER
+          =================================================== */}
+      <section className="york-full-cta-banner">
+        <div className="container">
+          <h2 className="york-full-cta-title">
+            Get Support That Helps You Move Towards What&apos;s Possible
+          </h2>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <Link 
+              href="/admissions#apply" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#F5A623',
+                color: '#041021',
+                padding: '12px 28px',
+                borderRadius: '6px',
+                fontWeight: 800,
+                fontSize: '0.88rem',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Apply Now →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          9. LATEST NEWS SECTION
+          =================================================== */}
+      <section className="york-news-section">
+        <div className="container">
+          <div className="york-news-header">
+            <h2 className="york-news-title">Latest News</h2>
+            <Link href="/about#highlights" className="york-view-more-btn">
+              View More <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          <div className="york-news-grid">
+            {newsArticles.map((article) => (
+              <div key={article.id} className="york-news-card">
+                <div className="york-news-img-box">
+                  <Image
+                    src={article.image}
+                    alt={article.title}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="york-news-body">
+                  <span className="york-news-category">{article.category}</span>
+                  <h3 className="york-news-card-title">{article.title}</h3>
+                  <p className="york-news-card-excerpt">{article.excerpt}</p>
+                  <Link href={article.link} style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    Read Full Announcement →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          10. STUDENT SUCCESS STORIES SECTION
+          =================================================== */}
+      <section className="york-news-section" style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
+        <div className="container">
+          <div className="york-news-header">
+            <h2 className="york-news-title">Student Success</h2>
+            <Link href="/student-experience" className="york-view-more-btn">
+              View More <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          <div className="york-news-grid">
+            {studentSuccessStories.map((story) => (
+              <div key={story.id} className="york-news-card">
+                <div className="york-news-img-box">
+                  <Image
+                    src={story.image}
+                    alt={story.title}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="york-news-body">
+                  <span className="york-news-category">{story.category}</span>
+                  <h3 className="york-news-card-title">{story.title}</h3>
+                  <p className="york-news-card-excerpt">{story.excerpt}</p>
+                  <Link href={story.link} style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    Read Graduate Story →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          ALUMNI STORY MODAL POPUP
+          =================================================== */}
+      {activeStory && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(4, 16, 33, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setActiveStory(null)}
+        >
+          <div 
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '640px',
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Media */}
+            <div style={{ position: 'relative', height: '300px', background: '#041021' }}>
+              <video
+                src={activeStory.videoSrc}
+                autoPlay
+                controls
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <button
+                onClick={() => setActiveStory(null)}
+                style={{
+                  position: 'absolute',
+                  top: '14px',
+                  right: '14px',
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10
+                }}
+                aria-label="Close Story"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#003366', margin: 0 }}>
+                    {activeStory.name}
+                  </h3>
+                  <p style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.9rem', margin: '4px 0 0' }}>
+                    {activeStory.credential}
+                  </p>
+                </div>
+                <span style={{ fontSize: '0.8rem', background: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
+                  Verified Alumni
+                </span>
+              </div>
+              <p style={{ color: '#475569', fontSize: '1rem', lineHeight: '1.65', marginBottom: '20px', fontStyle: 'italic' }}>
+                &ldquo;{activeStory.story}&rdquo;
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <Link
+                  href="/admissions#apply"
+                  onClick={() => setActiveStory(null)}
+                  style={{
+                    background: '#0284C7',
+                    color: '#FFFFFF',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  Start Your Journey
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }

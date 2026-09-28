@@ -701,7 +701,7 @@ export default function ChatWidget() {
                                   gap: '6px'
                                 }}
                               >
-                                <CreditCard size={14} /> Pay Application Fee (10,000 XAF)
+                                <CreditCard size={14} /> Pay Application Fee (15,000 / 25,000 XAF)
                               </button>
                             )}
                           </div>

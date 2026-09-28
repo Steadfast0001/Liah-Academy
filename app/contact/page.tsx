@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Phone, Mail, Send, CheckCircle, AlertCircle, Info, Handshake } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, CheckCircle, AlertCircle, Info, MessageSquare, ArrowRight } from 'lucide-react';
 import SocialLinksList from '@/components/SocialIcons';
-import { PARTNERSHIP_MAILTO_LINK } from '@/lib/constants';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -35,7 +34,7 @@ export default function ContactPage() {
         setEmail('');
         setSubject('');
         setMessage('');
-        setTimeout(() => setSuccess(false), 5000);
+        setTimeout(() => setSuccess(false), 6000);
       } else {
         setError(data.message || 'Failed to submit inquiry.');
       }
@@ -46,161 +45,122 @@ export default function ContactPage() {
   };
 
   return (
-    <main style={{ marginTop: 'calc(var(--header-height) + 40px)', marginBottom: '90px' }}>
-      <div className="container">
+    <main style={{ marginTop: 'calc(var(--header-height) + 36px)', marginBottom: '90px' }}>
+      <div className="container" style={{ maxWidth: '1240px' }}>
         
-        {/* Header */}
-        <div className="section-header">
-          <span className="course-badge">Contact Us</span>
-          <h1>Get in Touch with Liah</h1>
-          <p className="sub-header">
-            Have questions about admissions, fees, corporate software contracts, or partnership structures? Drop us a line below or visit our Buea campus.
+        {/* Header Section without kicker tag */}
+        <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 48px' }}>
+          <h1 style={{ 
+            fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', 
+            fontWeight: 800, 
+            color: '#081F3E', 
+            letterSpacing: '-0.02em',
+            marginBottom: '14px' 
+          }}>
+            Get in Touch with Liah
+          </h1>
+          <p style={{ 
+            color: '#475569', 
+            fontSize: '1.08rem', 
+            lineHeight: 1.65,
+            margin: 0
+          }}>
+            Reach out for admissions, alumni relations, corporate partnership, or general inquiries. Drop us a line, we would love to hear from you.
           </p>
         </div>
 
-        <div className="grid-2">
-          {/* LEFT COLUMN: Campus Info & Inquiry Form */}
-          <div>
-            {/* Campus Info Card */}
-            <section className="premium-card" style={{ marginBottom: '30px' }}>
-              <h3 style={{ color: '#081F3E', marginBottom: '24px', fontSize: '1.25rem' }}>
-                <MapPin size={22} color="#F5A623" style={{ display: 'inline', marginRight: '8px' }} />
-                Campus Contact Information
-              </h3>
-
-              <ul className="contact-details-list">
-                <li>
-                  <div className="icon-wrap">
-                    <MapPin size={20} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Main Campus Address</h4>
-                    <p style={{ fontSize: '14px', color: '#64748B' }}>Backweri Town, Buea, Southwest Region, Cameroon</p>
-                  </div>
-                </li>
-
-                <li>
-                  <div className="icon-wrap">
-                    <Phone size={20} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Telephone &amp; WhatsApp</h4>
-                    <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>+237 652 154 095 / +237 699 526 607</p>
-                    <a
-                      href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                        borderRadius: '6px',
-                        color: '#059669',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        textDecoration: 'none'
-                      }}
-                    >
-                      <Phone size={14} /> Chat on WhatsApp
-                    </a>
-                  </div>
-                </li>
-
-                <li>
-                  <div className="icon-wrap">
-                    <Mail size={20} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: '15px', marginBottom: '4px', color: '#081F3E' }}>Official Email Address</h4>
-                    <p style={{ fontSize: '14px', color: '#64748B' }}>info@liahacademy.com</p>
-                  </div>
-                </li>
-              </ul>
-
-              <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid rgba(15,23,42,0.08)' }}>
-                <h4 style={{ fontSize: '13px', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                  Social Channels
-                </h4>
-                <div style={{ marginTop: 0 }}>
-                  <SocialLinksList iconSize={18} />
-                </div>
-              </div>
-            </section>
-
-            {/* Corporate Partnership Card */}
-            <section className="premium-card" style={{ marginBottom: '30px', background: 'linear-gradient(135deg, #081F3E 0%, #0D2D59 100%)', color: '#FFFFFF' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <Handshake size={24} color="#F5A623" />
-                <h3 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                  Corporate &amp; Academic Partnerships
-                </h3>
-              </div>
-              <p style={{ color: '#CBD5E1', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                Interested in co-marketing, technical integrations, corporate software engineering, or hiring our graduates?
-              </p>
-              <a 
-                href={PARTNERSHIP_MAILTO_LINK}
-                className="btn"
-                style={{
-                  background: '#F5A623',
-                  color: '#081F3E',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 15px rgba(245, 166, 35, 0.35)'
-                }}
-              >
-                <Mail size={16} /> Partner With Us (Email)
-              </a>
-            </section>
-
-            {/* Direct Inquiry Form */}
-            <section id="inquiry" className="premium-card" style={{ scrollMarginTop: '120px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <span style={{ 
-                  background: '#FEF3C7', 
-                  color: '#B45309', 
-                  padding: '3px 10px', 
-                  borderRadius: '4px', 
-                  fontFamily: 'var(--font-mono)', 
-                  fontSize: '0.72rem', 
+        {/* 2-Column Main Layout Grid */}
+        <div 
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
+            gap: '32px',
+            alignItems: 'stretch'
+          }}
+        >
+          
+          {/* ===================================================
+              LEFT COLUMN: Direct Inquiry Form (Top) + Contact Info (Bottom)
+              =================================================== */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            
+            {/* 1. DIRECT INQUIRY CARD (TOP) */}
+            <section 
+              id="inquiry" 
+              className="premium-card" 
+              style={{ 
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '36px 32px',
+                border: '1px solid rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 10px 30px rgba(8, 31, 62, 0.04)',
+                scrollMarginTop: '120px'
+              }}
+            >
+              <div style={{ marginBottom: '22px' }}>
+                <h2 style={{ 
+                  color: '#081F3E', 
+                  fontSize: '1.45rem', 
                   fontWeight: 800, 
-                  textTransform: 'uppercase' 
+                  margin: '0 0 6px 0' 
                 }}>
-                  DIRECT INQUIRY
-                </span>
+                  Direct Inquiry
+                </h2>
+                <p style={{ 
+                  color: '#64748B', 
+                  fontSize: '0.92rem', 
+                  lineHeight: 1.5,
+                  margin: 0 
+                }}>
+                  Have questions about admissions, fees, corporate software contracts, or general inquiries?
+                </p>
               </div>
-              <h3 style={{ color: '#081F3E', marginBottom: '18px', fontSize: '1.3rem', fontWeight: 800 }}>
-                <Mail size={22} color="#F5A623" style={{ display: 'inline', marginRight: '8px' }} />
-                Send a Direct Inquiry
-              </h3>
 
               {success && (
-                <div style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', padding: '14px', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <CheckCircle size={20} />
-                  <span>Thank you! Your message has been delivered to our admissions office.</span>
+                <div style={{ 
+                  background: 'rgba(16, 185, 129, 0.12)', 
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#065F46', 
+                  padding: '14px 16px', 
+                  borderRadius: '8px', 
+                  marginBottom: '20px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px',
+                  fontSize: '0.92rem',
+                  fontWeight: 600
+                }}>
+                  <CheckCircle size={20} color="#10B981" style={{ flexShrink: 0 }} />
+                  <span>Thank you! Your message has been received by the Liah Academy admissions desk.</span>
                 </div>
               )}
 
               {error && (
-                <div style={{ background: 'rgba(239,68,68,0.15)', color: '#DC2626', padding: '14px', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <AlertCircle size={20} />
+                <div style={{ 
+                  background: 'rgba(239, 68, 68, 0.1)', 
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  color: '#DC2626', 
+                  padding: '14px 16px', 
+                  borderRadius: '8px', 
+                  marginBottom: '20px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px',
+                  fontSize: '0.92rem'
+                }}>
+                  <AlertCircle size={20} style={{ flexShrink: 0 }} />
                   <span>{error}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="contact_user_name">Your Name *</label>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                
+                {/* Row 1: Name & Email */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label htmlFor="contact_user_name" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px', display: 'block' }}>
+                      Your Name: *
+                    </label>
                     <input
                       id="contact_user_name"
                       name="name"
@@ -210,10 +170,14 @@ export default function ContactPage() {
                       placeholder="e.g. Marie Claire"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      style={{ borderRadius: '8px', padding: '12px 14px', fontSize: '0.92rem' }}
                     />
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="contact_user_email">Your Email *</label>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label htmlFor="contact_user_email" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px', display: 'block' }}>
+                      Your Email: *
+                    </label>
                     <input
                       id="contact_user_email"
                       name="email"
@@ -223,25 +187,33 @@ export default function ContactPage() {
                       placeholder="e.g. marie@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      style={{ borderRadius: '8px', padding: '12px 14px', fontSize: '0.92rem' }}
                     />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="contact_user_subject">Subject</label>
+                {/* Row 2: Subject */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label htmlFor="contact_user_subject" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px', display: 'block' }}>
+                    Subject:
+                  </label>
                   <input
                     id="contact_user_subject"
                     name="subject"
                     type="text"
                     className="form-input-light"
-                    placeholder="e.g. Admissions Inquiry / Corporate Software"
+                    placeholder="Select a Reason for Contact (e.g. Admissions Inquiry / Software)"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
+                    style={{ borderRadius: '8px', padding: '12px 14px', fontSize: '0.92rem' }}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="contact_user_message">Message *</label>
+                {/* Row 3: Message */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label htmlFor="contact_user_message" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px', display: 'block' }}>
+                    Message: *
+                  </label>
                   <textarea
                     id="contact_user_message"
                     name="message"
@@ -251,39 +223,224 @@ export default function ContactPage() {
                     placeholder="How can we assist you?"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    style={{ borderRadius: '8px', padding: '12px 14px', fontSize: '0.92rem', resize: 'vertical' }}
                   />
                 </div>
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
+                  style={{
+                    width: '100%',
+                    background: '#F5A623',
+                    color: '#081F3E',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '14px 24px',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 12px rgba(245, 166, 35, 0.3)',
+                    transition: 'all 0.2s ease',
+                    marginTop: '4px'
+                  }}
                 >
-                  {loading ? 'Sending Message...' : 'Send Inquiry'} <Send size={16} />
+                  {loading ? 'Sending Inquiry...' : 'Send Inquiry'} <ArrowRight size={16} />
                 </button>
               </form>
             </section>
+
+            {/* 2. CAMPUS CONTACT INFORMATION CARD (BOTTOM) */}
+            <section 
+              className="premium-card" 
+              style={{ 
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '30px 32px',
+                border: '1px solid rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 10px 30px rgba(8, 31, 62, 0.04)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F5A623', display: 'inline-block' }} />
+                <h3 style={{ color: '#081F3E', fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
+                  Campus Contact Information
+                </h3>
+              </div>
+
+              {/* 2 Side-by-Side Contact Staff / Desk Boxes */}
+              <div 
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
+                  gap: '16px',
+                  marginBottom: '24px'
+                }}
+              >
+                {/* Contact Box 1: Admissions Desk */}
+                <div 
+                  style={{ 
+                    background: '#F8FAFC', 
+                    borderRadius: '10px', 
+                    padding: '18px 16px',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Phone size={14} color="#B45309" />
+                      </div>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#081F3E' }}>
+                        Admissions Desk
+                      </h4>
+                    </div>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: '#64748B', lineHeight: 1.4 }}>
+                      Admissions officer for HND, ND &amp; Certifications
+                    </p>
+                  </div>
+                  <a
+                    href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '7px 12px',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '6px',
+                      color: '#059669',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <Phone size={12} /> +237 699 526 607
+                  </a>
+                </div>
+
+                {/* Contact Box 2: Campus Administration */}
+                <div 
+                  style={{ 
+                    background: '#F8FAFC', 
+                    borderRadius: '10px', 
+                    padding: '18px 16px',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Mail size={14} color="#B45309" />
+                      </div>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#081F3E' }}>
+                        Campus Secretariat
+                      </h4>
+                    </div>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: '#64748B', lineHeight: 1.4 }}>
+                      Corporate partnerships &amp; academic records
+                    </p>
+                  </div>
+                  <a
+                    href="tel:+237652154095"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '7px 12px',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '6px',
+                      color: '#059669',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <Phone size={12} /> +237 652 154 095
+                  </a>
+                </div>
+              </div>
+
+              {/* Social Channels Row */}
+              <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(15, 23, 42, 0.08)' }}>
+                <span style={{ 
+                  display: 'block', 
+                  fontSize: '0.72rem', 
+                  fontWeight: 800, 
+                  color: '#94A3B8', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.08em', 
+                  marginBottom: '10px' 
+                }}>
+                  Social Channels
+                </span>
+                <SocialLinksList iconSize={18} />
+              </div>
+            </section>
+
           </div>
 
-          {/* RIGHT COLUMN: Campus Map & Directions */}
+          {/* ===================================================
+              RIGHT COLUMN: Campus Map & Geolocation
+              =================================================== */}
           <div>
-            <section className="premium-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{ color: '#081F3E', marginBottom: '12px', fontSize: '1.25rem' }}>
-                <MapPin size={20} color="#F5A623" style={{ display: 'inline', marginRight: '8px' }} />
-                Campus Map & Geolocation
-              </h3>
-              <p style={{ color: '#64748B', marginBottom: '20px', fontSize: '0.95rem' }}>
-                Liah Academy is situated in Bakweri Town, Buea, nested along the serene lower slopes of Mount Cameroon.
+            <section 
+              className="premium-card" 
+              style={{ 
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '36px 32px',
+                border: '1px solid rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 10px 30px rgba(8, 31, 62, 0.04)',
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column' 
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <MapPin size={22} color="#F5A623" />
+                <h3 style={{ color: '#081F3E', margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>
+                  Campus Map &amp; Geolocation
+                </h3>
+              </div>
+              <p style={{ color: '#64748B', marginBottom: '20px', fontSize: '0.92rem', lineHeight: 1.5 }}>
+                Liah Academy is located in Bakweri Town, Buea, located along the serene lower slopes of Mount Cameroon.
               </p>
 
-              {/* Realtime Google Map Embed */}
-              <div style={{ flexGrow: 1, minHeight: '380px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(15,23,42,0.1)' }}>
+              {/* Realtime Interactive Google Map Embed */}
+              <div 
+                style={{ 
+                  flexGrow: 1, 
+                  minHeight: '440px', 
+                  borderRadius: '12px', 
+                  overflow: 'hidden', 
+                  border: '1px solid #E2E8F0',
+                  boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.04)'
+                }}
+              >
                 <iframe
                   src="https://maps.google.com/maps?q=Liah%20Academy,%20Bakweri%20Town,%20Buea,%20Cameroon&t=&z=16&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="100%"
-                  style={{ border: 0, minHeight: '380px', display: 'block' }}
+                  style={{ border: 0, minHeight: '440px', display: 'block' }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -291,7 +448,19 @@ export default function ContactPage() {
                 />
               </div>
 
-              <div style={{ marginTop: '20px', fontSize: '13px', color: '#64748B', lineHeight: '1.6', background: '#F8FAFC', padding: '14px', borderRadius: '8px' }}>
+              {/* Transit Directions Banner */}
+              <div 
+                style={{ 
+                  marginTop: '20px', 
+                  fontSize: '0.84rem', 
+                  color: '#475569', 
+                  lineHeight: '1.6', 
+                  background: '#F8FAFC', 
+                  padding: '14px 16px', 
+                  borderRadius: '10px',
+                  border: '1px solid #E2E8F0'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#081F3E', fontWeight: 700, marginBottom: '4px' }}>
                   <Info size={16} color="#F5A623" />
                   <span>Transit Directions</span>
@@ -300,6 +469,7 @@ export default function ContactPage() {
               </div>
             </section>
           </div>
+
         </div>
       </div>
     </main>

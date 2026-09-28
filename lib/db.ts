@@ -38,6 +38,7 @@ const bundleSeedPath = path.join(process.cwd(), 'data', 'liah_academy_store.json
 let mysqlPool: mysql.Pool | null = null;
 let isMySQLLive = false;
 let schemaInitialized = false;
+let lastMySQLCheckFailed = 0;
 
 export function getMySQLPool(): mysql.Pool {
   if (!mysqlPool) {
@@ -61,7 +62,12 @@ export function getMySQLPool(): mysql.Pool {
 
 // Auto-initialize schema in remote database if tables don't exist yet
 export async function ensureMySQLTables() {
-  if (schemaInitialized || !process.env.MYSQL_HOST || (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1'))) {
+  if (
+    schemaInitialized || 
+    !process.env.MYSQL_HOST || 
+    (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1')) ||
+    (Date.now() - lastMySQLCheckFailed < 60000)
+  ) {
     return;
   }
   try {
@@ -241,18 +247,24 @@ export async function ensureMySQLTables() {
     schemaInitialized = true;
     isMySQLLive = true;
   } catch (err) {
-    console.warn('MySQL schema auto-init warning:', err);
+    lastMySQLCheckFailed = Date.now();
+    isMySQLLive = false;
   }
 }
 
 // Background asynchronous MySQL synchronizer
 async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete', data: any) {
   // Only attempt MySQL synchronization if a remote or dedicated MySQL host is configured
-  if (!process.env.MYSQL_HOST || (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1'))) {
+  if (
+    !process.env.MYSQL_HOST || 
+    (isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1')) ||
+    (Date.now() - lastMySQLCheckFailed < 60000)
+  ) {
     return;
   }
   try {
     await ensureMySQLTables();
+    if (!isMySQLLive) return;
     const pool = getMySQLPool();
     if (table === 'students') {
       if (action === 'delete') {
@@ -449,6 +461,7 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
     isMySQLLive = true;
   } catch (err) {
     // MySQL write error is non-blocking to prevent server crash
+    lastMySQLCheckFailed = Date.now();
     isMySQLLive = false;
   }
 }
@@ -869,49 +882,91 @@ const initialData: Schema = {
   }
 };
 
-// 5. IN-MEMORY HOT CACHE & AUTO-HEALING ENGINE
+// 5. IN-MEMORY HOT CACHE & ASYNC PERSISTENCE ENGINE
 let memoryCache: Schema | null = null;
 let lastFileMtime: number = 0;
 let totalWritesCount = 0;
+let isFlushingDisk = false;
+let pendingDiskFlush = false;
+
+// Non-blocking asynchronous disk flusher with write queue
+async function asyncDiskFlush() {
+  if (isFlushingDisk) {
+    pendingDiskFlush = true;
+    return;
+  }
+  isFlushingDisk = true;
+  pendingDiskFlush = false;
+
+  try {
+    if (!memoryCache) return;
+    const serialized = JSON.stringify(memoryCache, null, 2);
+    const tempPath = `${jsonDbPath}.tmp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    await fs.promises.writeFile(tempPath, serialized, 'utf-8');
+    await fs.promises.rename(tempPath, jsonDbPath);
+    try {
+      const stat = await fs.promises.stat(jsonDbPath);
+      lastFileMtime = stat.mtimeMs;
+    } catch {}
+
+    if (totalWritesCount % 10 === 0) {
+      setImmediate(() => {
+        try {
+          if (memoryCache) createBackup(memoryCache);
+        } catch {}
+      });
+    }
+  } catch (err) {
+    console.error('Async disk flush warning:', err);
+  } finally {
+    isFlushingDisk = false;
+    if (pendingDiskFlush) {
+      setImmediate(() => {
+        asyncDiskFlush().catch(e => console.error('Disk flush catch:', e));
+      });
+    }
+  }
+}
 
 function createBackup(data: Schema) {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupPath = path.join(backupsDir, `store_backup_${timestamp}.json`);
-    fs.writeFileSync(backupPath, JSON.stringify(data, null, 2), 'utf-8');
-
-    const existing = fs.readdirSync(backupsDir).filter(f => f.startsWith('store_backup_') && f.endsWith('.json')).sort();
-    if (existing.length > 15) {
-      for (let i = 0; i < existing.length - 15; i++) {
-        try {
-          fs.unlinkSync(path.join(backupsDir, existing[i]));
-        } catch {}
-      }
-    }
+    fs.promises.writeFile(backupPath, JSON.stringify(data, null, 2), 'utf-8').then(() => {
+      fs.promises.readdir(backupsDir).then(files => {
+        const existing = files.filter(f => f.startsWith('store_backup_') && f.endsWith('.json')).sort();
+        if (existing.length > 15) {
+          for (let i = 0; i < existing.length - 15; i++) {
+            fs.promises.unlink(path.join(backupsDir, existing[i])).catch(() => {});
+          }
+        }
+      }).catch(() => {});
+    }).catch(() => {});
   } catch (e) {
     console.warn('Backup warning:', e);
   }
 }
 
 export function readDb(): Schema {
+  // If memory cache is already hot and valid, return immediately (< 1 microsecond)
+  if (memoryCache) {
+    return memoryCache;
+  }
+
   try {
     if (!fs.existsSync(jsonDbPath)) {
       if (fs.existsSync(bundleSeedPath)) {
         try {
           const seededRaw = fs.readFileSync(bundleSeedPath, 'utf-8');
           const parsedSeeded = JSON.parse(seededRaw) as Schema;
-          writeDb(parsedSeeded, false);
           memoryCache = parsedSeeded;
+          writeDb(parsedSeeded, false);
           return parsedSeeded;
         } catch {}
       }
+      memoryCache = initialData;
       writeDb(initialData, true);
       return initialData;
-    }
-
-    const stat = fs.statSync(jsonDbPath);
-    if (memoryCache && stat.mtimeMs === lastFileMtime) {
-      return memoryCache;
     }
 
     const raw = fs.readFileSync(jsonDbPath, 'utf-8');
@@ -958,12 +1013,15 @@ export function readDb(): Schema {
       }
     });
 
+    memoryCache = parsed;
+    try {
+      lastFileMtime = fs.statSync(jsonDbPath).mtimeMs;
+    } catch {}
+
     if (modified) {
       writeDb(parsed, false);
     }
 
-    memoryCache = parsed;
-    lastFileMtime = stat.mtimeMs;
     return parsed;
   } catch (err) {
     console.error('Error reading database:', err);
@@ -980,22 +1038,27 @@ export function writeDb(data: Schema, backup = true) {
       total_writes: totalWritesCount
     };
 
-    const tempPath = `${jsonDbPath}.tmp_${Date.now()}`;
-    const serialized = JSON.stringify(data, null, 2);
-    
-    fs.writeFileSync(tempPath, serialized, 'utf-8');
-    fs.renameSync(tempPath, jsonDbPath);
-
-    memoryCache = data;
-    try {
-      lastFileMtime = fs.statSync(jsonDbPath).mtimeMs;
-    } catch {}
-
-    if (backup && totalWritesCount % 5 === 0) {
-      createBackup(data);
+    // Auto-scrub any runaway base64 string from student documents to keep store lean
+    if (data.students && Array.isArray(data.students)) {
+      for (const s of data.students) {
+        if (s.document_url && s.document_url.startsWith('data:') && s.document_url.length > 5000) {
+          s.document_url = '/uploads/credentials/scrubbed_credential.pdf';
+        }
+        if (s.payment_proof_url && s.payment_proof_url.startsWith('data:') && s.payment_proof_url.length > 5000) {
+          s.payment_proof_url = '/uploads/credentials/scrubbed_proof.png';
+        }
+      }
     }
+
+    // Immediate memory update for ultra-low latency
+    memoryCache = data;
+
+    // Trigger non-blocking async disk write
+    setImmediate(() => {
+      asyncDiskFlush().catch(e => console.error('Background disk write notice:', e));
+    });
   } catch (err) {
-    console.error('CRITICAL: Error writing DB file:', err);
+    console.error('CRITICAL: Error updating in-memory database:', err);
   }
 }
 
@@ -1791,7 +1854,11 @@ export const db = {
 
         if (q.includes('INSERT INTO STUDENTS')) {
           const [full_name, email, password, phone, degree_type, program_type, study_format, document_url] = params;
-          const newId = Math.floor(1000 + Math.random() * 9000);
+          const existingIds = new Set(store.students.map(s => s.id));
+          let newId = (store.students.length ? Math.max(...store.students.map(s => s.id || 0)) : 1000) + 1;
+          while (existingIds.has(newId)) {
+            newId++;
+          }
           
           let parsedDocs: DocumentItem[] = [];
           try {

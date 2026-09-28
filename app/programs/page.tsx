@@ -1,3 +1,5 @@
-import DegreeProgramsPage from '../degree-programs/page';
+import { redirect } from 'next/navigation';
 
-export default DegreeProgramsPage;
+export default function ProgramsPage() {
+  redirect('/programs/hnd');
+}

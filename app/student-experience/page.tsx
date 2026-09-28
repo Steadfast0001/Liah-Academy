@@ -363,8 +363,8 @@ export default function StudentExperiencePage() {
                 a: 'Yes! Our Student Affairs office directly assists all admitted students in securing clean, secure, and affordable hostels and private student apartments within 2–5 minutes walking distance of campus in Bakweri Town, Buea.'
               },
               {
-                q: 'Can I study Online or Part-Time while working a job?',
-                a: 'Absolutely. We offer 100% Online formats (with a 15% tuition discount) and Evening/Weekend Part-Time cohorts (with a 10% discount) designed for working professionals and remote students across Cameroon.'
+                q: 'What are the study formats and can I attend while working a job?',
+                a: 'All programs are conducted 100% on-campus at our Bakweri Town campus in Buea. We provide intensive full-time day cohorts as well as flexible evening tracks to accommodate working professionals and ambitious learners.'
               },
               {
                 q: 'Can I pay my tuition in installments via Mobile Money?',
@@ -427,8 +427,8 @@ export default function StudentExperiencePage() {
             <Link href="/admissions" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
               Apply for Admission <ArrowRight size={16} />
             </Link>
-            <Link href="/degree-programs" className="btn btn-secondary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
-              Explore Degree Programs
+            <Link href="/programs" className="btn btn-secondary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
+              Explore All Programs
             </Link>
           </div>
         </section>
