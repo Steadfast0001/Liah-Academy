@@ -8,7 +8,7 @@ import {
   CheckCircle, FileText, Lock, ArrowRight, ArrowLeft, 
   UserPlus, AlertCircle, RefreshCw, Sparkles, Check,
   UploadCloud, FileCheck, Trash2, Paperclip, Loader2,
-  Clock, Award, Building, Mail, MapPin
+  Clock, Award, Building, Mail, MapPin, Info
 } from 'lucide-react';
 
 interface DocRequirement {
@@ -279,8 +279,10 @@ function AdmissionsContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 25 * 1024 * 1024) {
-      setRegError(`File "${file.name}" exceeds maximum allowed upload size of 25MB.`);
+    const maxBytes = 10 * 1024 * 1024; // 10 MB
+    if (file.size > maxBytes) {
+      const actualMb = (file.size / (1024 * 1024)).toFixed(1);
+      setRegError(`File "${file.name}" is ${actualMb} MB, which exceeds the maximum allowed upload size of 10 MB. Please choose a smaller file or compress it.`);
       return;
     }
 
@@ -961,6 +963,29 @@ function AdmissionsContent() {
               {/* STEP 3: Document Uploads & Submit */}
               {currentStep === 3 && (
                 <div>
+                  {/* HCI Upload Guidelines Notice */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    background: '#F0FDF4',
+                    border: '1.5px solid #86EFAC',
+                    padding: '14px 18px',
+                    borderRadius: '10px',
+                    marginBottom: '20px',
+                    color: '#166534'
+                  }}>
+                    <Info size={20} color="#16A34A" style={{ flexShrink: 0 }} />
+                    <div style={{ fontSize: '0.84rem', lineHeight: 1.45 }}>
+                      <strong style={{ color: '#14532D', display: 'block', marginBottom: '2px' }}>
+                        Document Upload Specifications
+                      </strong>
+                      <span>
+                        Maximum file size: <strong>10 MB per document</strong> &bull; Supported file types: <strong>PDF, JPG, JPEG, PNG</strong>.
+                      </span>
+                    </div>
+                  </div>
+
                   <p style={{ color: '#64748B', fontSize: '0.88rem', marginBottom: '18px' }}>
                     Attach your academic qualifications and official birth certificate for dossier approval:
                   </p>
@@ -970,11 +995,16 @@ function AdmissionsContent() {
                       const uploaded = uploadedDocs[slot.id];
                       return (
                         <div key={slot.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px 16px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
                             <strong style={{ fontSize: '0.88rem', color: '#081F3E' }}>
                               {slot.label} {slot.required && <span style={{ color: '#DC2626' }}>*</span>}
                             </strong>
-                            {uploaded && <span style={{ color: '#059669', fontSize: '0.78rem', fontWeight: 700 }}>✓ Attached</span>}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '0.72rem', background: '#E2E8F0', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                                Max 10 MB
+                              </span>
+                              {uploaded && <span style={{ color: '#059669', fontSize: '0.78rem', fontWeight: 700 }}>✓ Attached</span>}
+                            </div>
                           </div>
                           <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'block', marginBottom: '10px' }}>
                             {slot.hint}
@@ -997,7 +1027,7 @@ function AdmissionsContent() {
                             </div>
                           ) : (
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', border: '1px solid #CBD5E1', padding: '6px 14px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', cursor: 'pointer' }}>
-                              <UploadCloud size={14} /> Select File
+                              <UploadCloud size={14} /> Select File (Max 10 MB)
                               <input
                                 type="file"
                                 accept={slot.accept}

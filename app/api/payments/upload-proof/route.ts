@@ -30,6 +30,14 @@ export async function POST(request: Request) {
       const file = formData.get('screenshot') || formData.get('proof') || formData.get('file');
       if (file && typeof file === 'object' && 'arrayBuffer' in file) {
         const fileObj = file as File;
+        const maxBytes = 10 * 1024 * 1024; // 10 MB
+        if (fileObj.size > maxBytes) {
+          return NextResponse.json(
+            { success: false, message: 'Proof file exceeds maximum upload size of 10 MB.' },
+            { status: 400 }
+          );
+        }
+
         const bytes = await fileObj.arrayBuffer();
         const buffer = Buffer.from(bytes);
 

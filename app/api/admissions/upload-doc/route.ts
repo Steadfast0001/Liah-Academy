@@ -18,6 +18,14 @@ export async function POST(request: Request) {
     }
 
     const fileObj = file as File;
+    const maxBytes = 10 * 1024 * 1024; // 10 MB
+    if (fileObj.size > maxBytes) {
+      return NextResponse.json(
+        { success: false, message: 'File exceeds maximum allowed upload size of 10 MB. Please compress or select a smaller file.' },
+        { status: 400 }
+      );
+    }
+
     const bytes = await fileObj.arrayBuffer();
     const buffer = Buffer.from(bytes);
 

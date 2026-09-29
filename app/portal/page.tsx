@@ -257,8 +257,10 @@ function StudentPortalContent() {
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 25 * 1024 * 1024) {
-        setPayError('Selected screenshot is too large. Please select a file under 25MB.');
+      const maxBytes = 10 * 1024 * 1024; // 10 MB
+      if (file.size > maxBytes) {
+        const actualMb = (file.size / (1024 * 1024)).toFixed(1);
+        setPayError(`Selected file "${file.name}" is ${actualMb} MB, which exceeds the maximum allowed size of 10 MB. Please select a smaller file.`);
         return;
       }
       setPayScreenshotFile(file);
@@ -775,9 +777,14 @@ function StudentPortalContent() {
 
                   {/* Screenshot Upload */}
                   <div style={{ marginBottom: '18px' }}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
-                      Attach Proof of Payment (Screenshot) *
-                    </label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', margin: 0 }}>
+                        Attach Proof of Payment (Screenshot) *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', background: '#E2E8F0', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                        Max 10 MB
+                      </span>
+                    </div>
                     <label
                       htmlFor="portal_payment_proof"
                       style={{
@@ -786,7 +793,7 @@ function StudentPortalContent() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
-                        padding: '16px',
+                        padding: '18px 16px',
                         border: '2px dashed ' + (payScreenshotPreview ? '#10B981' : '#CBD5E1'),
                         borderRadius: '8px',
                         background: '#FFFFFF',
@@ -794,9 +801,12 @@ function StudentPortalContent() {
                         textAlign: 'center'
                       }}
                     >
-                      <ImageIcon size={22} color={payScreenshotPreview ? '#10B981' : '#64748B'} />
+                      <ImageIcon size={24} color={payScreenshotPreview ? '#10B981' : '#64748B'} />
                       <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E' }}>
-                        {payScreenshotFile ? payScreenshotFile.name : 'Click to select transaction screenshot'}
+                        {payScreenshotFile ? payScreenshotFile.name : 'Click to select transaction screenshot or receipt'}
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                        Max file size: <strong>10 MB</strong> &bull; PNG, JPG, JPEG, PDF
                       </span>
                       <input
                         id="portal_payment_proof"
