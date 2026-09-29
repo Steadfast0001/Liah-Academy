@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { readDb, writeDb } from '@/lib/db';
+import { readDb, writeDb } from './db';
 
 export interface EmailLog {
   id: string;

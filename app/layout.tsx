@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ChatWidget from '@/components/ChatWidget';
-import WhatsAppButton from '@/components/WhatsAppButton';
-import BackToTop from '@/components/BackToTop';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import ChatWidget from '../components/ChatWidget';
+import WhatsAppButton from '../components/WhatsAppButton';
+import BackToTop from '../components/BackToTop';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -32,7 +33,6 @@ export const metadata: Metadata = {
   }
 };
 
-import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function RootLayout({
   children,

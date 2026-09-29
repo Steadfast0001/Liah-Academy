@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '../../../../lib/db';
-import { verifyAdminAuth } from '../../../../lib/auth';
-import { exportApplicantsToCSVString, RawApplicantRecord } from '../../../../lib/csv';
+import { adminStore } from '@/lib/db';
+import { verifyAdminAuth } from '@/lib/auth';
+import { exportApplicantsToCSVString, RawApplicantRecord } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
