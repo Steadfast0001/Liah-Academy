@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { exportApplicantsToCSVString } from '../../lib/csv';
+import { compressImageFile } from '@/lib/imageOptimizer';
 
 interface Application {
   id: number;
@@ -959,13 +960,19 @@ export default function AdminDashboardPage() {
     }
 
     const token = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
-    const formData = new FormData();
-    formData.append('file', uploadFile);
-    formData.append('title', newMediaTitle || uploadFile.name);
-    formData.append('category', newMediaCategory);
 
     setActionLoading(true);
     try {
+      let fileToSend = uploadFile;
+      if (uploadFile.type && uploadFile.type.startsWith('image/')) {
+        fileToSend = await compressImageFile(uploadFile, 1920, 0.85);
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileToSend);
+      formData.append('title', newMediaTitle || uploadFile.name);
+      formData.append('category', newMediaCategory);
+
       const res = await fetch('/api/admin/media', {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {},
@@ -974,7 +981,7 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showNotification('Media asset uploaded successfully!');
+        showNotification('Media asset uploaded and saved physically to server disk!');
         setMediaList(prev => [data.data, ...prev]);
         setUploadFile(null);
         setNewMediaTitle('');
@@ -4191,7 +4198,7 @@ export default function AdminDashboardPage() {
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>
-                        Flyer / Image URL
+                        Flyer / Image URL (or upload image below &bull; Max 10 MB)
                       </label>
                       <input 
                         type="text" 
@@ -4199,7 +4206,43 @@ export default function AdminDashboardPage() {
                         placeholder="/assets/images/flyer_engineering.png"
                         value={newsForm.image}
                         onChange={(e) => setNewsForm({ ...newsForm, image: e.target.value })}
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)' }}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)', marginBottom: '8px' }}
+                      />
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          if (f.size > 10 * 1024 * 1024) {
+                            alert(`File size exceeds 10 MB limit.`);
+                            return;
+                          }
+                          try {
+                            const opt = await compressImageFile(f, 1600, 0.85);
+                            const fd = new FormData();
+                            fd.append('file', opt);
+                            fd.append('title', newsForm.title || f.name);
+                            fd.append('category', 'Prospectus');
+                            const token = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
+                            const res = await fetch('/api/admin/media', {
+                              method: 'POST',
+                              headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {},
+                              credentials: 'include',
+                              body: fd
+                            });
+                            const resData = await res.json();
+                            if (resData.success && resData.url) {
+                              setNewsForm(prev => ({ ...prev, image: resData.url }));
+                              showNotification('Flyer image uploaded and stored physically on disk!');
+                            } else {
+                              showNotification(resData.message || 'Upload failed', 'error');
+                            }
+                          } catch {
+                            showNotification('Failed to upload image', 'error');
+                          }
+                        }}
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px dashed rgba(15,23,42,0.2)', fontSize: '0.8rem' }}
                       />
                     </div>
 
