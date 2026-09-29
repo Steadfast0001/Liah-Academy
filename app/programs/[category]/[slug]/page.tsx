@@ -430,7 +430,7 @@ export default function ProgramDetailPage() {
             {/* Bottom Button */}
             <div style={{ background: '#F8FAFC', padding: '18px 24px', textAlign: 'center', borderTop: '1px solid #E2E8F0' }}>
               <Link
-                href="/admissions#apply"
+                href="/admissions#requirements"
                 style={{
                   background: '#081F3E',
                   color: '#F5A623',
