@@ -88,9 +88,11 @@ export async function POST(request: Request) {
       } catch {}
     });
 
+    const { password: _, ...safeStudent } = (createdStudent as any);
+
     return NextResponse.json({
       success: true,
-      data: createdStudent
+      data: safeStudent
     });
   } catch (error: any) {
     console.error('Registration error:', error);
