@@ -200,6 +200,130 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       },
 
       {
+        slug: 'cybersecurity-cloud-defense',
+        categorySlug: 'hnd',
+        title: 'Higher National Diploma (HND) in Cybersecurity & Cloud Defense',
+        degreeType: 'HND (2 Years)',
+        deliveryFormat: '100% On-Campus',
+        summary: 'A comprehensive 2-year accredited diploma in defensive security operations, penetration testing, ethical hacking, cloud security architecture, SIEM forensics, and enterprise network defense.',
+        heroQuote: {
+          text: 'The defensive and offensive security labs in Buea gave me the exact hands-on experience needed to secure enterprise infrastructure.',
+          author: 'Alain Ndifor',
+          title: 'SecOps Analyst & Cloud Defense Specialist'
+        },
+        heroImage: '/assets/images/campus_students_liah_shirts.jpg',
+        duration: '2 Years (4 Semesters)',
+        tuition: '250,000 FRS / Year',
+        applicationFee: '15,000 FRS',
+        tuitionInstallments: 'Payable in Flexible Installments',
+        campus: 'Bakweri Town Campus, Buea',
+        intakes: 'October (Fall) / February (Spring)',
+        overviewTitle: 'Become the Cybersecurity Engineer Safeguarding Mission-Critical Systems',
+        overviewText: 'Develop the defensive and offensive security capabilities required to protect enterprise infrastructure, identify system vulnerabilities, conduct ethical penetration tests, configure firewalls, and respond to cyber incidents in our Bakweri Town cybersecurity lab.',
+        careerOutcomes: [
+          {
+            title: 'Cybersecurity Analyst & SOC Specialist',
+            description: 'Monitor networks, analyze security events, detect intrusions, and manage incident responses.',
+            responsibilities: [
+              'Implement SIEM monitoring and analyze intrusion alerts',
+              'Configure firewalls, IDS/IPS, and zero-trust policies',
+              'Perform security auditing and compliance assessments'
+            ],
+            averageSalary: '3,800,000 – 9,500,000 FRS / Year'
+          },
+          {
+            title: 'Ethical Hacker / Penetration Tester',
+            description: 'Evaluate system security by ethically identifying and reporting exploitable vulnerabilities.',
+            responsibilities: [
+              'Perform vulnerability scans and web application pen-tests',
+              'Simulate attack scenarios and test network defenses',
+              'Produce detailed mitigation and remediation reports'
+            ],
+            averageSalary: '4,000,000 – 10,500,000 FRS / Year'
+          }
+        ],
+        admissionRequirements: {
+          toApply: [
+            'Non-refundable Application Fee: 15,000 FRS (MTN MoMo or on-campus)',
+            'Completed Application Form',
+            'Official GCE Advanced Level Certificate (at least 2 papers) or Baccalauréat equivalent',
+            'Certified copy of National Identity Card or Birth Certificate',
+            '2 Recent Passport-sized Photographs'
+          ],
+          conditional: [
+            'Candidates awaiting GCE A-Level results may receive conditional admission pending official release.',
+            'Direct 2nd Year Entry is available for candidates with accredited ND or equivalent university coursework.'
+          ]
+        },
+        curriculum: [
+          {
+            levelName: 'Level 100 (Year 1): Security Foundations & Network Defense',
+            modules: [
+              {
+                code: 'CYB 101',
+                title: 'Networking Infrastructure & Linux Hardening',
+                description: 'OSI/TCP-IP models, packet analysis with Wireshark, Linux command-line security, and access controls.',
+                topics: ['Wireshark', 'Linux Admin', 'TCP/IP Protocols', 'SSH/SSL Hardening']
+              },
+              {
+                code: 'CYB 102',
+                title: 'Threat Identification & Cryptography Basics',
+                description: 'Malware analysis fundamentals, encryption algorithms, hashing, public key infrastructure (PKI), and threat vectors.',
+                topics: ['Symmetric/Asymmetric Encryption', 'Threat Vectors', 'PKI', 'Password Auditing']
+              }
+            ]
+          },
+          {
+            levelName: 'Level 200 (Year 2): Ethical Hacking, SOC Ops & Cloud Defense',
+            modules: [
+              {
+                code: 'CYB 201',
+                title: 'Penetration Testing & Web Application Security',
+                description: 'Ethical hacking methodologies, OWASP Top 10 vulnerabilities, Metasploit, Burp Suite, and Kali Linux toolsets.',
+                topics: ['OWASP Top 10', 'Burp Suite', 'Metasploit', 'Vulnerability Scanning']
+              },
+              {
+                code: 'CYB 202',
+                title: 'Cloud Security, SIEM & Incident Response Capstone',
+                description: 'AWS/Azure cloud security, SIEM logging with Splunk/Wazuh, incident response playbooks, and capstone enterprise defense.',
+                topics: ['SIEM / Wazuh', 'Cloud Security Posture', 'Incident Response', 'Capstone Defense Project']
+              }
+            ]
+          }
+        ],
+        skillsAndSupport: [
+          {
+            title: 'Live Cyber Lab Practice',
+            description: 'Hands-on practice in dedicated isolated sandboxes, CTF challenges, and live defensive scenarios in Bakweri Town.',
+            bullets: [
+              'CompTIA Security+ and CEH exam preparation',
+              'Hands-on Capture The Flag (CTF) competitive exercises',
+              'Enterprise firewall and SIEM log monitoring workstations'
+            ]
+          },
+          {
+            title: 'Career & SecOps Mentorship',
+            description: 'Direct guidance from practicing security leads and network defense engineers.',
+            bullets: [
+              'SecOps portfolio and bug bounty guidance',
+              'Mock technical security interviews and report audits',
+              'Direct placement opportunities with telecom and banking security teams'
+            ]
+          }
+        ],
+        faqs: [
+          {
+            question: 'What qualification do I receive upon graduation?',
+            answer: 'You will receive the official Cameroon Ministry of Higher Education (MINESUP) Higher National Diploma (HND) in Cybersecurity & Cloud Defense.'
+          },
+          {
+            question: 'Where do classes take place?',
+            answer: 'All lectures and practical cybersecurity lab sessions take place exclusively at our physical campus in Bakweri Town, Buea.'
+          }
+        ]
+      },
+
+      {
         slug: 'web-graphic-design',
         categorySlug: 'hnd',
         title: 'Higher National Diploma (HND) in Web & Graphic Design',
@@ -1203,6 +1327,7 @@ PROGRAM_CATEGORIES['certification-programs'] = PROGRAM_CATEGORIES['certification
 PROGRAM_CATEGORIES['nd-programs'] = PROGRAM_CATEGORIES['nd'];
 PROGRAM_CATEGORIES['software-engineering'] = PROGRAM_CATEGORIES['hnd'];
 PROGRAM_CATEGORIES['cybersecurity'] = PROGRAM_CATEGORIES['hnd'];
+PROGRAM_CATEGORIES['cybersecurity-cloud-defense'] = PROGRAM_CATEGORIES['hnd'];
 PROGRAM_CATEGORIES['devops'] = PROGRAM_CATEGORIES['certifications'];
 PROGRAM_CATEGORIES['data-science'] = PROGRAM_CATEGORIES['certifications'];
 PROGRAM_CATEGORIES['web-design'] = PROGRAM_CATEGORIES['nd'];
