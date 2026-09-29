@@ -2,27 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { 
-  MessageSquare, X, Send, Bot, CheckCircle, AlertCircle, 
-  Smartphone, Loader2, CreditCard, User, BookOpen, ExternalLink,
-  ChevronRight, RefreshCw, ShieldCheck, Copy, Check, MessageCircle, 
-  HelpCircle, GraduationCap, Search, MapPin, Phone, Maximize2, Minimize2, Sparkles, ArrowRight
+  MessageSquare, X, Send, Bot, CheckCircle, 
+  Loader2, User, Phone, Mail, ExternalLink,
+  MessageCircle, Sparkles, Shield, Clock
 } from 'lucide-react';
 import { WhatsAppIcon } from './SocialIcons';
-
-interface StudentData {
-  id: number;
-  full_name: string;
-  email: string;
-  phone: string;
-  degree_type: string;
-  program_type: string;
-  study_format: string;
-  admission_status: string;
-  payment_status: string;
-  created_at?: string;
-}
 
 interface ChatMessage {
   id: string;
@@ -30,145 +15,104 @@ interface ChatMessage {
   sender_name?: string;
   text: string;
   timestamp?: string;
-  actionType?: string;
-  studentData?: StudentData;
-  showPaymentDirectives?: boolean;
-  prefillData?: any;
 }
 
-const feeOptions = [
-  { label: 'Application Fee (HND / ND)', amount: 15000, desc: 'HND & ND Application Fee (15,000 XAF)' },
-  { label: 'Application Fee (Certifications)', amount: 25000, desc: 'Professional Certifications Application Fee (25,000 XAF)' },
-];
-
-
 export default function ChatWidget() {
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'pay' | 'apply' | 'track' | 'programs'>('chat');
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
+  const [userContact, setUserContact] = useState<string>('');
+  const [showContactFields, setShowContactFields] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: '1',
-      sender: 'bot',
-      text: "Hello! Welcome to Liah Academy 🎓. I'm your interactive admissions assistant and student portal desk.\n\nYou can chat with me, explore our degree tracks, check your dossier status, or pay your fees using our instant MTN MoMo short code: *126*14*670265493*Amount#!"
+      id: 'welcome-1',
+      sender: 'agent',
+      sender_name: 'Liah Admissions Desk',
+      text: 'Hello! 👋 Welcome to Liah Academy Live Support. Send us a message here and our admissions counselors will respond to you live.',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
-  const [isTyping, setIsTyping] = useState(false);
-
-  // In-Chat Payment Directives State
-  const [selectedFee, setSelectedFee] = useState<number>(15000);
-  const [selectedFeeName, setSelectedFeeName] = useState<string>('Application Fee (HND / ND)');
-  const [customChatAmount, setCustomChatAmount] = useState<string>('');
-  const [studentIdTag, setStudentIdTag] = useState<string>('');
-  const [copiedShortCode, setCopiedShortCode] = useState(false);
-  const [shortCodeDialed, setShortCodeDialed] = useState(false);
-  const [autoChecking, setAutoChecking] = useState(false);
-
-  // In-Chat PIN Terminal State
-  const [showChatPinPrompt, setShowChatPinPrompt] = useState(false);
-  const [chatPin, setChatPin] = useState('');
-  const [chatPinSubmitting, setChatPinSubmitting] = useState(false);
-  const [chatPinError, setChatPinError] = useState('');
-  const [chatMomoReceipt, setChatMomoReceipt] = useState<any>(null);
-
-  // Fast Apply State
-  const [applyName, setApplyName] = useState('');
-  const [applyEmail, setApplyEmail] = useState('');
-  const [applyPhone, setApplyPhone] = useState('');
-  const [applyDegree, setApplyDegree] = useState<'HND' | 'ND' | 'Certification'>('HND');
-  const [applyProgram, setApplyProgram] = useState('Software Engineering HND');
-  const [applyLoading, setApplyLoading] = useState(false);
-  const [applySuccess, setApplySuccess] = useState<any>(null);
-  const [applyError, setApplyError] = useState('');
-
-  // Track Status State
-  const [trackQuery, setTrackQuery] = useState('');
-  const [trackLoading, setTrackLoading] = useState(false);
-  const [trackResult, setTrackResult] = useState<any>(null);
-  const [trackError, setTrackError] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    if (activeTab === 'chat') {
+    if (isOpen) {
       scrollToBottom();
+      setUnreadCount(0);
+      setTimeout(() => inputRef.current?.focus(), 150);
     }
-  }, [messages, isTyping, showChatPinPrompt, chatMomoReceipt, shortCodeDialed, activeTab]);
+  }, [isOpen, messages]);
 
-  // Initialize or restore chat session
+  // Initialize session ID
   useEffect(() => {
     let sid = '';
     try {
-      sid = localStorage.getItem('liah_chat_session_id') || '';
-      if (!sid) {
-        sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        localStorage.setItem('liah_chat_session_id', sid);
+      if (typeof window !== 'undefined') {
+        sid = localStorage.getItem('liah_chat_session_id') || '';
+        if (!sid) {
+          sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+          localStorage.setItem('liah_chat_session_id', sid);
+        }
+        const savedName = localStorage.getItem('liah_chat_user_name');
+        if (savedName) setUserName(savedName);
+        const savedContact = localStorage.getItem('liah_chat_user_contact');
+        if (savedContact) setUserContact(savedContact);
       }
     } catch {
-      sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     }
     setSessionId(sid);
 
-    // Fetch existing messages from persistent session
-    fetch(`/api/chat?sessionId=${sid}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
-          const loaded: ChatMessage[] = data.messages.map((m: any) => ({
-            id: m.id,
-            sender: m.sender,
-            sender_name: m.sender_name,
-            text: m.text,
-            timestamp: m.timestamp
-          }));
-          setMessages(loaded);
-        }
-      })
-      .catch(() => {});
+    // Initial fetch of conversation history
+    if (sid) {
+      fetch(`/api/chat?sessionId=${sid}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
+            setMessages(data.messages);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
-  // Poll for live replies from Admissions / Support specialists
+  // Real-time polling for live responses from admin
   useEffect(() => {
-    if (!isOpen || !sessionId) return;
-    const interval = setInterval(async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
+    if (!sessionId) return;
+
+    const pollInterval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.hidden && !isOpen) return;
+
       try {
         const res = await fetch(`/api/chat?sessionId=${sessionId}`);
         const data = await res.json();
         if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
           setMessages(prev => {
-            const hasNewMessages = data.messages.length !== prev.length || 
-              data.messages.some((m: any) => !prev.find(p => p.id === m.id));
-            if (hasNewMessages) {
-              return data.messages.map((m: any) => {
-                const existing = prev.find(p => p.id === m.id);
-                return existing || {
-                  id: m.id,
-                  sender: m.sender,
-                  sender_name: m.sender_name,
-                  text: m.text,
-                  timestamp: m.timestamp
-                };
-              });
+            if (data.messages.length > prev.length) {
+              if (!isOpen) {
+                setUnreadCount(prevUnread => prevUnread + (data.messages.length - prev.length));
+              }
+              return data.messages;
             }
             return prev;
           });
         }
       } catch {}
-    }, 4000);
+    }, 3000);
 
-    return () => clearInterval(interval);
-  }, [isOpen, sessionId]);
+    return () => clearInterval(pollInterval);
+  }, [sessionId, isOpen]);
 
-
-  // Global hotkey Ctrl+J / Cmd+J
+  // Global hotkey Ctrl+J / Cmd+J to toggle live chat
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
@@ -180,1041 +124,441 @@ export default function ChatWidget() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleCopyShortCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedShortCode(true);
-    setTimeout(() => setCopiedShortCode(false), 2500);
-  };
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const text = input.trim();
+    if (!text || isSending) return;
 
-  const handleRunShortCode = (code: string, amount: number) => {
-    setShortCodeDialed(true);
-    setChatPin('');
-    setChatPinError('');
-    try {
-      navigator.clipboard.writeText(code);
-    } catch {}
-    const dialUri = `tel:*126*14*670265493*${amount}%23`;
-    window.location.href = dialUri;
-  };
-
-  const handleAutoCheckStatus = async () => {
-    setAutoChecking(true);
-    setChatPinError('');
-    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
-
-    try {
-      const res = await fetch('/api/payments/momo-confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: studentIdTag ? parseInt(studentIdTag) : undefined,
-          amount: effectiveAmount,
-          phone: '670265493',
-          pin: '0000'
-        })
-      });
-
-      const data = await res.json();
-      setAutoChecking(false);
-
-      if (data.success) {
-        setChatMomoReceipt(data.data?.receipt || {
-          reference: data.data?.payment?.reference,
-          amount: effectiveAmount,
-          recipient: '670265493 (Liah Academy)',
-          date: new Date().toLocaleString(),
-          status: 'PAID & APPROVED'
-        });
-
-        const successMsg: ChatMessage = {
-          id: Date.now().toString(),
-          sender: 'bot',
-          text: `🎉 MoMo Payment Validated! ${effectiveAmount.toLocaleString()} XAF has been received. Your admission status is now APPROVED!`
-        };
-        setMessages(prev => [...prev, successMsg]);
-      } else {
-        setShowChatPinPrompt(true);
-      }
-    } catch {
-      setAutoChecking(false);
-      setShowChatPinPrompt(true);
-    }
-  };
-
-  const handleChatAuthorizePin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatPin || chatPin.length < 4) {
-      setChatPinError('Please enter your 4 or 5-digit Secret PIN.');
-      return;
-    }
-    setChatPinSubmitting(true);
-    setChatPinError('');
-
-    const effectiveAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
-
-    try {
-      const res = await fetch('/api/payments/momo-confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: studentIdTag ? parseInt(studentIdTag) : undefined,
-          amount: effectiveAmount,
-          phone: '670265493',
-          pin: chatPin
-        })
-      });
-
-      const data = await res.json();
-      setChatPinSubmitting(false);
-
-      if (data.success) {
-        setShowChatPinPrompt(false);
-        setChatMomoReceipt(data.data?.receipt || {
-          reference: data.data?.payment?.reference,
-          amount: effectiveAmount,
-          recipient: '670265493 (Liah Academy)',
-          date: new Date().toLocaleString(),
-          status: 'PAID & APPROVED'
-        });
-
-        const successMsg: ChatMessage = {
-          id: Date.now().toString(),
-          sender: 'bot',
-          text: `🎉 MoMo Payment Validated! ${effectiveAmount.toLocaleString()} XAF has been authorized. Your admission dossier status is now APPROVED!`
-        };
-        setMessages(prev => [...prev, successMsg]);
-      } else {
-        setChatPinError(data.message || 'PIN verification failed. Please check your PIN.');
-      }
-    } catch {
-      setChatPinSubmitting(false);
-      setChatPinError('Network error confirming PIN authorization.');
-    }
-  };
-
-  const handleSendMessage = async (textToSend: string) => {
-    const query = textToSend.trim();
-    if (!query) return;
-
-    // Switch to chat tab if from another tab
-    setActiveTab('chat');
-
-    // Add user message
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: `user_${Date.now()}`,
       sender: 'user',
-      text: query
+      sender_name: userName || 'Student / Visitor',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+
+    // Optimistic append
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setIsTyping(true);
+    setIsSending(true);
 
     try {
-      const activeSid = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('liah_chat_session_id') : '') || '';
+      if (userName && typeof window !== 'undefined') {
+        localStorage.setItem('liah_chat_user_name', userName);
+      }
+      if (userContact && typeof window !== 'undefined') {
+        localStorage.setItem('liah_chat_user_contact', userContact);
+      }
+
       const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query,
-          sessionId: activeSid,
-          userName: applyName || '',
-          userEmail: applyEmail || ''
-        })
-      });
-      const data = await res.json();
-      
-      if (data.sessionId && data.sessionId !== sessionId) {
-        setSessionId(data.sessionId);
-        try { localStorage.setItem('liah_chat_session_id', data.sessionId); } catch {}
-      }
-
-      setIsTyping(false);
-      const botMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'bot',
-        text: data.response || "I'm happy to help! You can reach our admissions team directly at info@liahacademy.com.",
-        actionType: data.actionType,
-        studentData: data.studentData,
-        showPaymentDirectives: data.actionType === 'payment_form',
-        prefillData: data.prefillData
-      };
-
-      if (data.prefillData?.studentId) {
-        setStudentIdTag(String(data.prefillData.studentId));
-      }
-
-      setMessages(prev => [...prev, botMsg]);
-    } catch {
-      setIsTyping(false);
-      const fallbackMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'bot',
-        text: "Thanks for reaching out! You can learn more by applying on our Admissions page or contacting us at info@liahacademy.com."
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
-    }
-  };
-
-  const handleFastApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setApplyLoading(true);
-    setApplyError('');
-    try {
-      const res = await fetch('/api/admissions/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: applyName,
-          email: applyEmail,
-          phone: applyPhone,
-          degree_type: applyDegree,
-          program_type: applyProgram,
-          password: 'LiahCandidate2026!'
+          sessionId,
+          query: text,
+          userName: userName || undefined,
+          userPhone: userContact || undefined,
+          userEmail: userContact?.includes('@') ? userContact : undefined
         })
       });
+
       const data = await res.json();
-      setApplyLoading(false);
-      if (data.success) {
-        setApplySuccess(data.student);
-      } else {
-        setApplyError(data.message || 'Registration error. Please check your details.');
+      if (data.success && data.response) {
+        // If an automated acknowledgement or answer was returned and not yet in messages
+        const botReply: ChatMessage = {
+          id: `reply_${Date.now()}`,
+          sender: 'agent',
+          sender_name: 'Liah Support',
+          text: data.response,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => {
+          // Avoid duplicate text if already fetched via poll
+          if (prev.some(m => m.text === botReply.text && m.sender !== 'user')) return prev;
+          return [...prev, botReply];
+        });
       }
     } catch {
-      setApplyLoading(false);
-      setApplyError('Network error connecting to admissions server.');
+      // Offline fallback note
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `err_${Date.now()}`,
+          sender: 'agent',
+          sender_name: 'System',
+          text: 'Message stored. If internet was interrupted, our admissions desk will see your message once connectivity restores.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const handleTrackDossierSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackQuery.trim()) return;
-    setTrackLoading(true);
-    setTrackError('');
-    setTrackResult(null);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: `Check status for ${trackQuery.trim()}` })
-      });
-      const data = await res.json();
-      setTrackLoading(false);
-
-      if (data.studentData) {
-        setTrackResult(data.studentData);
-      } else {
-        setTrackError(data.response || `No student application found for "${trackQuery}".`);
-      }
-    } catch {
-      setTrackLoading(false);
-      setTrackError('Could not verify dossier status right now.');
+  const handleQuickQuestion = (question: string) => {
+    setInput(question);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
-
-  const currentPayAmount = customChatAmount ? (parseInt(customChatAmount) || 0) : (selectedFee || 15000);
-  const activeShortCode = `*126*14*670265493*${currentPayAmount || 15000}#`;
-
-  // Do not render live chat widget inside Admin portal
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
 
   return (
     <>
-      {/* Unified Single Circular Golden Floating Live Chat Button */}
-      <div
-        className="chat-widget-bubble"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open Live Chat &amp; Student Desk"
-        role="button"
-        tabIndex={0}
-        title="Live Chat &amp; Admissions Assistant"
-      >
-        {isOpen ? <X size={26} color="#081F3E" /> : <MessageSquare size={26} color="#081F3E" />}
-        <span className="live-chat-pulse-dot" />
-        
-        {/* Floating Tooltip Label */}
-        <div className="chat-bubble-tooltip">
-          <span style={{ fontWeight: 800 }}>Live Chat</span> &bull; 24/7
-        </div>
-      </div>
-
-      {/* Floating Panel (Positioned on the Right) */}
-      {isOpen && (
-        <div 
-          className="chat-modal-window"
-          style={isMaximized ? {
+      {/* Floating Launcher Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          aria-label="Open Live Chat"
+          style={{
             position: 'fixed',
-            bottom: 0,
-            right: 0,
-            left: 0,
-            top: 0,
-            width: '100vw',
-            maxWidth: '100vw',
-            height: '100vh',
-            maxHeight: '100vh',
-            borderRadius: 0,
-            zIndex: 99999
-          } : {}}
+            bottom: '24px',
+            right: '24px',
+            background: 'linear-gradient(135deg, #081F3E 0%, #0F2F57 100%)',
+            color: '#FFFFFF',
+            border: '2px solid #F5A623',
+            borderRadius: '50px',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            boxShadow: '0 8px 25px rgba(8, 31, 62, 0.4)',
+            cursor: 'pointer',
+            zIndex: 9999,
+            transition: 'transform 0.2s, box-shadow 0.2s'
+          }}
+          className="hover:scale-105"
+        >
+          <div style={{ position: 'relative' }}>
+            <MessageSquare size={22} color="#F5A623" />
+            <span style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              width: '9px',
+              height: '9px',
+              borderRadius: '50%',
+              background: '#10B981',
+              border: '2px solid #081F3E'
+            }} />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.02em' }}>
+            Live Chat
+          </span>
+          {unreadCount > 0 && (
+            <span style={{
+              background: '#DC2626',
+              color: '#FFFFFF',
+              borderRadius: '50%',
+              width: '20px',
+              height: '20px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {unreadCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Live Chat Modal Box */}
+      {isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: 'min(400px, calc(100vw - 32px))',
+            height: 'min(580px, calc(100vh - 40px))',
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            boxShadow: '0 20px 45px rgba(8, 31, 62, 0.35)',
+            border: '1px solid #E2E8F0',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 99999,
+            overflow: 'hidden',
+            fontFamily: 'inherit'
+          }}
         >
           {/* Header */}
-          <div className="chat-header" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div className="chat-header-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div className="chat-avatar">
-                <Bot size={20} color="#081F3E" />
-                <span className="online-badge" />
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #081F3E 0%, #0F2F57 100%)',
+              color: '#FFFFFF',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '2px solid #F5A623'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'rgba(245, 166, 35, 0.2)',
+                border: '1.5px solid #F5A623',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <MessageCircle size={20} color="#F5A623" />
               </div>
               <div>
-                <h4 className="chat-header-title" style={{ fontSize: '0.95rem', fontWeight: 800 }}>Liah Live Chat &amp; Desk</h4>
-                <p className="chat-header-status" style={{ fontSize: '0.72rem' }}>24/7 Admissions, MoMo &amp; Student Portal</p>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#FFFFFF' }}>
+                  Liah Academy Support
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                  <span style={{ fontSize: '0.75rem', color: '#CBD5E1', fontWeight: 600 }}>
+                    Admissions Desk Online
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {/* Direct WhatsApp Contact Button */}
-              <a
-                href="https://wa.me/237699526607?text=Hello%20Liah%20Academy%20Admissions%2C%20I%20would%20like%20to%20inquire%20about%20admissions."
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: '#25D366',
-                  color: '#FFFFFF',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(37, 211, 102, 0.4)'
-                }}
-                title="Open WhatsApp Chat (+237 699 526 607)"
-              >
-                <WhatsAppIcon size={14} />
-                <span>WhatsApp</span>
-              </a>
-
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
-                onClick={() => setIsMaximized(!isMaximized)}
+                onClick={() => setIsOpen(false)}
+                aria-label="Close Chat"
                 style={{
-                  background: 'rgba(255,255,255,0.08)',
+                  background: 'rgba(255, 255, 255, 0.15)',
                   border: 'none',
-                  color: '#CBD5E1',
-                  borderRadius: '6px',
-                  width: '28px',
-                  height: '28px',
+                  borderRadius: '50%',
+                  width: '30px',
+                  height: '30px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  color: '#FFFFFF',
                   cursor: 'pointer'
                 }}
-                title={isMaximized ? 'Restore Window' : 'Expand Window'}
-              >
-                {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-              </button>
-
-              <button
-                className="chat-close-btn"
-                onClick={() => setIsOpen(false)}
-                aria-label="Close Chat"
               >
                 <X size={16} />
               </button>
             </div>
           </div>
 
-          {/* Integrated Navigation Bar (Switch between AI Chat, MoMo Pay, Fast Apply, Track, Programs) */}
+          {/* Optional Quick User Identification Toggle */}
           <div style={{
+            background: '#F8FAFC',
+            borderBottom: '1px solid #E2E8F0',
+            padding: '8px 16px',
             display: 'flex',
-            background: '#041021',
-            borderBottom: '1px solid rgba(245,166,35,0.2)',
-            padding: '4px 6px',
-            gap: '4px',
-            overflowX: 'auto',
-            scrollbarWidth: 'none'
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.78rem',
+            color: '#64748B'
           }}>
-            {[
-              { id: 'chat', label: '💬 AI Advisor', icon: Bot },
-              { id: 'pay', label: '💳 MTN MoMo', icon: Smartphone },
-              { id: 'apply', label: '🎓 Fast Apply', icon: GraduationCap },
-              { id: 'track', label: '🔍 Track Dossier', icon: Search },
-              { id: 'programs', label: '📚 Programs', icon: BookOpen },
-            ].map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: isActive ? 'rgba(245, 166, 35, 0.25)' : 'transparent',
-                    color: isActive ? '#FDE047' : '#94A3B8',
-                    fontWeight: isActive ? 800 : 600,
-                    fontSize: '0.74rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Icon size={13} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+            <span>
+              Chatting as: <strong style={{ color: '#081F3E' }}>{userName || 'Prospective Student'}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowContactFields(!showContactFields)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#0284C7',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: '0.78rem'
+              }}
+            >
+              {showContactFields ? 'Done' : 'Set Name / Phone'}
+            </button>
           </div>
 
-          {/* TAB 1: AI Chat Assistant */}
-          {activeTab === 'chat' && (
-            <>
-              {/* Messages Body */}
-              <div className="chat-messages-container">
-                {messages.map((msg) => {
-                  if (msg.sender === 'agent') {
-                    return (
-                      <div
-                        key={msg.id}
-                        className="chat-msg agent"
-                        style={{
-                          display: 'flex',
-                          gap: '8px',
-                          marginBottom: '14px',
-                          alignItems: 'flex-start',
-                          animation: 'fadeIn 0.3s ease'
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: '#10B981',
-                            color: '#FFFFFF',
-                            borderRadius: '50%',
-                            width: '28px',
-                            height: '28px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            fontSize: '0.8rem',
-                            fontWeight: 800,
-                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
-                          }}
-                        >
-                          👩‍💼
-                        </div>
-                        <div
-                          style={{
-                            background: '#FFFFFF',
-                            border: '1.5px solid #10B981',
-                            borderRadius: '12px',
-                            borderTopLeftRadius: '2px',
-                            padding: '10px 14px',
-                            maxWidth: '85%',
-                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.12)'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', borderBottom: '1px solid #E2E8F0', paddingBottom: '4px' }}>
-                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                              {msg.sender_name || 'Admissions Officer'} (Live Support)
-                            </span>
-                            {msg.timestamp && (
-                              <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
-                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', color: '#0F172A', fontSize: '0.9rem' }}>
-                            {msg.text}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`chat-msg ${msg.sender === 'user' ? 'user' : 'bot'}`}
-                    >
-                      {msg.sender === 'bot' && (
-                        <div className="bot-icon-circle">
-                          <Bot size={14} />
-                        </div>
-                      )}
-                      <div className="chat-bubble-content">
-                        <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
-                          {msg.text}
-                        </div>
-
-                        {/* Render Verified Student Dossier Card */}
-                        {msg.studentData && (
-                          <div className="chat-dossier-card">
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                              <div style={{ fontWeight: 800, color: '#F5A623', fontSize: '0.85rem' }}>
-                                Verified Dossier #{msg.studentData.id}
-                              </div>
-                              <span style={{ 
-                                fontSize: '0.7rem', 
-                                padding: '2px 6px', 
-                                borderRadius: '4px', 
-                                background: msg.studentData.payment_status === 'Paid' ? '#10B981' : '#F59E0B', 
-                                color: '#FFFFFF',
-                                fontWeight: 700
-                              }}>
-                                {msg.studentData.payment_status === 'Paid' ? 'PAID' : 'PAYMENT PENDING'}
-                              </span>
-                            </div>
-                            
-                            <div style={{ fontSize: '0.78rem', color: '#CBD5E1', lineHeight: '1.6' }}>
-                              <div><strong>Name:</strong> {msg.studentData.full_name}</div>
-                              <div><strong>Program:</strong> {msg.studentData.program_type} ({msg.studentData.degree_type})</div>
-                              <div><strong>Admission:</strong> <span style={{ color: '#FDE047', fontWeight: 700 }}>{msg.studentData.admission_status}</span></div>
-                            </div>
-
-                            {msg.studentData.payment_status !== 'Paid' && (
-                              <button
-                                onClick={() => {
-                                  setStudentIdTag(String(msg.studentData?.id));
-                                  setActiveTab('pay');
-                                }}
-                                style={{
-                                  width: '100%',
-                                  marginTop: '10px',
-                                  padding: '8px 12px',
-                                  borderRadius: '6px',
-                                  background: '#F5A623',
-                                  color: '#081F3E',
-                                  fontWeight: 800,
-                                  fontSize: '0.78rem',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '6px'
-                                }}
-                              >
-                                <CreditCard size={14} /> Pay Application Fee (15,000 / 25,000 XAF)
-                              </button>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Direct Links inside Chat */}
-                        {(msg.showPaymentDirectives || msg.actionType === 'payment_form') && (
-                          <div style={{ marginTop: '8px' }}>
-                            <button
-                              onClick={() => setActiveTab('pay')}
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                borderRadius: '6px',
-                                background: '#F5A623',
-                                color: '#081F3E',
-                                fontWeight: 800,
-                                fontSize: '0.78rem',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px'
-                              }}
-                            >
-                              <Smartphone size={14} /> Open MTN MoMo Payment Panel
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {isTyping && (
-                  <div className="chat-msg bot" style={{ display: 'flex', gap: '4px', padding: '10px 14px' }}>
-                    <span style={{ animation: 'pulse 1s infinite' }}>●</span>
-                    <span style={{ animation: 'pulse 1s infinite 0.2s' }}>●</span>
-                    <span style={{ animation: 'pulse 1s infinite 0.4s' }}>●</span>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-
-              {/* Bottom Input Row */}
-              <div className="chat-input-row">
+          {/* Contact Details Dropdown */}
+          {showContactFields && (
+            <div style={{ background: '#F1F5F9', padding: '12px 16px', borderBottom: '1px solid #CBD5E1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
                 <input
-                  id="chat_ai_assistant_input"
-                  name="chat_ai_assistant_input"
-                  aria-label="Type your message to admissions assistant"
                   type="text"
-                  className="chat-text-input"
-                  placeholder="Ask a question, check status, or type 'pay'..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSendMessage(input);
-                  }}
+                  placeholder="Your Name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', width: '100%' }}
                 />
-                <button
-                  className="chat-send-btn"
-                  onClick={() => handleSendMessage(input)}
-                  aria-label="Send message"
-                >
-                  <Send size={16} />
-                </button>
+                <input
+                  type="text"
+                  placeholder="Phone or Email"
+                  value={userContact}
+                  onChange={(e) => setUserContact(e.target.value)}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', width: '100%' }}
+                />
               </div>
-            </>
+              <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                Helps our admissions team address you and follow up if needed.
+              </span>
+            </div>
           )}
 
-          {/* TAB 2: MTN MoMo Pay */}
-          {activeTab === 'pay' && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#081F3E', color: '#F8FAFC' }}>
-              <div style={{
-                background: 'rgba(245, 166, 35, 0.12)',
-                border: '1px solid rgba(245, 166, 35, 0.35)',
+          {/* Message Thread Feed */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: '#FFFFFF'
+            }}
+          >
+            {messages.map((m) => {
+              const isUser = m.sender === 'user';
+              return (
+                <div
+                  key={m.id}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isUser ? 'flex-end' : 'flex-start',
+                    maxWidth: '85%',
+                    alignSelf: isUser ? 'flex-end' : 'flex-start'
+                  }}
+                >
+                  <span style={{ fontSize: '0.7rem', color: '#94A3B8', marginBottom: '3px', padding: '0 4px' }}>
+                    {isUser ? (m.sender_name || 'You') : (m.sender_name || 'Admissions Counselor')} • {m.timestamp || ''}
+                  </span>
+                  <div
+                    style={{
+                      background: isUser ? '#081F3E' : '#F1F5F9',
+                      color: isUser ? '#FFFFFF' : '#0F172A',
+                      padding: '10px 14px',
+                      borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                      fontSize: '0.88rem',
+                      lineHeight: '1.45',
+                      wordBreak: 'break-word',
+                      boxShadow: isUser ? '0 2px 8px rgba(8, 31, 62, 0.15)' : 'none',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick FAQ Suggestion Chips */}
+          <div style={{
+            padding: '8px 12px',
+            background: '#F8FAFC',
+            borderTop: '1px solid #E2E8F0',
+            display: 'flex',
+            gap: '6px',
+            overflowX: 'auto',
+            whiteSpace: 'nowrap'
+          }}>
+            {[
+              'What programs are available?',
+              'What are the tuition fees?',
+              'How do I enrol online?'
+            ].map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => handleQuickQuestion(q)}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '16px',
+                  padding: '4px 10px',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  color: '#081F3E',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* WhatsApp Direct Option Banner */}
+          <div style={{
+            background: '#F0FDF4',
+            borderTop: '1px solid #DCFCE7',
+            padding: '6px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.76rem'
+          }}>
+            <span style={{ color: '#166534', fontWeight: 600 }}>Prefer direct WhatsApp?</span>
+            <a
+              href="https://wa.me/237670265493?text=Hello%20Liah%20Academy%20Admissions%20Team"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#15803D',
+                fontWeight: 800,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <WhatsAppIcon size={13} /> +237 670 265 493
+            </a>
+          </div>
+
+          {/* Input Form */}
+          <form
+            onSubmit={handleSendMessage}
+            style={{
+              padding: '12px',
+              background: '#FFFFFF',
+              borderTop: '1px solid #E2E8F0',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center'
+            }}
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Type your message here..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
                 borderRadius: '8px',
-                padding: '10px',
-                marginBottom: '14px',
+                border: '1.5px solid #CBD5E1',
+                fontSize: '0.88rem',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isSending}
+              style={{
+                background: input.trim() ? '#081F3E' : '#94A3B8',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                width: '42px',
+                height: '42px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
-              }}>
-                <Smartphone size={18} color="#F5A623" />
-                <div style={{ fontSize: '0.8rem', color: '#FDE047', fontWeight: 700 }}>
-                  Official Short Code: <strong>*126*14*670265493*Amount#</strong>
-                </div>
-              </div>
-
-              {/* Amount Selection */}
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.76rem', color: '#94A3B8', marginBottom: '6px', fontWeight: 700 }}>
-                  Select Payment Amount:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
-                  {feeOptions.map(opt => (
-                    <button
-                      key={opt.amount}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFee(opt.amount);
-                        setSelectedFeeName(opt.label);
-                        setCustomChatAmount('');
-                        setShortCodeDialed(false);
-                      }}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: selectedFee === opt.amount && !customChatAmount ? '2px solid #F5A623' : '1px solid rgba(255,255,255,0.12)',
-                        background: selectedFee === opt.amount && !customChatAmount ? 'rgba(245, 166, 35, 0.25)' : 'rgba(255,255,255,0.04)',
-                        color: '#FFFFFF',
-                        textAlign: 'left',
-                        fontSize: '0.74rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <div style={{ fontWeight: 700 }}>{opt.label}</div>
-                      <div style={{ color: '#FDE047', fontSize: '0.7rem' }}>{opt.amount.toLocaleString()} XAF</div>
-                    </button>
-                  ))}
-                </div>
-
-                <input
-                  type="number"
-                  placeholder="Or enter custom amount in XAF..."
-                  value={customChatAmount}
-                  onChange={(e) => {
-                    setCustomChatAmount(e.target.value);
-                    setShortCodeDialed(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: '#041021',
-                    color: '#FFFFFF',
-                    fontSize: '0.82rem'
-                  }}
-                />
-              </div>
-
-              {/* Big "Pay Now — Open MTN MoMo" Action Button (Short code runs in background) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
-                <button
-                  type="button"
-                  onClick={() => handleRunShortCode(activeShortCode, currentPayAmount || 15000)}
-                  style={{
-                    width: '100%',
-                    padding: '13px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #F5A623 0%, #E28704 100%)',
-                    color: '#081F3E',
-                    fontWeight: 900,
-                    fontSize: '0.92rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(245, 166, 35, 0.4)'
-                  }}
-                >
-                  <Smartphone size={18} /> Pay Now — Open MTN MoMo ({(currentPayAmount || 15000).toLocaleString()} XAF)
-                </button>
-              </div>
-
-              {/* Auto-check confirmation */}
-              {shortCodeDialed && !chatMomoReceipt && (
-                <div style={{
-                  background: 'rgba(16,185,129,0.12)',
-                  border: '1px solid #10B981',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{ fontSize: '0.76rem', color: '#A7F3D0', fontWeight: 700, marginBottom: '6px' }}>
-                    📲 Code dispatched. Entered Secret PIN on your phone?
-                  </div>
-                  <button
-                    type="button"
-                    disabled={autoChecking}
-                    onClick={handleAutoCheckStatus}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: '#10B981',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    {autoChecking ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                    ✓ I Entered PIN — Auto-Check Status
-                  </button>
-                </div>
-              )}
-
-              {/* Receipt Card */}
-              {chatMomoReceipt && (
-                <div style={{
-                  background: '#ECFDF5',
-                  border: '2px solid #10B981',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#065F46',
-                  fontSize: '0.78rem'
-                }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.86rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <CheckCircle size={16} color="#10B981" /> Payment Confirmed &amp; Approved!
-                  </div>
-                  <div>Reference: <strong>{chatMomoReceipt.reference}</strong></div>
-                  <div>Amount: <strong>{chatMomoReceipt.amount?.toLocaleString()} XAF</strong></div>
-                  <div>Recipient: <strong>670265493 (Liah Academy)</strong></div>
-                  <div>Status: <strong style={{ color: '#059669' }}>PAID &amp; APPROVED</strong></div>
-                </div>
-              )}
-
-            </div>
-          )}
-
-          {/* TAB 3: Fast Apply */}
-          {activeTab === 'apply' && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#081F3E', color: '#F8FAFC' }}>
-              <h4 style={{ color: '#FDE047', margin: '0 0 6px 0', fontSize: '0.92rem', fontWeight: 800 }}>
-                1-Minute Fast Registration
-              </h4>
-              <p style={{ margin: '0 0 12px 0', color: '#94A3B8', fontSize: '0.76rem' }}>
-                Create your applicant dossier directly without leaving this page.
-              </p>
-
-              {applyError && (
-                <div style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5', padding: '8px 10px', borderRadius: '6px', fontSize: '0.76rem', marginBottom: '10px' }}>
-                  ⚠️ {applyError}
-                </div>
-              )}
-
-              {applySuccess ? (
-                <div style={{ background: '#ECFDF5', border: '1.5px solid #10B981', borderRadius: '8px', padding: '14px', color: '#065F46' }}>
-                  <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '6px' }}>
-                    🎉 Application Created Successfully!
-                  </div>
-                  <p style={{ fontSize: '0.78rem', margin: '0 0 10px 0' }}>
-                    Welcome, <strong>{applySuccess.full_name}</strong>! Your applicant ID is <strong>#{applySuccess.id}</strong>.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setStudentIdTag(String(applySuccess.id));
-                      setSelectedFee(applyDegree === 'Certification' ? 25000 : 15000);
-                      setSelectedFeeName(applyDegree === 'Certification' ? 'Application Fee (Certifications)' : 'Application Fee (HND / ND)');
-                      setActiveTab('pay');
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      width: '100%',
-                      background: '#081F3E',
-                      color: '#F5A623',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Proceed to Pay Application Fee ({applyDegree === 'Certification' ? '25,000' : '15,000'} XAF) <ArrowRight size={14} />
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleFastApplySubmit}>
-                  <div style={{ marginBottom: '8px' }}>
-                    <label style={{ display: 'block', fontSize: '0.74rem', color: '#94A3B8', marginBottom: '4px' }}>Full Legal Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. John Doe"
-                      value={applyName}
-                      onChange={(e) => setApplyName(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.8rem' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.74rem', color: '#94A3B8', marginBottom: '4px' }}>Email Address *</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="john@example.com"
-                        value={applyEmail}
-                        onChange={(e) => setApplyEmail(e.target.value)}
-                        style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.8rem' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.74rem', color: '#94A3B8', marginBottom: '4px' }}>Phone (MoMo) *</label>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="670 123 456"
-                        value={applyPhone}
-                        onChange={(e) => setApplyPhone(e.target.value)}
-                        style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.8rem' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '0.74rem', color: '#94A3B8', marginBottom: '4px' }}>Degree Track *</label>
-                    <select
-                      value={applyDegree}
-                      onChange={(e) => {
-                        const deg = e.target.value as any;
-                        setApplyDegree(deg);
-                        setApplyProgram(deg === 'HND' ? 'Software Engineering HND' : (deg === 'ND' ? 'Web Design ND' : 'DevOps Certification'));
-                      }}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.8rem', marginBottom: '6px' }}
-                    >
-                      <option value="HND">Higher National Diploma (HND - 2 Years)</option>
-                      <option value="ND">National Diploma (ND - 1 Year)</option>
-                      <option value="Certification">Professional Certification</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={applyLoading}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: '#F5A623',
-                      color: '#081F3E',
-                      fontWeight: 900,
-                      fontSize: '0.84rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    {applyLoading ? <Loader2 size={15} className="animate-spin" /> : <GraduationCap size={15} />}
-                    Create Admission Dossier
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: Track Dossier */}
-          {activeTab === 'track' && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#081F3E', color: '#F8FAFC' }}>
-              <h4 style={{ color: '#FDE047', margin: '0 0 6px 0', fontSize: '0.92rem', fontWeight: 800 }}>
-                Track Application Status
-              </h4>
-              <p style={{ margin: '0 0 12px 0', color: '#94A3B8', fontSize: '0.76rem' }}>
-                Enter your registered Email Address or Student ID:
-              </p>
-
-              <form onSubmit={handleTrackDossierSubmit} style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. john@example.com or #1002"
-                  value={trackQuery}
-                  onChange={(e) => setTrackQuery(e.target.value)}
-                  style={{ flex: 1, padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.8rem' }}
-                />
-                <button
-                  type="submit"
-                  disabled={trackLoading}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: '#F5A623',
-                    color: '#081F3E',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  {trackLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
-                  Search
-                </button>
-              </form>
-
-              {trackError && (
-                <div style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5', padding: '8px 10px', borderRadius: '6px', fontSize: '0.76rem' }}>
-                  {trackError}
-                </div>
-              )}
-
-              {trackResult && (
-                <div style={{
-                  background: '#020617',
-                  border: '1.5px solid #F5A623',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  fontSize: '0.78rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 800, color: '#FDE047' }}>Dossier #{trackResult.id}</span>
-                    <span style={{
-                      background: trackResult.payment_status === 'Paid' ? '#10B981' : '#F59E0B',
-                      color: '#FFFFFF',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '0.68rem',
-                      fontWeight: 700
-                    }}>
-                      {trackResult.payment_status}
-                    </span>
-                  </div>
-
-                  <div style={{ color: '#CBD5E1', lineHeight: '1.5', marginBottom: '10px' }}>
-                    <div>Candidate: <strong>{trackResult.full_name}</strong></div>
-                    <div>Program: <strong>{trackResult.program_type} ({trackResult.degree_type})</strong></div>
-                    <div>Status: <strong style={{ color: '#34D399' }}>{trackResult.admission_status}</strong></div>
-                  </div>
-
-                  <Link
-                    href="/admissions"
-                    onClick={() => setIsOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      background: '#F5A623',
-                      color: '#081F3E',
-                      padding: '7px 10px',
-                      borderRadius: '6px',
-                      fontWeight: 800,
-                      fontSize: '0.74rem',
-                      textDecoration: 'none'
-                    }}
-                  >
-                    Open Full Dossier &amp; Admission Letter <ArrowRight size={13} />
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 5: Programs Catalog */}
-          {activeTab === 'programs' && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#081F3E', color: '#F8FAFC' }}>
-              <h4 style={{ color: '#FDE047', margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 800 }}>
-                Degree Programs &amp; Certifications
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {[
-                  { title: 'Software Engineering HND', dur: '2 Years', fee: '250,000 XAF/yr' },
-                  { title: 'Cybersecurity & Cloud Defense HND', dur: '2 Years', fee: '250,000 XAF/yr' },
-                  { title: 'Information & Comm. Tech (ICT) ND', dur: '1 Year', fee: '150,000 XAF/yr' },
-                  { title: 'Web Design ND', dur: '1 Year', fee: '150,000 XAF/yr' },
-                  { title: 'DevOps Certification', dur: '9 Months', fee: '350,000 XAF' },
-                  { title: 'Data Science & Machine Learning', dur: '9 Months', fee: '350,000 XAF' }
-                ].map((p, idx) => (
-                  <div key={idx} style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    padding: '8px 10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#FFF' }}>{p.title}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{p.dur} &bull; {p.fee}</div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setApplyProgram(p.title);
-                        setActiveTab('apply');
-                      }}
-                      style={{
-                        background: '#F5A623',
-                        border: 'none',
-                        color: '#081F3E',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontWeight: 800,
-                        fontSize: '0.7rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Enroll
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                justifyContent: 'center',
+                cursor: input.trim() ? 'pointer' : 'not-allowed',
+                flexShrink: 0,
+                transition: 'background 0.2s'
+              }}
+            >
+              {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} color="#F5A623" />}
+            </button>
+          </form>
         </div>
       )}
     </>
