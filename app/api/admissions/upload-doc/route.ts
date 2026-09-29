@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       const diskFileName = `credential_${slotId}_${Date.now()}_${cleanFileName}`;
       const filePath = path.join(uploadDir, diskFileName);
 
-      fs.writeFileSync(filePath, buffer);
+      await fs.promises.writeFile(filePath, buffer);
       url = `/uploads/credentials/${diskFileName}`;
     } catch (fsErr) {
       // Vercel serverless environment: return standard asset reference URL

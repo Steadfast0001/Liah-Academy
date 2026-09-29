@@ -7,8 +7,9 @@ import {
   UserCheck, ShieldCheck, CreditCard, CheckCircle, 
   LogIn, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
   UploadCloud, FileCheck, Smartphone, Loader2, Copy, Image as ImageIcon,
-  Clock, Printer, Building, Mail, MapPin, ArrowRight, Lock
+  Clock, Printer, Building, Mail, MapPin, ArrowRight, Lock, Zap
 } from 'lucide-react';
+import { compressImageFile } from '../../lib/imageOptimizer';
 
 const getApplicationFee = (deg?: string): number => {
   if (!deg) return 15000;
@@ -254,15 +255,19 @@ function StudentPortalContent() {
     }
   };
 
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const maxBytes = 10 * 1024 * 1024; // 10 MB
-      if (file.size > maxBytes) {
-        const actualMb = (file.size / (1024 * 1024)).toFixed(1);
-        setPayError(`Selected file "${file.name}" is ${actualMb} MB, which exceeds the maximum allowed size of 10 MB. Please select a smaller file.`);
+  const handleScreenshotChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (rawFile) {
+      const maxSlotBytes = 2.5 * 1024 * 1024; // 2.5 MB allocation
+      
+      // Auto-compress high-resolution camera photos/screenshots instantly
+      const file = await compressImageFile(rawFile);
+      if (file.size > maxSlotBytes) {
+        const actualMb = (file.size / (1024 * 1024)).toFixed(2);
+        setPayError(`Selected proof image is ${actualMb} MB, which exceeds the allowed upload allocation of 2.5 MB. Please select or compress your screenshot.`);
         return;
       }
+      setPayError('');
       setPayScreenshotFile(file);
       const reader = new FileReader();
       reader.onload = () => {

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
           const safeExt = path.extname(fileObj.name) || '.png';
           const fileName = `proof_${studentId || 'anon'}_${Date.now()}${safeExt}`;
           const filePath = path.join(uploadDir, fileName);
-          fs.writeFileSync(filePath, buffer);
+          await fs.promises.writeFile(filePath, buffer);
           proofUrl = `/assets/proofs/${fileName}`;
         } catch (fsErr) {
           // Vercel serverless read-only filesystem fallback: inline Base64 data URL
