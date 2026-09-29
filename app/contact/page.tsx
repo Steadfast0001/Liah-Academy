@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Send, CheckCircle, AlertCircle, Info, MessageSquare, ArrowRight } from 'lucide-react';
-import SocialLinksList from '@/components/SocialIcons';
+import SocialLinksList from '../../components/SocialIcons';
 
 export default function ContactPage() {
   const [name, setName] = useState('');

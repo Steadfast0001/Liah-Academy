@@ -12,7 +12,7 @@ import {
   Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2
 } from 'lucide-react';
 
-import { exportApplicantsToCSVString } from '@/lib/csv';
+import { exportApplicantsToCSVString } from '../../lib/csv';
 
 interface Application {
   id: number;

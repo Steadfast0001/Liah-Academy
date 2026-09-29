@@ -7,7 +7,7 @@ import {
   Building, Lightbulb, Award, Handshake, 
   CheckCircle, ArrowRight, Calendar, Sparkles, Mail
 } from 'lucide-react';
-import { PARTNERSHIP_MAILTO_LINK } from '@/lib/constants';
+import { PARTNERSHIP_MAILTO_LINK } from '../../lib/constants';
 
 const newsArticles = [
   {
