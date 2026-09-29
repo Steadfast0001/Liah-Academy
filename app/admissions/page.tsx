@@ -656,8 +656,8 @@ function AdmissionsContent() {
                   </span>
                 </div>
 
-                <a 
-                  href="#apply" 
+                <Link 
+                  href="/portal?tab=enrol" 
                   style={{ 
                     background: '#F5A623', 
                     color: '#081F3E', 
@@ -671,8 +671,8 @@ function AdmissionsContent() {
                     gap: '6px'
                   }}
                 >
-                  Apply Now &rarr;
-                </a>
+                  Enrol via Student Portal &rarr;
+                </Link>
               </div>
             </div>
 
