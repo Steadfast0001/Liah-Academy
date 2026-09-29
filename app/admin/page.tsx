@@ -4985,6 +4985,31 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
+              {/* Download & Full View Controls */}
+              {previewProofItem.payment_proof_url && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                  <a
+                    href={previewProofItem.payment_proof_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    download={`proof_payment_app_${previewProofItem.id}.png`}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, color: '#081F3E', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', fontWeight: 700 }}
+                  >
+                    <Download size={15} /> Download Proof Screenshot
+                  </a>
+                  <a
+                    href={previewProofItem.payment_proof_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-secondary"
+                    style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem' }}
+                  >
+                    <ExternalLink size={15} /> Open Full View
+                  </a>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
@@ -5089,18 +5114,18 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
 
-              {/* Document Rendering Frame */}
+              {/* Document Rendering Frame (Live Image & PDF Viewer) */}
               <div 
                 style={{
                   background: '#0F172A',
                   borderRadius: '10px',
-                  padding: '12px',
+                  padding: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: '18px',
-                  minHeight: '280px',
-                  maxHeight: '480px',
+                  minHeight: '320px',
+                  maxHeight: '520px',
                   overflow: 'hidden'
                 }}
               >
@@ -5134,9 +5159,23 @@ export default function AdminDashboardPage() {
                       }}
                       style={{
                         maxWidth: '100%',
-                        maxHeight: '440px',
+                        maxHeight: '480px',
                         objectFit: 'contain',
                         borderRadius: '6px'
+                      }}
+                    />
+                  </div>
+                ) : previewDocItem.url ? (
+                  <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column' }}>
+                    <iframe
+                      src={`${previewDocItem.url}#toolbar=1&navpanes=0`}
+                      title={previewDocItem.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: '#FFFFFF'
                       }}
                     />
                   </div>
@@ -5149,35 +5188,37 @@ export default function AdminDashboardPage() {
                     <p style={{ margin: '0 0 16px 0', fontSize: '0.84rem', color: '#94A3B8' }}>
                       Official credential document attached to student application record.
                     </p>
-                    {previewDocItem.url && (
-                      <a
-                        href={previewDocItem.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-primary"
-                        style={{ padding: '9px 18px', fontSize: '0.85rem' }}
-                      >
-                        <ExternalLink size={15} /> Open Full Document in New Tab
-                      </a>
-                    )}
                   </div>
                 )}
               </div>
 
               {/* Modal Footer Controls */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                {previewDocItem.url ? (
-                  <a
-                    href={previewDocItem.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    download={previewDocItem.fileName}
-                    className="btn btn-secondary"
-                    style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
-                  >
-                    <Download size={15} /> Download Document
-                  </a>
-                ) : <div />}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {previewDocItem.url && (
+                    <a
+                      href={previewDocItem.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      download={previewDocItem.fileName}
+                      className="btn btn-secondary"
+                      style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 700 }}
+                    >
+                      <Download size={15} /> Download Document
+                    </a>
+                  )}
+                  {previewDocItem.url && (
+                    <a
+                      href={previewDocItem.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-secondary"
+                      style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+                    >
+                      <ExternalLink size={15} /> Open in New Tab
+                    </a>
+                  )}
+                </div>
 
                 <button
                   type="button"

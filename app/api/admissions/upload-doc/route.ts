@@ -18,10 +18,11 @@ export async function POST(request: Request) {
     }
 
     const fileObj = file as File;
-    const maxBytes = 10 * 1024 * 1024; // 10 MB
+    const maxBytes = 2.5 * 1024 * 1024; // 2.5 MB slot allocation
     if (fileObj.size > maxBytes) {
+      const actualMb = (fileObj.size / (1024 * 1024)).toFixed(2);
       return NextResponse.json(
-        { success: false, message: 'File exceeds maximum allowed upload size of 10 MB. Please compress or select a smaller file.' },
+        { success: false, message: `Upload Rejected: File is too large! Selected file is ${actualMb} MB. The maximum allowed limit per document is 2.5 MB (Total Budget: 10 MB). Please compress or choose a smaller file.` },
         { status: 400 }
       );
     }

@@ -264,7 +264,10 @@ function StudentPortalContent() {
       const file = await compressImageFile(rawFile);
       if (file.size > maxSlotBytes) {
         const actualMb = (file.size / (1024 * 1024)).toFixed(2);
-        setPayError(`Selected proof image is ${actualMb} MB, which exceeds the allowed upload allocation of 2.5 MB. Please select or compress your screenshot.`);
+        e.target.value = '';
+        setPayScreenshotFile(null);
+        setPayScreenshotPreview(null);
+        setPayError(`⚠️ Upload Rejected: File is too large! Selected proof screenshot is ${actualMb} MB. Maximum allowed allocation is 2.5 MB. Please select or compress your screenshot.`);
         return;
       }
       setPayError('');

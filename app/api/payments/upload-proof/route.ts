@@ -30,10 +30,11 @@ export async function POST(request: Request) {
       const file = formData.get('screenshot') || formData.get('proof') || formData.get('file');
       if (file && typeof file === 'object' && 'arrayBuffer' in file) {
         const fileObj = file as File;
-        const maxBytes = 10 * 1024 * 1024; // 10 MB
+        const maxBytes = 5 * 1024 * 1024; // 5 MB maximum for proof uploads
         if (fileObj.size > maxBytes) {
+          const actualMb = (fileObj.size / (1024 * 1024)).toFixed(2);
           return NextResponse.json(
-            { success: false, message: 'Proof file exceeds maximum upload size of 10 MB.' },
+            { success: false, message: `Upload Rejected: File is too large! Selected proof file is ${actualMb} MB. Maximum allowed limit is 5 MB. Please select or compress your screenshot.` },
             { status: 400 }
           );
         }

@@ -47,8 +47,9 @@ export async function POST(request: Request) {
       const fileObj = file as File;
       const maxBytes = 10 * 1024 * 1024; // 10 MB per asset
       if (fileObj.size > maxBytes) {
+        const actualMb = (fileObj.size / (1024 * 1024)).toFixed(2);
         return NextResponse.json(
-          { success: false, message: 'File exceeds maximum allowed upload size of 10 MB.' },
+          { success: false, message: `Upload Rejected: File is too large! Selected media asset is ${actualMb} MB. Maximum allowed size is 10 MB.` },
           { status: 400 }
         );
       }

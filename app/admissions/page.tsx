@@ -293,7 +293,8 @@ function AdmissionsContent() {
 
       if (file.size > maxSlotBytes) {
         const actualMb = (file.size / (1024 * 1024)).toFixed(2);
-        setRegError(`File "${file.name}" is ${actualMb} MB. To ensure balanced upload performance, each document is allocated up to 2.5 MB (Total Budget: 10 MB). Please select or compress your document.`);
+        e.target.value = '';
+        setRegError(`⚠️ Upload Rejected: File is too large! Selected file "${file.name}" is ${actualMb} MB. The maximum allowed limit per document is 2.5 MB (Total Budget: 10 MB). Please compress or choose a smaller file.`);
         setUploadingSlot(null);
         return;
       }
@@ -305,7 +306,8 @@ function AdmissionsContent() {
       }, 0);
 
       if (currentTotalBytes + file.size > maxTotalBytes) {
-        setRegError(`Total upload budget (10 MB) exceeded. Please remove or compress existing files.`);
+        e.target.value = '';
+        setRegError(`⚠️ Upload Rejected: Total application upload budget (10 MB) exceeded. Please compress or replace existing files.`);
         setUploadingSlot(null);
         return;
       }
@@ -320,6 +322,12 @@ function AdmissionsContent() {
       });
 
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        e.target.value = '';
+        setRegError(data.message || '⚠️ Upload failed: File was rejected by server.');
+        setUploadingSlot(null);
+        return;
+      }
       if (res.ok && data.success && data.url) {
         setUploadedDocs(prev => {
           const updated = {
