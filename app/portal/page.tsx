@@ -8,7 +8,7 @@ import {
   LogIn, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
   UploadCloud, FileCheck, Smartphone, Loader2, Copy, Image as ImageIcon,
   Clock, Printer, Building, Mail, MapPin, ArrowRight, ArrowLeft, Lock, Zap,
-  UserPlus, FileText, Trash2, Paperclip, Eye, EyeOff
+  UserPlus, FileText, Trash2, Paperclip, Eye, EyeOff, ExternalLink
 } from 'lucide-react';
 import { compressImageFile } from '../../lib/imageOptimizer';
 
@@ -143,6 +143,7 @@ function StudentPortalContent() {
 
   // Logged-in Student Session State
   const [student, setStudent] = useState<any>(null);
+  const [isClientReady, setIsClientReady] = useState(false);
   const [showAdmissionLetterModal, setShowAdmissionLetterModal] = useState(false);
 
   // Login Form State
@@ -168,6 +169,7 @@ function StudentPortalContent() {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [draftSavedStep, setDraftSavedStep] = useState<number>(1);
 
   // Direct Mobile Money Payment & Proof Upload State
   const [showCheckout, setShowCheckout] = useState(false);
@@ -184,16 +186,10 @@ function StudentPortalContent() {
   const [copiedShortCode, setCopiedShortCode] = useState(false);
   const [shortCodeDialed, setShortCodeDialed] = useState(false);
   const [paymentPhase, setPaymentPhase] = useState<'IDLE' | 'DIALED' | 'CHECKING' | 'CONFIRMED'>('IDLE');
-  const [autoCheckLoading, setAutoCheckLoading] = useState(false);
-  const [showManualUpload, setShowManualUpload] = useState(false);
-  const [showPinPrompt, setShowPinPrompt] = useState(false);
-  const [userPin, setUserPin] = useState('');
-  const [pinSubmitting, setPinSubmitting] = useState(false);
-  const [pinError, setPinError] = useState('');
-  const [momoReceipt, setMomoReceipt] = useState<any>(null);
 
-  // Restore authenticated student session & process URL parameters
+  // Single mount effect to initialize client state smoothly
   useEffect(() => {
+    setIsClientReady(true);
     try {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('liah_student_session') || sessionStorage.getItem('liah_student_session');
@@ -204,27 +200,40 @@ function StudentPortalContent() {
             setPayAmountOption(getApplicationFee(parsed.degree_type));
           }
         }
+
+        // Check draft
+        const draftStr = localStorage.getItem('liah_admission_draft');
+        if (draftStr) {
+          const draft = JSON.parse(draftStr);
+          if (draft && (draft.fullName || draft.email || draft.phone)) {
+            if (draft.fullName) setFullName(draft.fullName);
+            if (draft.email) setEmail(draft.email);
+            if (draft.phone) setPhone(draft.phone);
+            if (draft.degreeType && !degreeParam) setDegreeType(draft.degreeType);
+            if (draft.programType && !programParam) setProgramType(draft.programType);
+            if (draft.studyFormat) setStudyFormat(draft.studyFormat);
+            if (draft.uploadedDocs) setUploadedDocs(draft.uploadedDocs);
+            if (draft.currentStep && draft.currentStep > 1) {
+              setDraftSavedStep(draft.currentStep);
+            }
+            setHasSavedDraft(true);
+          }
+        }
       }
     } catch {}
 
-    // Handle tab switching from URL
     if (tabParam === 'login') {
       setGatewayTab('login');
     } else if (tabParam === 'enrol' || tabParam === 'register') {
       setGatewayTab('enrol');
     }
 
-    // Pre-fill degree & program if passed in URL
     if (degreeParam) {
       const upper = degreeParam.toUpperCase();
       let normalizedDegree: 'HND' | 'ND' | 'Certification' = 'HND';
-      if (upper.includes('CERT')) {
-        normalizedDegree = 'Certification';
-      } else if (upper.includes('ND') && !upper.includes('HND')) {
-        normalizedDegree = 'ND';
-      } else {
-        normalizedDegree = 'HND';
-      }
+      if (upper.includes('CERT')) normalizedDegree = 'Certification';
+      else if (upper.includes('ND') && !upper.includes('HND')) normalizedDegree = 'ND';
+      else normalizedDegree = 'HND';
       setDegreeType(normalizedDegree);
       setGatewayTab('enrol');
     }
@@ -233,27 +242,6 @@ function StudentPortalContent() {
       setProgramType(programParam);
       setGatewayTab('enrol');
     }
-
-    // Restore auto-saved draft if student has incomplete enrolment application
-    try {
-      if (typeof window !== 'undefined') {
-        const draftStr = localStorage.getItem('liah_admission_draft');
-        if (draftStr) {
-          const draft = JSON.parse(draftStr);
-          if (draft && (draft.fullName || draft.email || draft.phone || draft.currentStep > 1)) {
-            if (draft.fullName && !fullName) setFullName(draft.fullName);
-            if (draft.email && !email) setEmail(draft.email);
-            if (draft.phone && !phone) setPhone(draft.phone);
-            if (draft.degreeType && !degreeParam) setDegreeType(draft.degreeType);
-            if (draft.programType && !programParam) setProgramType(draft.programType);
-            if (draft.studyFormat) setStudyFormat(draft.studyFormat);
-            if (draft.uploadedDocs && Object.keys(draft.uploadedDocs).length > 0) setUploadedDocs(draft.uploadedDocs);
-            if (draft.currentStep) setCurrentStep(draft.currentStep);
-            setHasSavedDraft(true);
-          }
-        }
-      }
-    } catch {}
   }, [tabParam, degreeParam, programParam]);
 
   // Keep Program synced when Degree Category changes
@@ -302,6 +290,12 @@ function StudentPortalContent() {
     setHasSavedDraft(false);
   };
 
+  const handleResumeDraft = () => {
+    if (draftSavedStep) {
+      setCurrentStep(draftSavedStep);
+    }
+  };
+
   // Enrolment Step 1 Validation
   const handleStep1Next = (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,7 +336,6 @@ function StudentPortalContent() {
     setRegError('');
 
     try {
-      // 1. Instant client-side compression for camera images
       const file = await compressImageFile(rawFile);
 
       if (file.size > maxSlotBytes) {
@@ -537,7 +530,6 @@ function StudentPortalContent() {
   const handleOpenMoMo = (code: string, amount: number) => {
     setPaymentPhase('DIALED');
     setShortCodeDialed(true);
-    setShowManualUpload(false);
     setPayError('');
     try {
       navigator.clipboard.writeText(code);
@@ -636,7 +628,6 @@ function StudentPortalContent() {
     }
   };
 
-  // Compute Total Size of Attached Documents in Step 3
   const totalUploadedBytes = Object.values(uploadedDocs).reduce((acc, doc: any) => {
     return acc + (doc.bytes || 350 * 1024);
   }, 0);
@@ -1001,24 +992,35 @@ function StudentPortalContent() {
                   </h2>
                 </div>
 
-                {/* Auto-saved draft restore notification */}
-                {hasSavedDraft && (
+                {/* Auto-saved draft notification with Resume Option */}
+                {hasSavedDraft && currentStep === 1 && (
                   <div style={{ background: '#081F3E', color: '#FFFFFF', padding: '14px 18px', borderRadius: '8px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ fontSize: '1.2rem' }}>💾</span>
                       <div>
                         <strong style={{ display: 'block', fontSize: '0.88rem', color: '#FFFFFF' }}>
-                          Welcome back{fullName ? `, ${fullName}` : ''}! Your progress at Step {currentStep} of 3 has been saved.
+                          Welcome back{fullName ? `, ${fullName}` : ''}! You have a saved application draft.
                         </strong>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleClearDraft}
-                      style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#FFFFFF', borderRadius: '4px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Start Fresh
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {draftSavedStep > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleResumeDraft}
+                          style={{ background: '#F5A623', border: 'none', color: '#081F3E', borderRadius: '4px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          Resume Step {draftSavedStep}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleClearDraft}
+                        style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#FFFFFF', borderRadius: '4px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Start Fresh
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1233,7 +1235,7 @@ function StudentPortalContent() {
                   </form>
                 )}
 
-                {/* STEP 3: DOCUMENT UPLOADS (EXACT MATCH OF IMAGE media_1790694494083.png) */}
+                {/* STEP 3: DOCUMENT UPLOADS */}
                 {currentStep === 3 && (
                   <form onSubmit={handleRegisterSubmit}>
                     {/* Budget Information Box (Green Alert Card) */}
