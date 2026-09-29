@@ -459,10 +459,20 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
       }
     }
     isMySQLLive = true;
-  } catch (err) {
+  } catch (err: any) {
     // MySQL write error is non-blocking to prevent server crash
     lastMySQLCheckFailed = Date.now();
     isMySQLLive = false;
+    try {
+      import('./email').then(({ sendSystemFaultAlert }) => {
+        sendSystemFaultAlert({
+          faultType: `MySQL Database Sync Fault (${table})`,
+          errorMessage: err?.message || String(err),
+          stack: err?.stack,
+          details: { table, action, id: data?.id || data?.reference }
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch {}
   }
 }
 
@@ -916,8 +926,17 @@ async function asyncDiskFlush() {
         } catch {}
       });
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Async disk flush warning:', err);
+    try {
+      import('./email').then(({ sendSystemFaultAlert }) => {
+        sendSystemFaultAlert({
+          faultType: 'Local Data Store Disk Flush Fault',
+          errorMessage: err?.message || String(err),
+          stack: err?.stack
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch {}
   } finally {
     isFlushingDisk = false;
     if (pendingDiskFlush) {

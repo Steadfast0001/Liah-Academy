@@ -562,3 +562,92 @@ Liah Academy of Technology and Management`;
     recipientType: 'applicant'
   });
 }
+
+// Memory throttle for system alerts to avoid flooding email (max 1 alert per faultType every 10 min)
+const alertThrottleMap = new Map<string, number>();
+
+export async function sendSystemFaultAlert({
+  faultType,
+  errorMessage,
+  stack,
+  details
+}: {
+  faultType: string;
+  errorMessage: string;
+  stack?: string;
+  details?: Record<string, any>;
+}): Promise<void> {
+  const now = Date.now();
+  const lastSent = alertThrottleMap.get(faultType) || 0;
+  if (now - lastSent < 10 * 60 * 1000) {
+    // Throttled within 10 minutes
+    return;
+  }
+  alertThrottleMap.set(faultType, now);
+
+  const adminEmails = getAdminEmails();
+  const timestamp = new Date().toUTCString();
+  const envMode = process.env.NODE_ENV || 'production';
+
+  const detailsFormatted = details ? Object.entries(details)
+    .map(([k, v]) => `<tr><td style="padding:6px;font-weight:bold;color:#475569;">${k}</td><td style="padding:6px;color:#0f172a;font-family:monospace;font-size:12px;">${typeof v === 'object' ? JSON.stringify(v) : String(v)}</td></tr>`)
+    .join('') : '';
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border: 2px solid #EF4444; border-radius: 12px; overflow: hidden;">
+      <div style="background: #991B1B; padding: 20px; text-align: center; color: #ffffff;">
+        <span style="background: #F87171; color: #7F1D1D; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">CRITICAL SYSTEM ALERT</span>
+        <h2 style="margin: 10px 0 0 0; color: #ffffff; font-size: 20px;">System Fault Detected: ${faultType}</h2>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #FCA5A5;">Timestamp: ${timestamp}</p>
+      </div>
+      <div style="padding: 24px; color: #334155; line-height: 1.6;">
+        <p style="font-size: 15px; color: #1E293B; margin-top: 0;"><strong>An automated error trigger was activated on the Liah Academy production platform.</strong></p>
+        
+        <div style="background: #FEF2F2; border-left: 4px solid #DC2626; padding: 14px 16px; border-radius: 6px; margin: 18px 0;">
+          <strong style="color: #991B1B; font-size: 14px;">Error Message:</strong>
+          <pre style="margin: 8px 0 0 0; white-space: pre-wrap; font-family: monospace; font-size: 13px; color: #7F1D1D; background: #FEE2E2; padding: 10px; border-radius: 4px;">${errorMessage}</pre>
+        </div>
+
+        ${detailsFormatted ? `
+          <h4 style="color: #081F3E; margin: 16px 0 8px 0; font-size: 14px;">Diagnostic Details:</h4>
+          <table style="width: 100%; border-collapse: collapse; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 16px;">
+            ${detailsFormatted}
+          </table>
+        ` : ''}
+
+        ${stack ? `
+          <h4 style="color: #081F3E; margin: 16px 0 8px 0; font-size: 14px;">Stack Trace:</h4>
+          <pre style="margin: 0 0 16px 0; white-space: pre-wrap; font-family: monospace; font-size: 11px; color: #334155; background: #F1F5F9; padding: 12px; border-radius: 6px; border: 1px solid #CBD5E1; max-height: 200px; overflow-y: auto;">${stack}</pre>
+        ` : ''}
+
+        <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 16px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #1E40AF;">
+          <strong>🛡️ Automatic Self-Healing & Failover Status:</strong><br/>
+          The system continues to service incoming student requests via memory-resilient cache and fallback routines. Please review the server logs if issues persist.
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748B;">
+          <p style="margin: 0 0 4px 0; font-weight: bold; color: #081F3E;">Liah Academy System Monitor</p>
+          <p style="margin: 0;">Environment: ${envMode} | Host: server385.web-hosting.com</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const text = `[CRITICAL SYSTEM ALERT] ${faultType}\nTimestamp: ${timestamp}\n\nError: ${errorMessage}\n\nDetails:\n${JSON.stringify(details, null, 2)}\n\nStack:\n${stack || 'N/A'}`;
+
+  for (const email of adminEmails) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: `🚨 [SYSTEM ALERT] ${faultType} – Liah Academy`,
+        html,
+        text,
+        type: 'admin_alert',
+        recipientType: 'admin'
+      });
+    } catch (e) {
+      console.error('Failed to dispatch system alert email to:', email, e);
+    }
+  }
+}
+
