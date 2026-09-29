@@ -811,7 +811,7 @@ function StudentPortalContent() {
                         {payScreenshotFile ? payScreenshotFile.name : 'Click to select transaction screenshot or receipt'}
                       </span>
                       <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
-                        Max file size: <strong>10 MB</strong> &bull; PNG, JPG, JPEG, PDF
+                        Max file size: <strong>2.5 MB</strong> &bull; PNG, JPG, JPEG, PDF (Auto-compressed for fast upload)
                       </span>
                       <input
                         id="portal_payment_proof"

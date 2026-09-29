@@ -1066,7 +1066,7 @@ function AdmissionsContent() {
                             </div>
                           ) : (
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', border: '1px solid #CBD5E1', padding: '6px 14px', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', cursor: 'pointer' }}>
-                              <UploadCloud size={14} /> Select File (Max 10 MB)
+                              <UploadCloud size={14} /> Select Document (Max 2.5 MB)
                               <input
                                 type="file"
                                 accept={slot.accept}

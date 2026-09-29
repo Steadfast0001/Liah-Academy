@@ -3766,12 +3766,21 @@ export default function AdminDashboardPage() {
 
                 <div style={{ flex: '1 1 240px' }}>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', color: '#64748B' }}>
-                    Choose File (MP4, PNG, JPG)
+                    Choose File (Max 10 MB &bull; MP4, PNG, JPG, WebP)
                   </label>
                   <input 
                     type="file" 
-                    accept="image/*,video/mp4"
-                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    accept="image/*,video/mp4,video/webm"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f && f.size > 10 * 1024 * 1024) {
+                        alert(`Selected file is ${(f.size / (1024 * 1024)).toFixed(1)} MB. Maximum allowed size is 10 MB.`);
+                        e.target.value = '';
+                        setUploadFile(null);
+                        return;
+                      }
+                      setUploadFile(f || null);
+                    }}
                     style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid rgba(15,23,42,0.15)' }}
                   />
                 </div>
