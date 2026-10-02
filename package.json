@@ -9,6 +9,7 @@
     "start": "next start",
     "setup": "node scripts/setup.js",
     "db:setup": "node scripts/cpanel-db-setup.js",
+    "db:export": "node scripts/export_full_sql_dump.js",
     "package:cpanel": "node scripts/package_for_cpanel.js",
     "lint": "next lint",
     "test:smoke": "node scripts/smoke-test.js",

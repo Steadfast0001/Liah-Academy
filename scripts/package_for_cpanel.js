@@ -18,6 +18,14 @@ if (fs.existsSync(distDir)) {
 
 fs.mkdirSync(distDir, { recursive: true });
 
+// 0. Ensure fresh SQL data dump before bundling
+try {
+  console.log('🔄 Generating fresh platform SQL dump...');
+  execSync('node scripts/export_full_sql_dump.js', { stdio: 'inherit' });
+} catch (e) {
+  console.warn('⚠️ Warning: Could not generate SQL dump:', e.message);
+}
+
 // 1. Prune .next/cache to reduce package size
 const cacheDir = path.join(rootDir, '.next', 'cache');
 if (fs.existsSync(cacheDir)) {

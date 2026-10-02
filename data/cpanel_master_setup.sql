@@ -23,11 +23,11 @@ CREATE TABLE IF NOT EXISTS `students` (
   `cohort` VARCHAR(50) DEFAULT '2026/2027 Academic Year',
   `qualification` VARCHAR(100) DEFAULT 'GCE Advanced Level / Baccalauréat',
   `statement` TEXT DEFAULT NULL,
-  `document_url` TEXT DEFAULT NULL,
+  `document_url` LONGTEXT DEFAULT NULL,
   `documents` JSON DEFAULT NULL,
   `payment_status` VARCHAR(50) DEFAULT 'Pending',
   `admission_status` VARCHAR(50) DEFAULT 'Under Review',
-  `payment_proof_url` TEXT DEFAULT NULL,
+  `payment_proof_url` LONGTEXT DEFAULT NULL,
   `payment_transaction_id` VARCHAR(100) DEFAULT '',
   `payment_amount` INT DEFAULT 15000,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -43,11 +43,13 @@ CREATE TABLE IF NOT EXISTS `students` (
 ALTER TABLE `students` MODIFY `id` INT NOT NULL AUTO_INCREMENT;
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `matricule` VARCHAR(50) DEFAULT NULL;
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `documents` JSON DEFAULT NULL;
-ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_proof_url` TEXT DEFAULT NULL;
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_proof_url` LONGTEXT DEFAULT NULL;
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_transaction_id` VARCHAR(100) DEFAULT '';
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_amount` INT DEFAULT 15000;
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `cohort` VARCHAR(50) DEFAULT '2026/2027 Academic Year';
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `qualification` VARCHAR(100) DEFAULT 'GCE Advanced Level / Baccalauréat';
+ALTER TABLE `students` MODIFY `document_url` LONGTEXT DEFAULT NULL;
+ALTER TABLE `students` MODIFY `payment_proof_url` LONGTEXT DEFAULT NULL;
 ALTER TABLE `students` MODIFY `payment_status` VARCHAR(50) DEFAULT 'Pending';
 ALTER TABLE `students` MODIFY `admission_status` VARCHAR(50) DEFAULT 'Under Review';
 ALTER TABLE `students` MODIFY `study_format` VARCHAR(50) DEFAULT 'oncampus';
