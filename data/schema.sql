@@ -4,8 +4,8 @@
 -- Auto-generated and maintained by Liah Academy Core Engine
 -- ============================================================================
 
-CREATE DATABASE IF NOT EXISTS `liah_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `liah_db`;
+CREATE DATABASE IF NOT EXISTS `rhibwcnc_liah_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `rhibwcnc_liah_db`;
 
 -- ----------------------------------------------------------------------------
 -- Table 1: students (Student Admissions, Dossiers, and Password Hashes)
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `students` (
   `statement` TEXT,
   `document_url` TEXT,
   `documents` JSON,
-  `payment_status` ENUM('Pending', 'Pending Verification', 'Deposit Paid', 'Paid') DEFAULT 'Pending',
+  `payment_status` VARCHAR(50) DEFAULT 'Pending',
   `admission_status` ENUM('Under Review', 'Pending Review', 'Approved', 'Rejected') DEFAULT 'Under Review',
   `payment_proof_url` TEXT,
   `payment_transaction_id` VARCHAR(100) DEFAULT '',
@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS `students` (
   INDEX `idx_students_payment_status` (`payment_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE `students` MODIFY `payment_status` VARCHAR(50) DEFAULT 'Pending';
+
 -- ----------------------------------------------------------------------------
 -- Table 2: payments (Mobile Money & Tuition Transaction Ledger)
 -- ----------------------------------------------------------------------------
@@ -47,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
   `currency` VARCHAR(10) DEFAULT 'XAF',
   `operator` VARCHAR(50) DEFAULT 'MTN Mobile Money',
   `phone` VARCHAR(50) DEFAULT '',
-  `status` ENUM('PENDING', 'SUCCESSFUL', 'FAILED', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+  `status` ENUM('PENDING', 'PENDING_VERIFICATION', 'APPROVED', 'PAID', 'FAILED', 'REJECTED') DEFAULT 'PENDING',
   `description` VARCHAR(255) DEFAULT 'Registration / Tuition Payment',
   `proof_url` TEXT,
   `transaction_id` VARCHAR(100) DEFAULT '',
@@ -57,7 +59,8 @@ CREATE TABLE IF NOT EXISTS `payments` (
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_payments_student_id` (`student_id`),
-  INDEX `idx_payments_status` (`status`)
+  INDEX `idx_payments_status` (`status`),
+  CONSTRAINT `fk_payments_student` FOREIGN KEY (`student_id`) REFERENCES `students`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

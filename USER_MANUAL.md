@@ -38,8 +38,8 @@ Welcome to the **Liah Academy Web & Admissions Management System**.
 
 Liah Academy is a premier higher institute of technology and corporate software engineering enterprise based in Bakweri Town, Buea, Cameroon. The platform allows prospective students, corporate partners, and enrolled candidates to:
 - Browse accredited **Higher National Diploma (HND)**, **National Diploma (ND)**, and **Professional Certification** tracks.
-- Calculate transparent tuition fee schedules with real-time study format discounts (Online 15% discount, Part-Time 10% discount).
-- Register online through an intuitive 3-step admission application wizard.
+- Review transparent fixed academic fee schedules for 100% on-campus instruction in Buea.
+- Register online through an intuitive 4-step admission application wizard.
 - Authenticate into the verified **Student Portal** to monitor admission progress and review financial dossiers.
 - Settle application fees (15,000 XAF for HND/ND, 25,000 XAF for Certifications) directly via **MTN Mobile Money (*126#)**.
 - Interact with an intelligent **AI Academic Assistant** for instantaneous answers, directives, and applicant verification.
@@ -164,7 +164,7 @@ Immediately upon administrative payment verification:
 Visit the **Student Experience** page (`/student-experience`):
 - **Live Workshop Video Players**: Watch recorded technical lab workshops and code reviews directly on the platform with custom play/pause and audio controls.
 - **Campus Facilities**: Explore details regarding our dedicated high-speed fiber-optic Wi-Fi, dual-boot Linux/Windows workstations, and 24/7 campus security.
-- **Student Housing & Hostels**: Learn how the Student Affairs office assists students in finding secure accommodation in Bakweri Town, Buea (2–5 minutes walking distance).
+- **Student Housing & Hostels**: Information on independent off-campus private student hostels in Bakweri Town, Buea (2–5 minutes walking distance; housing is independently arranged and not guaranteed by the academy).
 - **Interactive FAQ Accordion**: Expand frequently asked questions for instantaneous answers.
 
 ---

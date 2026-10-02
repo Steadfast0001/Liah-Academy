@@ -432,7 +432,7 @@ const programsData = [
   {
     id: 1,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Software Engineering HND',
+    title: 'HND in Software Engineering',
     desc: 'Learn full-stack programming, backend frameworks, software design patterns, and enterprise database operations.',
     degree: 'HND',
     duration: '2 Years',
@@ -445,7 +445,7 @@ const programsData = [
   {
     id: 2,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Cybersecurity & Cloud Defense HND',
+    title: 'HND in Cybersecurity & Cloud Defense',
     desc: 'Network defense architectures, ethical penetration testing, vulnerability assessment, Linux server hardening, and cloud security.',
     degree: 'HND',
     duration: '2 Years',
@@ -458,7 +458,7 @@ const programsData = [
   {
     id: 3,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Network and Maintenance HND',
+    title: 'HND in Network and Maintenance',
     desc: 'Audit network topologies, manage systems security, configure routing protocols, and handle hardware diagnostics.',
     degree: 'HND',
     duration: '2 Years',
@@ -471,7 +471,7 @@ const programsData = [
   {
     id: 4,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Web and Graphics Design HND',
+    title: 'HND in Web and Graphics Design',
     desc: 'Acquire skills in creating user interfaces, design tools, modern UI/UX layouts, branding assets, and frontend programming.',
     degree: 'HND',
     duration: '2 Years',
@@ -484,7 +484,7 @@ const programsData = [
   {
     id: 5,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Digital Marketing and E-Commerce HND',
+    title: 'HND in Digital Marketing and E-Commerce',
     desc: 'Build online shops, optimize payment methods, run digital campaigns, and scale automated conversion funnels.',
     degree: 'HND',
     duration: '2 Years',
@@ -497,7 +497,7 @@ const programsData = [
   {
     id: 6,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Computer Engineering ND',
+    title: 'ND in Computer Engineering',
     desc: 'Hardware architectures, computer electronics, circuit diagnostics, component repair, and microprocessor programming.',
     degree: 'ND',
     duration: '1 Year',
@@ -510,7 +510,7 @@ const programsData = [
   {
     id: 7,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Information & Communication Tech ND',
+    title: 'ND in Information & Communication Tech',
     desc: 'Database systems, basic web technologies, local networking infrastructure, and IT technical user support.',
     degree: 'ND',
     duration: '1 Year',
@@ -523,7 +523,7 @@ const programsData = [
   {
     id: 8,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Web Design ND',
+    title: 'ND in Web Design',
     desc: 'Foundational website markup, styling, scripting, and mobile-friendly responsive user interfaces.',
     degree: 'ND',
     duration: '1 Year',
@@ -536,7 +536,7 @@ const programsData = [
   {
     id: 9,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Computerized Accounting ND',
+    title: 'ND in Computerized Accounting',
     desc: 'Apply financial computing theories using digital bookkeeping platforms, spreadsheets, and reporting systems.',
     degree: 'ND',
     duration: '1 Year',
@@ -549,7 +549,7 @@ const programsData = [
   {
     id: 10,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Graphics Design and Printing ND',
+    title: 'ND in Graphics Design and Printing',
     desc: 'Visual communication, Adobe design suite, typography, prepress output, digital printing, and brand collateral creation.',
     degree: 'ND',
     duration: '1 Year',
@@ -562,7 +562,7 @@ const programsData = [
   {
     id: 11,
     school: 'SCHOOL OF ENGINEERING',
-    title: 'Basic Computer ND',
+    title: 'ND in Basic Computer',
     desc: 'Office productivity software, operating systems navigation, internet protocols, typing speed, and foundational digital literacy.',
     degree: 'ND',
     duration: '1 Year',

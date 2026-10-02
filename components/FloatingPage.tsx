@@ -4,28 +4,27 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Sparkles, X, Maximize2, Minimize2, CreditCard, Smartphone, 
-  Search, BookOpen, MapPin, Phone, MessageCircle, CheckCircle, 
+  Search, MapPin, Phone, MessageCircle,
   ArrowRight, Loader2, Copy, Check, ShieldCheck, ExternalLink,
-  GraduationCap, Layers, UserCheck, ChevronRight
+  GraduationCap, UserCheck, ChevronRight
 } from 'lucide-react';
 
 export default function FloatingPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pay' | 'apply' | 'track' | 'programs' | 'contact'>('pay');
+  const [activeTab, setActiveTab] = useState<'pay' | 'apply' | 'track' | 'contact'>('pay');
 
   // MoMo Pay State
   const [payAmount, setPayAmount] = useState<number>(15000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [dialed, setDialed] = useState(false);
-  const [autoChecking, setAutoChecking] = useState(false);
-  const [payReceipt, setPayReceipt] = useState<any>(null);
 
   // Fast Apply State
   const [applyName, setApplyName] = useState('');
   const [applyEmail, setApplyEmail] = useState('');
   const [applyPhone, setApplyPhone] = useState('');
+  const [applyPassword, setApplyPassword] = useState('');
   const [applyDegree, setApplyDegree] = useState<'HND' | 'ND' | 'Certification'>('HND');
   const [applyProgram, setApplyProgram] = useState('Software Engineering HND');
   const [applyLoading, setApplyLoading] = useState(false);
@@ -67,33 +66,6 @@ export default function FloatingPage() {
     window.location.href = `tel:*126*14*670265493*${amount}%23`;
   };
 
-  const handleAutoCheck = async () => {
-    setAutoChecking(true);
-    try {
-      const res = await fetch('/api/payments/momo-confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: currentEffectiveAmount,
-          phone: '670265493',
-          pin: '0000'
-        })
-      });
-      const data = await res.json();
-      setAutoChecking(false);
-      if (data.success) {
-        setPayReceipt(data.data?.receipt || {
-          reference: data.data?.payment?.reference,
-          amount: currentEffectiveAmount,
-          date: new Date().toLocaleString(),
-          status: 'PAID & APPROVED'
-        });
-      }
-    } catch {
-      setAutoChecking(false);
-    }
-  };
-
   const handleFastApply = async (e: React.FormEvent) => {
     e.preventDefault();
     setApplyLoading(true);
@@ -108,7 +80,7 @@ export default function FloatingPage() {
           phone: applyPhone,
           degree_type: applyDegree,
           program_type: applyProgram,
-          password: 'LiahCandidate2026!'
+          password: applyPassword
         })
       });
       const data = await res.json();
@@ -293,7 +265,6 @@ export default function FloatingPage() {
               { id: 'pay', label: '💳 MTN MoMo', icon: Smartphone },
               { id: 'apply', label: '🎓 Fast Apply', icon: GraduationCap },
               { id: 'track', label: '🔍 Track Dossier', icon: Search },
-              { id: 'programs', label: '📚 Programs', icon: BookOpen },
               { id: 'contact', label: '📍 Buea Campus', icon: MapPin },
             ].map(tab => {
               const Icon = tab.icon;
@@ -479,8 +450,7 @@ export default function FloatingPage() {
                   </div>
                 </div>
 
-                {/* Auto-check confirmation */}
-                {dialed && !payReceipt && (
+                {dialed && (
                   <div style={{
                     background: 'rgba(16,185,129,0.12)',
                     border: '1px solid #10B981',
@@ -489,12 +459,10 @@ export default function FloatingPage() {
                     marginBottom: '14px'
                   }}>
                     <div style={{ fontSize: '0.8rem', color: '#A7F3D0', fontWeight: 700, marginBottom: '8px' }}>
-                      📲 Code dispatched to phone dialer. Enter Secret PIN to conclude:
+                      Complete the transfer in the MTN MoMo interface. Liah Academy cannot verify a transfer automatically.
                     </div>
-                    <button
-                      type="button"
-                      disabled={autoChecking}
-                      onClick={handleAutoCheck}
+                    <Link
+                      href="/portal?tab=enrol"
                       style={{
                         width: '100%',
                         padding: '10px 14px',
@@ -508,32 +476,13 @@ export default function FloatingPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px'
+                        gap: '6px',
+                        textDecoration: 'none'
                       }}
                     >
-                      {autoChecking ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                      ✓ I Entered PIN — Auto-Check &amp; Activate Session
-                    </button>
-                  </div>
-                )}
-
-                {/* Receipt Card */}
-                {payReceipt && (
-                  <div style={{
-                    background: '#ECFDF5',
-                    border: '2px solid #10B981',
-                    borderRadius: '10px',
-                    padding: '14px',
-                    color: '#065F46',
-                    fontSize: '0.82rem'
-                  }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle size={18} color="#10B981" /> Payment Confirmed &amp; Approved!
-                    </div>
-                    <div>Reference: <strong>{payReceipt.reference}</strong></div>
-                    <div>Amount: <strong>{payReceipt.amount?.toLocaleString()} XAF</strong></div>
-                    <div>Recipient: <strong>670265493 (Liah Academy)</strong></div>
-                    <div>Status: <strong style={{ color: '#059669' }}>PAID &amp; APPROVED</strong></div>
+                      <ArrowRight size={16} />
+                      Open Student Portal to submit proof
+                    </Link>
                   </div>
                 )}
               </div>
@@ -619,6 +568,20 @@ export default function FloatingPage() {
                           style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.82rem' }}
                         />
                       </div>
+                    </div>
+
+                    <div style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '0.76rem', color: '#94A3B8', marginBottom: '4px' }}>Create Portal Password (12+ characters) *</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={12}
+                        maxLength={128}
+                        autoComplete="new-password"
+                        value={applyPassword}
+                        onChange={(e) => setApplyPassword(e.target.value)}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#041021', color: '#FFF', fontSize: '0.82rem' }}
+                      />
                     </div>
 
                     <div style={{ marginBottom: '12px' }}>
@@ -764,59 +727,7 @@ export default function FloatingPage() {
               </div>
             )}
 
-            {/* TAB 4: Programs Catalog */}
-            {activeTab === 'programs' && (
-              <div>
-                <h4 style={{ color: '#FDE047', margin: '0 0 10px 0', fontSize: '0.95rem', fontWeight: 800 }}>
-                  Degree Programs &amp; Certifications
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { title: 'Software Engineering HND', dur: '2 Years', fee: '250,000 XAF/yr', school: 'Engineering' },
-                    { title: 'Cybersecurity & Cloud Defense HND', dur: '2 Years', fee: '250,000 XAF/yr', school: 'Security' },
-                    { title: 'Information & Comm. Tech (ICT) ND', dur: '1 Year', fee: '150,000 XAF/yr', school: 'IT' },
-                    { title: 'Web Design ND', dur: '1 Year', fee: '150,000 XAF/yr', school: 'Design' },
-                    { title: 'DevOps Certification', dur: '9 Months', fee: '350,000 XAF', school: 'Cloud' },
-                    { title: 'Data Science & Machine Learning', dur: '9 Months', fee: '350,000 XAF', school: 'AI Lab' }
-                  ].map((p, idx) => (
-                    <div key={idx} style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      padding: '10px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.84rem', color: '#FFF' }}>{p.title}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{p.dur} &bull; {p.fee}</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setApplyProgram(p.title);
-                          setActiveTab('apply');
-                        }}
-                        style={{
-                          background: '#F5A623',
-                          border: 'none',
-                          color: '#081F3E',
-                          padding: '5px 10px',
-                          borderRadius: '6px',
-                          fontWeight: 800,
-                          fontSize: '0.72rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Enroll
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 5: Buea Campus & Contact */}
+            {/* TAB 4: Buea Campus & Contact */}
             {activeTab === 'contact' && (
               <div>
                 <h4 style={{ color: '#FDE047', margin: '0 0 8px 0', fontSize: '0.95rem', fontWeight: 800 }}>

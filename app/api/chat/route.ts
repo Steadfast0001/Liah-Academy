@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '@/lib/db';
+import { getDatabaseSourceMode } from '@/lib/db';
 import { sanitizeInput } from '@/lib/security';
+import { getChatSessionId } from '@/lib/chat-session';
+import { getChatSession, markChatSessionRead, saveChatMessage } from '@/lib/chat-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,18 +10,19 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
+    const authorizedSessionId = getChatSessionId(request);
 
-    if (!sessionId) {
-      return NextResponse.json({ success: true, messages: [] });
+    if (!sessionId || !authorizedSessionId || sessionId !== authorizedSessionId) {
+      return NextResponse.json({ success: false, message: 'Chat session is unavailable.' }, { status: 401 });
     }
 
-    const session = adminStore.getChatSession(sessionId);
+    const session = await getChatSession(sessionId);
     if (!session) {
       return NextResponse.json({ success: true, messages: [] });
     }
 
     // Mark as read by user
-    adminStore.markChatSessionRead(sessionId, 'user');
+    await markChatSessionRead(sessionId, 'user');
 
     return NextResponse.json({
       success: true,
@@ -28,7 +31,7 @@ export async function GET(request: Request) {
       messages: session.messages || []
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Chat is temporarily unavailable.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
@@ -42,7 +45,10 @@ export async function POST(request: Request) {
     }
     const query = sanitizeInput(body?.query);
     const incomingSessionId = sanitizeInput(body?.sessionId);
-    const sessionId = incomingSessionId || `chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const sessionId = getChatSessionId(request);
+    if (!sessionId || (incomingSessionId && incomingSessionId !== sessionId)) {
+      return NextResponse.json({ success: false, message: 'Chat session is unavailable.' }, { status: 401 });
+    }
     const userName = sanitizeInput(body?.userName);
     const userEmail = sanitizeInput(body?.userEmail);
     const userPhone = sanitizeInput(body?.userPhone);
@@ -56,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Record User Message in Chat Session for Admin
-    adminStore.saveChatMessage(
+    await saveChatMessage(
       sessionId,
       { sender: 'user', text: query.trim(), sender_name: userName || 'Student / Visitor' },
       { user_name: userName, user_email: userEmail, user_phone: userPhone }
@@ -112,6 +118,13 @@ Our admissions team is available to help confirm your payment.`;
 Feel free to ask any further questions right here!`;
     } else if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('good morning') || q.includes('good afternoon') || q.includes('bonjour')) {
       autoReply = `Hello ${userName ? userName : ''}! 👋 Thank you for contacting Liah Academy. How can our admissions team assist you today?`;
+    } else if (q.includes('hostel') || q.includes('accommodation') || q.includes('housing') || q.includes('dorm') || q.includes('room')) {
+      autoReply = `🏠 **Accommodation Policy**:
+Liah Academy does **not** provide on-campus dormitories or guaranteed hostel accommodation. Admitted students independently arrange off-campus housing.
+Our campus is centrally located in **Bakweri Town, Buea**, surrounded by numerous independent private hostels and rental apartments within short walking distance.`;
+    } else if (q.includes('online') || q.includes('remote') || q.includes('distance') || q.includes('e-learning') || q.includes('virtual')) {
+      autoReply = `🏫 **Study Format Notice**:
+There is **no online study format**. All academic programs at Liah Academy are conducted **100% on-campus** at our Bakweri Town campus in Buea to provide intensive hands-on lab work and physical workstation access. We offer full-time day cohorts and evening sessions for working learners.`;
     } else if (q.includes('where') || q.includes('location') || q.includes('campus') || q.includes('address') || q.includes('buea')) {
       autoReply = `📍 **Campus Location**:
 Liah Academy Higher Institute of Technology is located at **Bakweri Town Campus, Buea, South West Region, Cameroon**.
@@ -121,7 +134,7 @@ All practical classes, coding labs, and lectures are held 100% on campus with 24
     }
 
     // Save auto-reply to thread
-    adminStore.saveChatMessage(
+    await saveChatMessage(
       sessionId,
       { sender: 'agent', text: autoReply, sender_name: 'Liah Admissions Desk' }
     );
@@ -133,6 +146,6 @@ All practical classes, coding labs, and lectures are held 100% on campus with 24
     });
 
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Chat is temporarily unavailable.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }

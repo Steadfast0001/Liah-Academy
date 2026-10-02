@@ -18,6 +18,7 @@ interface ChatMessage {
 }
 
 export default function ChatWidget() {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string>('');
@@ -33,7 +34,7 @@ export default function ChatWidget() {
       sender: 'agent',
       sender_name: 'Liah Admissions Desk',
       text: 'Hello! 👋 Welcome to Liah Academy Live Support. Send us a message here and our admissions counselors will respond to you live.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: ''
     }
   ]);
 
@@ -52,37 +53,46 @@ export default function ChatWidget() {
     }
   }, [isOpen, messages]);
 
+  // Set mounted on client and format initial timestamp
+  useEffect(() => {
+    setMounted(true);
+    setMessages(prev =>
+      prev.map(m =>
+        m.id === 'welcome-1' && !m.timestamp
+          ? { ...m, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+          : m
+      )
+    );
+  }, []);
+
   // Initialize session ID
   useEffect(() => {
-    let sid = '';
-    try {
-      if (typeof window !== 'undefined') {
-        sid = localStorage.getItem('liah_chat_session_id') || '';
-        if (!sid) {
-          sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-          localStorage.setItem('liah_chat_session_id', sid);
-        }
+    const initializeChat = async () => {
+      try {
         const savedName = localStorage.getItem('liah_chat_user_name');
         if (savedName) setUserName(savedName);
         const savedContact = localStorage.getItem('liah_chat_user_contact');
         if (savedContact) setUserContact(savedContact);
-      }
-    } catch {
-      sid = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    }
-    setSessionId(sid);
 
-    // Initial fetch of conversation history
-    if (sid) {
-      fetch(`/api/chat?sessionId=${sid}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
-            setMessages(data.messages);
-          }
-        })
-        .catch(() => {});
-    }
+        const sessionResponse = await fetch('/api/chat/session', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const sessionData = await sessionResponse.json();
+        if (!sessionResponse.ok || !sessionData.success || !sessionData.sessionId) return;
+
+        setSessionId(sessionData.sessionId);
+        const historyResponse = await fetch(`/api/chat?sessionId=${encodeURIComponent(sessionData.sessionId)}`, {
+          credentials: 'include'
+        });
+        const history = await historyResponse.json();
+        if (history.success && Array.isArray(history.messages) && history.messages.length > 0) {
+          setMessages(history.messages);
+        }
+      } catch {}
+    };
+
+    void initializeChat();
   }, []);
 
   // Real-time polling for live responses from admin
@@ -127,7 +137,7 @@ export default function ChatWidget() {
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const text = input.trim();
-    if (!text || isSending) return;
+    if (!text || !sessionId || isSending) return;
 
     const userMsg: ChatMessage = {
       id: `user_${Date.now()}`,
@@ -143,16 +153,24 @@ export default function ChatWidget() {
     setIsSending(true);
 
     try {
-      if (userName && typeof window !== 'undefined') {
-        localStorage.setItem('liah_chat_user_name', userName);
-      }
-      if (userContact && typeof window !== 'undefined') {
-        localStorage.setItem('liah_chat_user_contact', userContact);
+      if (typeof window !== 'undefined') {
+        if (userName) {
+          localStorage.setItem('liah_chat_user_name', userName);
+        } else {
+          localStorage.removeItem('liah_chat_user_name');
+        }
+
+        if (userContact) {
+          localStorage.setItem('liah_chat_user_contact', userContact);
+        } else {
+          localStorage.removeItem('liah_chat_user_contact');
+        }
       }
 
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           sessionId,
           query: text,
@@ -201,6 +219,10 @@ export default function ChatWidget() {
       inputRef.current.focus();
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
@@ -423,7 +445,7 @@ export default function ChatWidget() {
                     alignSelf: isUser ? 'flex-end' : 'flex-start'
                   }}
                 >
-                  <span style={{ fontSize: '0.7rem', color: '#94A3B8', marginBottom: '3px', padding: '0 4px' }}>
+                  <span suppressHydrationWarning style={{ fontSize: '0.7rem', color: '#94A3B8', marginBottom: '3px', padding: '0 4px' }}>
                     {isUser ? (m.sender_name || 'You') : (m.sender_name || 'Admissions Counselor')} • {m.timestamp || ''}
                   </span>
                   <div

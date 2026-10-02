@@ -13,12 +13,12 @@ function AdmissionsOverview() {
         
         {/* Header */}
         <div className="section-header" style={{ textAlign: 'center', marginBottom: '45px' }}>
-          <span className="course-badge">Admissions &amp; Tuition Portal</span>
+          <span className="course-badge">Admissions &amp; Application Portal</span>
           <h1 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 800, color: '#081F3E', margin: '10px 0' }}>
-            Admissions &amp; Tuition Schedule
+            Admissions &amp; Fee Schedule
           </h1>
           <p className="sub-header" style={{ maxWidth: '680px', margin: '0 auto', fontSize: '1rem', color: '#64748B' }}>
-            Review institutional entry requirements, transparent fixed tuition schedules, and submit your official enrolment dossier.
+            Review institutional entry requirements and transparent academic fee schedules. Online submission handles only your one-time application processing fee.
           </p>
         </div>
 
@@ -73,7 +73,7 @@ function AdmissionsOverview() {
                   </li>
                   <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ color: '#F5A623', fontWeight: 900, fontSize: '1rem', lineHeight: 1 }}>✓</span>
-                    <span><strong>Tuition / Application Clearance:</strong> Enrolments and workstation allocations are confirmed after payment.</span>
+                    <span><strong>Application Clearance:</strong> Enrolments and workstation allocations are confirmed after submitting application proof of payment and academic credentials.</span>
                   </li>
                 </ul>
               </div>
@@ -94,7 +94,7 @@ function AdmissionsOverview() {
                   <span>ENROLLMENT COMPLETION POLICY:</span>
                 </div>
                 <div>
-                  All registrations and lab workstation reservations are complete only after the applicant has completed payment and submitted valid academic credentials.
+                  All registrations and lab workstation reservations are processed after the applicant has submitted application proof of payment and valid academic credentials. Program tuition is settled offline directly at the campus finance office upon admission.
                 </div>
               </div>
             </div>
@@ -208,6 +208,11 @@ function AdmissionsOverview() {
                   </div>
 
                 </div>
+
+                {/* Clarification Note on Tuition vs Application Fee */}
+                <div style={{ marginTop: '20px', padding: '12px 16px', background: '#F1F5F9', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem', color: '#475569', lineHeight: '1.5' }}>
+                  ℹ️ <strong>Payment Policy Notice:</strong> Only the one-time application processing fee (15,000 XAF or 25,000 XAF) is submitted online with MTN MoMo payment proof. Program tuition is paid offline directly at the campus finance office in Buea upon admission confirmation.
+                </div>
               </div>
             </div>
 
@@ -235,7 +240,7 @@ function AdmissionsOverview() {
               Already Submitted Your Enrolment Dossier?
             </h3>
             <p style={{ color: '#CBD5E1', fontSize: '0.9rem', margin: 0, maxWidth: '560px' }}>
-              Log into the dedicated Student Portal to review your admission status, download official acceptance letters, or complete tuition payments.
+              Log into the dedicated Student Portal to review your admission status, download official acceptance letters, or upload application fee payment proof.
             </p>
           </div>
 

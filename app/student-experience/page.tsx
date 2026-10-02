@@ -359,16 +359,16 @@ export default function StudentExperiencePage() {
                 a: 'Every enrolled student undergoes a structured internship in our Corporate Software Development & IT Services Division. Students build real client applications alongside senior software architects and graduate with verifiable industry work experience.'
               },
               {
-                q: 'Does Liah Academy assist with student accommodation in Buea?',
-                a: 'Yes! Our Student Affairs office directly assists all admitted students in securing clean, secure, and affordable hostels and private student apartments within 2–5 minutes walking distance of campus in Bakweri Town, Buea.'
+                q: 'Does Liah Academy provide guaranteed hostel accommodation?',
+                a: 'No. Liah Academy does not provide on-campus dormitories or guaranteed hostel accommodation. All admitted students independently arrange their own off-campus housing. Our campus is situated in Bakweri Town, Buea, where numerous independent private hostels and rental apartments are available within walking distance.'
               },
               {
-                q: 'What are the study formats and can I attend while working a job?',
-                a: 'All programs are conducted 100% on-campus at our Bakweri Town campus in Buea. We provide intensive full-time day cohorts as well as flexible evening tracks to accommodate working professionals and ambitious learners.'
+                q: 'Is there an online study format available?',
+                a: 'No. There is no online study format. All academic training, lectures, and laboratory sessions at Liah Academy are conducted 100% on-campus at our Bakweri Town campus in Buea to ensure rigorous, hands-on software development and practical mentoring. We offer full-time day cohorts and evening tracks for working professionals.'
               },
               {
-                q: 'Can I pay my tuition in installments via Mobile Money?',
-                a: 'Yes! We support flexible 2 or 3 installment payment plans. You can pay seamlessly via MTN Mobile Money (*126#) directly on the Admissions portal or follow directives inside our AI Chat assistant.'
+                q: 'How are fees paid and what is required online during enrolment?',
+                a: 'Online application requires only the one-time application processing fee (25,000 XAF for Certifications, 15,000 XAF for HND/ND) submitted via MTN MoMo (*126#) with payment screenshot upload. Program tuition fees are settled offline directly at the campus finance office in Buea with flexible installment plans upon admission.'
               }
             ].map((faq, idx) => (
               <details

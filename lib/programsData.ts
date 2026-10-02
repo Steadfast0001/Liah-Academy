@@ -78,7 +78,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'software-engineering',
         categorySlug: 'hnd',
-        title: 'Higher National Diploma (HND) in Software Engineering',
+        title: 'HND in Software Engineering',
         degreeType: 'HND (2 Years)',
         deliveryFormat: '100% On-Campus',
         summary: 'A 2-year accredited diploma covering full-stack web development, Python backends, TypeScript architectures, relational databases, and enterprise software engineering at our Bakweri Town Campus.',
@@ -202,7 +202,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'cybersecurity-cloud-defense',
         categorySlug: 'hnd',
-        title: 'Higher National Diploma (HND) in Cybersecurity & Cloud Defense',
+        title: 'HND in Cybersecurity & Cloud Defense',
         degreeType: 'HND (2 Years)',
         deliveryFormat: '100% On-Campus',
         summary: 'A comprehensive 2-year accredited diploma in defensive security operations, penetration testing, ethical hacking, cloud security architecture, SIEM forensics, and enterprise network defense.',
@@ -326,7 +326,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'web-graphic-design',
         categorySlug: 'hnd',
-        title: 'Higher National Diploma (HND) in Web & Graphic Design',
+        title: 'HND in Web & Graphic Design',
         degreeType: 'HND (2 Years)',
         deliveryFormat: '100% On-Campus',
         summary: 'A 2-year accredited program blending modern UI/UX design, Figma design systems, corporate branding, Adobe Creative Suite, and responsive web development in our Buea campus studios.',
@@ -406,7 +406,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'digital-marketing',
         categorySlug: 'hnd',
-        title: 'Higher National Diploma (HND) in Digital Marketing & E-Commerce',
+        title: 'HND in Digital Marketing & E-Commerce',
         degreeType: 'HND (2 Years)',
         deliveryFormat: '100% On-Campus',
         summary: 'Master performance advertising, Search Engine Optimization (SEO), growth funnels, social media management, data analytics, and digital brand scaling on campus in Buea.',
@@ -486,7 +486,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'network-maintenance',
         categorySlug: 'hnd',
-        title: 'Higher National Diploma (HND) in Network & Maintenance',
+        title: 'HND in Network & Maintenance',
         degreeType: 'HND (2 Years)',
         deliveryFormat: '100% On-Campus',
         summary: 'Comprehensive hands-on training in enterprise computer networking, Cisco routing & switching, Linux server maintenance, hardware diagnostics, and fiber optic cabling.',
@@ -834,7 +834,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'computer-engineering',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Computer Engineering',
+        title: 'ND in Computer Engineering',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Foundational computer hardware architecture, system assembly, electronic diagnostics, microcontrollers, and computer maintenance in our Buea workbench labs.',
@@ -895,7 +895,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'ict',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Information & Communication Technology (ICT)',
+        title: 'ND in Information & Communication Technology (ICT)',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Comprehensive ICT training covering computer systems, local networking, office applications, databases, and IT support fundamentals.',
@@ -956,7 +956,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'web-design',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Web Design',
+        title: 'ND in Web Design',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Foundational web development covering semantic HTML5, CSS3, modern responsive layouts, JavaScript basics, and web hosting at our Bakweri Town Campus.',
@@ -1017,7 +1017,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'graphic-design-printing',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Graphic Design & Printing',
+        title: 'ND in Graphic Design & Printing',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Commercial graphic design, Adobe Photoshop, Illustrator, InDesign, typography, color separation, and industrial digital printing techniques.',
@@ -1078,7 +1078,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'basic-computer',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Basic Computer Operations & Applications',
+        title: 'ND in Basic Computer Operations & Applications',
         degreeType: 'ND (6 Months – 1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Essential computer fundamentals, touch typing mastery, Windows OS administration, Microsoft Office Suite (Word, Excel, PowerPoint), and digital literacy in Buea.',
@@ -1139,7 +1139,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'office-automation',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Office Automation Secretaryship',
+        title: 'ND in Office Automation Secretaryship',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Professional secretarial operations, executive correspondence, calendar management, cloud office tools, digital archiving, and office administration in Buea.',
@@ -1200,7 +1200,7 @@ export const PROGRAM_CATEGORIES: Record<string, ProgramCategory> = {
       {
         slug: 'computerized-accounting',
         categorySlug: 'nd',
-        title: 'National Diploma (ND) in Computerized Accounting',
+        title: 'ND in Computerized Accounting',
         degreeType: 'ND (1 Year)',
         deliveryFormat: '100% On-Campus',
         summary: 'Financial accounting fundamentals, Sage 50, QuickBooks, Advanced Excel financial modeling, payroll processing, and OHADA tax systems in Buea.',

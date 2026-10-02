@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next';
+import dynamic from 'next/dynamic';
 import './globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import ChatWidget from '../components/ChatWidget';
-import WhatsAppButton from '../components/WhatsAppButton';
-import BackToTop from '../components/BackToTop';
 import ErrorBoundary from '../components/ErrorBoundary';
+
+const ChatWidget = dynamic(() => import('../components/ChatWidget'), { ssr: false });
+const WhatsAppButton = dynamic(() => import('../components/WhatsAppButton'), { ssr: false });
+const BackToTop = dynamic(() => import('../components/BackToTop'), { ssr: false });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -40,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <ErrorBoundary fallback={<div style={{ height: '70px', background: '#081F3E' }} />}>
           <Header />
         </ErrorBoundary>

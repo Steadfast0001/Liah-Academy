@@ -1,30 +1,51 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '@/lib/db';
-import { verifyAdminAuth } from '@/lib/auth';
+import crypto from 'crypto';
+import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
+import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+async function saveMediaItem(item: { title: string; type: string; src: string; category: string; size: string }) {
+  if (getDatabaseSourceMode() !== 'mysql') return adminStore.addMedia(item);
+
+  await ensureMySQLTables();
+  const id = `m_${crypto.randomUUID()}`;
+  await getMySQLPool().execute(
+    'INSERT INTO media (id, title, type, src, category, size) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, item.title, item.type, item.src, item.category, item.size]
+  );
+  const [rows] = await getMySQLPool().execute('SELECT * FROM media WHERE id = ?', [id]);
+  return (rows as any[])[0];
+}
+
 export async function GET(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
       );
     }
 
-    const media = adminStore.getMedia();
+    let media;
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [rows] = await getMySQLPool().execute('SELECT * FROM media ORDER BY created_at DESC');
+      media = rows;
+    } else {
+      media = adminStore.getMedia();
+    }
     return NextResponse.json({ success: true, data: media });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to load media.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
@@ -76,18 +97,21 @@ export async function POST(request: Request) {
         await fs.promises.writeFile(filePath, buffer);
         url = `/assets/media/${diskFileName}`;
       } catch (fsErr) {
-        const cleanFileName = fileObj.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        url = `/assets/media/media_${Date.now()}_${cleanFileName}`;
+        console.error('Admin media storage failed:', fsErr);
+        return NextResponse.json(
+          { success: false, message: 'Media storage is unavailable. Please try again later.' },
+          { status: 500 }
+        );
       }
 
       const formattedSize = fileObj.size > 1024 * 1024 
         ? `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`
         : `${Math.round(fileObj.size / 1024)} KB`;
 
-      const newItem = adminStore.addMedia({
+      const newItem = await saveMediaItem({
         title: title || fileObj.name,
         type: mediaType,
-        src: url, // Storing physical disk URL only, zero Base64 in database
+        src: url,
         category: category || 'Workshops',
         size: formattedSize
       });
@@ -108,7 +132,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Title and source URL are required.' }, { status: 400 });
     }
 
-    const newItem = adminStore.addMedia({
+    if (typeof src !== 'string' || !(/^https?:\/\//i.test(src) || /^\/(?!\/)/.test(src))) {
+      return NextResponse.json(
+        { success: false, message: 'Use a stored file path or HTTP URL; embedded file data is not accepted.' },
+        { status: 400 }
+      );
+    }
+
+    const newItem = await saveMediaItem({
       title,
       type: type || 'video',
       src,
@@ -119,13 +150,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: 'Media reference registered successfully.', data: newItem });
   } catch (error: any) {
     console.error('Error in /api/admin/media POST:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to save media.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
@@ -138,9 +169,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'ID is required' }, { status: 400 });
     }
 
-    adminStore.deleteMedia(id);
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      await getMySQLPool().execute('DELETE FROM media WHERE id = ?', [id]);
+    } else {
+      adminStore.deleteMedia(id);
+    }
     return NextResponse.json({ success: true, message: `Media item #${id} removed.` });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to delete media.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }

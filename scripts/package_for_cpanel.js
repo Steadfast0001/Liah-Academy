@@ -110,10 +110,16 @@ for (const file of rootFiles) {
 
 // 3. Compress staging directory to liah-academy-cpanel.zip
 console.log('🗜️  Compressing production zip package...');
-const powershellCmd = `Compress-Archive -Path '${distDir}\\*' -DestinationPath '${zipPath}' -Force`;
 
 try {
-  execSync(`powershell -Command "${powershellCmd}"`, { cwd: rootDir, stdio: 'inherit' });
+  // Use Windows built-in tar.exe for high-speed zip packaging
+  try {
+    execSync(`tar -a -cf "${zipPath}" *`, { cwd: distDir, stdio: 'pipe' });
+  } catch (tarErr) {
+    const powershellCmd = `Compress-Archive -Path '${distDir}\\*' -DestinationPath '${zipPath}' -Force`;
+    execSync(`powershell -Command "${powershellCmd}"`, { cwd: rootDir, stdio: 'inherit' });
+  }
+
   const stats = fs.statSync(zipPath);
   const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
   console.log(`✅ Database-Safe cPanel Package created successfully: liah-academy-cpanel.zip (${sizeMB} MB)`);

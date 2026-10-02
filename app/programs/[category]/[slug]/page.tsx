@@ -91,7 +91,7 @@ export default function ProgramDetailPage() {
                 </Link>
 
                 <Link
-                  href="/admissions#apply"
+                  href="/portal?tab=enrol"
                   style={{
                     background: '#FFFFFF',
                     color: '#081F3E',
@@ -294,7 +294,7 @@ export default function ProgramDetailPage() {
               Career Outcomes
             </h2>
             <Link
-              href="/admissions#apply"
+              href="/portal?tab=enrol"
               style={{
                 background: '#081F3E',
                 color: '#F5A623',
@@ -467,7 +467,7 @@ export default function ProgramDetailPage() {
               </p>
             </div>
             <Link
-              href="/admissions#apply"
+              href="/portal?tab=enrol"
               style={{
                 background: '#081F3E',
                 color: '#F5A623',
@@ -680,7 +680,7 @@ export default function ProgramDetailPage() {
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
               <Link
-                href="/admissions#apply"
+                href="/portal?tab=enrol"
                 style={{
                   background: '#F5A623',
                   color: '#081F3E',

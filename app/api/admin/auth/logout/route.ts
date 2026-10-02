@@ -11,8 +11,8 @@ export async function POST() {
   // Clear HTTP cookie
   response.cookies.set('liah_admin_token', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: 'strict',
     path: '/',
     maxAge: 0
   });

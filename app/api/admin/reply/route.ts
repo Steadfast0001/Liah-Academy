@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
-import { verifyAdminAuth } from '@/lib/auth';
+import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 import { sendEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ function getAppUrl(): string {
 
 export async function POST(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }

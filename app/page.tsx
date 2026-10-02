@@ -188,7 +188,7 @@ export default function HomePage() {
                 Explore Programs <ArrowRight size={18} />
               </Link>
               <Link 
-                href="/admissions#apply" 
+                href="/portal?tab=enrol"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -518,7 +518,7 @@ export default function HomePage() {
           </h2>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link 
-              href="/admissions#apply" 
+              href="/portal?tab=enrol"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -697,7 +697,7 @@ export default function HomePage() {
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <Link
-                  href="/admissions#apply"
+                  href="/portal?tab=enrol"
                   onClick={() => setActiveStory(null)}
                   style={{
                     background: '#0284C7',

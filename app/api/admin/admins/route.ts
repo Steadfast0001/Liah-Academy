@@ -1,44 +1,51 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '@/lib/db';
-import { verifyAdminAuth, getAdminFromRequest } from '@/lib/auth';
-import { hashPassword } from '@/lib/security';
+import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
+import { verifyAdminAuthAsync as verifyAdminAuth, getAdminFromRequest } from '@/lib/auth';
+import { hashPassword, validateRequestOrigin } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
-const MASTER_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'info@liahacademy.com').toLowerCase();
-
 export async function GET(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const admins = adminStore.getAdmins();
-    
-    // Always include the master .env admin at the top
-    const masterAdmin = {
-      id: 0,
-      full_name: 'Master Administrator',
-      email: MASTER_ADMIN_EMAIL,
+    let admins: any[];
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [rows] = await getMySQLPool().execute(
+        'SELECT id, full_name, email, role, created_at, last_login FROM admins ORDER BY id'
+      );
+      admins = rows as any[];
+    } else {
+      admins = adminStore.getAdmins();
+    }
+
+    const safeAdmins = admins.map(a => ({
+      id: a.id,
+      full_name: a.full_name,
+      email: a.email,
       password: '••••••••',
-      role: 'SuperAdmin' as const,
-      created_at: '2026-01-01T00:00:00.000Z',
-      last_login: new Date().toISOString(),
-      is_master: true
-    };
+      role: a.role,
+      created_at: a.created_at,
+      last_login: a.last_login
+    }));
 
-    // Filter out any DB admin that duplicates the master email
-    const dbAdmins = admins.filter(a => a.email.toLowerCase() !== MASTER_ADMIN_EMAIL);
-
-    return NextResponse.json({ success: true, data: [masterAdmin, ...dbAdmins] });
+    return NextResponse.json({ success: true, data: safeAdmins });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to load administrators.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.valid) {
+      return NextResponse.json({ success: false, message: originCheck.reason || 'Cross-origin request rejected.' }, { status: 403 });
+    }
+
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
@@ -62,8 +69,15 @@ export async function POST(request: Request) {
     }
 
     // Check if email already exists
-    const existing = adminStore.getAdminByEmail(email);
-    if (existing || email.toLowerCase().trim() === MASTER_ADMIN_EMAIL) {
+    let existing;
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [rows] = await getMySQLPool().execute('SELECT id FROM admins WHERE LOWER(email) = ? LIMIT 1', [String(email).toLowerCase().trim()]);
+      existing = (rows as any[])[0];
+    } else {
+      existing = adminStore.getAdminByEmail(email);
+    }
+    if (existing) {
       return NextResponse.json(
         { success: false, message: 'An administrator with this email already exists.' },
         { status: 409 }
@@ -71,12 +85,25 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = hashPassword(password);
-    const newAdmin = adminStore.addAdmin({
-      full_name,
-      email: email.toLowerCase().trim(),
-      password: hashedPassword,
-      role: role === 'SuperAdmin' ? 'SuperAdmin' : 'Admin'
-    });
+    let newAdmin;
+    if (getDatabaseSourceMode() === 'mysql') {
+      const [result] = await getMySQLPool().execute(
+        'INSERT INTO admins (full_name, email, password, role) VALUES (?, ?, ?, ?)',
+        [full_name, email.toLowerCase().trim(), hashedPassword, role === 'SuperAdmin' ? 'SuperAdmin' : 'Admin']
+      );
+      const [rows] = await getMySQLPool().execute(
+        'SELECT id, full_name, email, role, created_at, last_login FROM admins WHERE id = ?',
+        [(result as { insertId: number }).insertId]
+      );
+      newAdmin = (rows as any[])[0];
+    } else {
+      newAdmin = adminStore.addAdmin({
+        full_name,
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        role: role === 'SuperAdmin' ? 'SuperAdmin' : 'Admin'
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -84,13 +111,21 @@ export async function POST(request: Request) {
       data: { ...newAdmin, password: '••••••••' }
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    if (error?.code === 'ER_DUP_ENTRY') {
+      return NextResponse.json({ success: false, message: 'An administrator with this email already exists.' }, { status: 409 });
+    }
+    return NextResponse.json({ success: false, message: 'Unable to create administrator.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.valid) {
+      return NextResponse.json({ success: false, message: originCheck.reason || 'Cross-origin request rejected.' }, { status: 403 });
+    }
+
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
@@ -109,13 +144,35 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, message: 'Admin ID is required.' }, { status: 400 });
     }
 
+    const numericId = Number(id);
+    if (!Number.isSafeInteger(numericId) || numericId <= 0) {
+      return NextResponse.json({ success: false, message: 'Invalid administrator ID.' }, { status: 400 });
+    }
+
     const updates: any = {};
     if (full_name) updates.full_name = full_name;
-    if (email) updates.email = email;
+    if (email) updates.email = email.toLowerCase().trim();
     if (password) updates.password = hashPassword(password);
     if (role) updates.role = role;
 
-    const updated = adminStore.updateAdmin(Number(id), updates);
+    let updated;
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [existingRows] = await getMySQLPool().execute('SELECT id FROM admins WHERE id = ?', [numericId]);
+      if (!(existingRows as any[]).length) return NextResponse.json({ success: false, message: 'Admin not found.' }, { status: 404 });
+      await getMySQLPool().execute(
+        `UPDATE admins SET full_name = COALESCE(?, full_name), email = COALESCE(?, email),
+         password = COALESCE(?, password), role = COALESCE(?, role) WHERE id = ?`,
+        [updates.full_name || null, updates.email || null, updates.password || null, updates.role || null, numericId]
+      );
+      const [rows] = await getMySQLPool().execute(
+        'SELECT id, full_name, email, role, created_at, last_login FROM admins WHERE id = ?',
+        [numericId]
+      );
+      updated = (rows as any[])[0];
+    } else {
+      updated = adminStore.updateAdmin(numericId, updates);
+    }
     if (!updated) {
       return NextResponse.json({ success: false, message: 'Admin not found.' }, { status: 404 });
     }
@@ -126,13 +183,21 @@ export async function PUT(request: Request) {
       data: { ...updated, password: '••••••••' }
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    if (error?.code === 'ER_DUP_ENTRY') {
+      return NextResponse.json({ success: false, message: 'An administrator with this email already exists.' }, { status: 409 });
+    }
+    return NextResponse.json({ success: false, message: 'Unable to update administrator.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.valid) {
+      return NextResponse.json({ success: false, message: originCheck.reason || 'Cross-origin request rejected.' }, { status: 403 });
+    }
+
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
@@ -146,16 +211,26 @@ export async function DELETE(request: Request) {
 
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
+    const numericId = Number(id);
 
-    if (!id || Number(id) === 0) {
+    if (!id || !Number.isSafeInteger(numericId) || numericId <= 0) {
       return NextResponse.json(
-        { success: false, message: 'Cannot delete the master administrator account.' },
-        { status: 403 }
+        { success: false, message: 'Invalid administrator ID.' },
+        { status: 400 }
       );
     }
 
+    let targetAdmin;
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [rows] = await getMySQLPool().execute('SELECT id, full_name, email, role FROM admins WHERE id = ?', [numericId]);
+      targetAdmin = (rows as any[])[0];
+    } else {
+      targetAdmin = adminStore.getAdmins().find(a => a.id === numericId);
+    }
+    if (!targetAdmin) return NextResponse.json({ success: false, message: 'Admin not found.' }, { status: 404 });
+
     // Prevent deleting your own active account
-    const targetAdmin = adminStore.getAdmins().find(a => a.id === Number(id));
     if (targetAdmin && caller.email && targetAdmin.email.toLowerCase() === caller.email.toLowerCase()) {
       return NextResponse.json(
         { success: false, message: 'You cannot delete your own active administrator account.' },
@@ -163,7 +238,30 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const deleted = adminStore.deleteAdmin(Number(id));
+    // Ensure at least one SuperAdmin remains in the database
+    if (targetAdmin.role === 'SuperAdmin') {
+      let superAdminCount = 0;
+      if (getDatabaseSourceMode() === 'mysql') {
+        const [countRows] = await getMySQLPool().execute('SELECT COUNT(*) as count FROM admins WHERE role = "SuperAdmin"');
+        superAdminCount = Number((countRows as any[])[0]?.count || 0);
+      } else {
+        superAdminCount = adminStore.getAdmins().filter(a => a.role === 'SuperAdmin').length;
+      }
+      if (superAdminCount <= 1) {
+        return NextResponse.json(
+          { success: false, message: 'Cannot delete the only remaining SuperAdmin account. The system requires at least one SuperAdmin.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    let deleted: boolean;
+    if (getDatabaseSourceMode() === 'mysql') {
+      const [result] = await getMySQLPool().execute('DELETE FROM admins WHERE id = ?', [numericId]);
+      deleted = Number((result as { affectedRows: number }).affectedRows) > 0;
+    } else {
+      deleted = adminStore.deleteAdmin(numericId);
+    }
     if (!deleted) {
       return NextResponse.json({ success: false, message: 'Admin not found.' }, { status: 404 });
     }
@@ -173,6 +271,6 @@ export async function DELETE(request: Request) {
       message: 'Administrator removed successfully.'
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to delete administrator.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }

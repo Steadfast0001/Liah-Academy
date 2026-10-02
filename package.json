@@ -8,7 +8,11 @@
     "fix-perms": "node scripts/fix-perms.js",
     "start": "next start",
     "setup": "node scripts/setup.js",
-    "lint": "next lint"
+    "db:setup": "node scripts/cpanel-db-setup.js",
+    "package:cpanel": "node scripts/package_for_cpanel.js",
+    "lint": "next lint",
+    "test:smoke": "node scripts/smoke-test.js",
+    "test:backup": "node scripts/backup-verify.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",

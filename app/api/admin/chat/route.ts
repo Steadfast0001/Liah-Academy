@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '@/lib/db';
-import { verifyAdminAuth, getAdminFromRequest } from '@/lib/auth';
+import { getDatabaseSourceMode } from '@/lib/db';
+import { verifyAdminAuthAsync as verifyAdminAuth, getAdminFromRequest } from '@/lib/auth';
+import { closeChatSession, deleteChatSession, getChatSession, getChatSessions, markChatSessionRead, sendAdminChatReply } from '@/lib/chat-store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
@@ -17,16 +18,16 @@ export async function GET(request: Request) {
     const sessionId = searchParams.get('sessionId');
 
     if (sessionId) {
-      const session = adminStore.getChatSession(sessionId);
+      const session = await getChatSession(sessionId);
       if (!session) {
         return NextResponse.json({ success: false, message: 'Chat session not found' }, { status: 404 });
       }
       // Mark as read by admin
-      adminStore.markChatSessionRead(sessionId, 'admin');
-      return NextResponse.json({ success: true, session });
+      await markChatSessionRead(sessionId, 'admin');
+      return NextResponse.json({ success: true, session: { ...session, unread_admin: false } });
     }
 
-    const sessions = adminStore.getChatSessions();
+    const sessions = await getChatSessions();
     const unreadCount = sessions.filter(s => s.unread_admin).length;
 
     return NextResponse.json({ 
@@ -35,13 +36,13 @@ export async function GET(request: Request) {
       unreadCount
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Chat service is temporarily unavailable.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
@@ -59,7 +60,8 @@ export async function POST(request: Request) {
     }
 
     if (action === 'close') {
-      adminStore.closeChatSession(sessionId);
+      const closed = await closeChatSession(sessionId);
+      if (!closed) return NextResponse.json({ success: false, message: 'Chat session not found.' }, { status: 404 });
       return NextResponse.json({ success: true, message: 'Session marked as closed.' });
     }
 
@@ -67,7 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Message text is required.' }, { status: 400 });
     }
 
-    const result = adminStore.sendAdminChatReply(sessionId, text.trim(), adminName);
+    const result = await sendAdminChatReply(sessionId, text.trim(), adminName);
     if (!result.session) {
       return NextResponse.json({ success: false, message: 'Chat session not found.' }, { status: 404 });
     }
@@ -78,13 +80,13 @@ export async function POST(request: Request) {
       data: result
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Chat service is temporarily unavailable.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }
@@ -98,9 +100,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'Session ID is required.' }, { status: 400 });
     }
 
-    adminStore.deleteChatSession(sessionId);
+    const deleted = await deleteChatSession(sessionId);
+    if (!deleted) return NextResponse.json({ success: false, message: 'Chat session not found.' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Chat session deleted successfully.' });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Chat service is temporarily unavailable.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }

@@ -137,6 +137,7 @@ function StudentPortalContent() {
   const tabParam = searchParams.get('tab');
   const degreeParam = searchParams.get('degree');
   const programParam = searchParams.get('program');
+  const hydratedRef = React.useRef(false);
 
   // Active Gateway View: 'enrol' (New Applicant) or 'login' (Registered Student)
   const [gatewayTab, setGatewayTab] = useState<'enrol' | 'login'>('enrol');
@@ -167,12 +168,20 @@ function StudentPortalContent() {
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [regError, setRegError] = useState('');
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
   const [draftSavedStep, setDraftSavedStep] = useState<number>(1);
 
+  // Step 3: Registration Payment Proof (Optional)
+  const [regPaymentProofUrl, setRegPaymentProofUrl] = useState<string>('');
+  const [regPaymentFileName, setRegPaymentFileName] = useState<string>('');
+  const [regPaymentFileSize, setRegPaymentFileSize] = useState<string>('');
+  const [regPaymentUploading, setRegPaymentUploading] = useState<boolean>(false);
+  const [regPaymentTxId, setRegPaymentTxId] = useState<string>('');
+  const [regCopiedShortCode, setRegCopiedShortCode] = useState<boolean>(false);
+
   // Direct Mobile Money Payment & Proof Upload State
-  const [showCheckout, setShowCheckout] = useState(false);
   const [payAmountOption, setPayAmountOption] = useState<number>(15000);
   const [payCustomAmount, setPayCustomAmount] = useState<string>('');
   const [paySenderPhone, setPaySenderPhone] = useState<string>('');
@@ -187,40 +196,11 @@ function StudentPortalContent() {
   const [shortCodeDialed, setShortCodeDialed] = useState(false);
   const [paymentPhase, setPaymentPhase] = useState<'IDLE' | 'DIALED' | 'CHECKING' | 'CONFIRMED'>('IDLE');
 
-  // Single mount effect to initialize client state smoothly
+  // Keep the current UI state authoritative. Do not hydrate from old saved session/draft data
+  // after a refresh, otherwise stale values overwrite the latest user change.
   useEffect(() => {
-    setIsClientReady(true);
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('liah_student_session') || sessionStorage.getItem('liah_student_session');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && (parsed.id || parsed.full_name)) {
-            setStudent(parsed);
-            setPayAmountOption(getApplicationFee(parsed.degree_type));
-          }
-        }
-
-        // Check draft
-        const draftStr = localStorage.getItem('liah_admission_draft');
-        if (draftStr) {
-          const draft = JSON.parse(draftStr);
-          if (draft && (draft.fullName || draft.email || draft.phone)) {
-            if (draft.fullName) setFullName(draft.fullName);
-            if (draft.email) setEmail(draft.email);
-            if (draft.phone) setPhone(draft.phone);
-            if (draft.degreeType && !degreeParam) setDegreeType(draft.degreeType);
-            if (draft.programType && !programParam) setProgramType(draft.programType);
-            if (draft.studyFormat) setStudyFormat(draft.studyFormat);
-            if (draft.uploadedDocs) setUploadedDocs(draft.uploadedDocs);
-            if (draft.currentStep && draft.currentStep > 1) {
-              setDraftSavedStep(draft.currentStep);
-            }
-            setHasSavedDraft(true);
-          }
-        }
-      }
-    } catch {}
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
 
     if (tabParam === 'login') {
       setGatewayTab('login');
@@ -242,6 +222,17 @@ function StudentPortalContent() {
       setProgramType(programParam);
       setGatewayTab('enrol');
     }
+
+    fetch('/api/admissions/session', { credentials: 'include' })
+      .then(async response => response.ok ? response.json() : null)
+      .then(data => {
+        if (data?.success && data.data) {
+          setStudent(data.data);
+          setPayAmountOption(getApplicationFee(data.data.degree_type));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsClientReady(true));
   }, [tabParam, degreeParam, programParam]);
 
   // Keep Program synced when Degree Category changes
@@ -269,6 +260,13 @@ function StudentPortalContent() {
           updatedAt: new Date().toISOString(),
           ...overrides
         };
+
+        if (!payload.fullName && !payload.email && !payload.phone && Object.keys(payload.uploadedDocs || {}).length === 0) {
+          localStorage.removeItem('liah_admission_draft');
+          setHasSavedDraft(false);
+          return;
+        }
+
         localStorage.setItem('liah_admission_draft', JSON.stringify(payload));
         setHasSavedDraft(true);
       }
@@ -296,24 +294,119 @@ function StudentPortalContent() {
     }
   };
 
-  // Enrolment Step 1 Validation
-  const handleStep1Next = (e: React.FormEvent) => {
+  // Direct Step Jump Navigation with State Validation
+  const handleJumpToStep = (targetStep: number) => {
+    if (targetStep === currentStep) return;
+    setRegError('');
+    if (targetStep === 1) {
+      setCurrentStep(1);
+      return;
+    }
+    if (targetStep === 2) {
+      if (!fullName.trim() || !email.trim() || !phone.trim()) {
+        setRegError('Please complete your contact and program information on Step 1 first.');
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+    if (targetStep === 3) {
+      if (!fullName.trim() || !email.trim() || !phone.trim()) {
+        setRegError('Please complete your contact and program information on Step 1 first.');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setRegError('Please create a portal password (min. 6 characters) on Step 2 first.');
+        return;
+      }
+      if (!agreeTerms) {
+        setRegError('Please accept the institutional attendance & honesty policy on Step 2.');
+        return;
+      }
+      setCurrentStep(3);
+      return;
+    }
+    if (targetStep === 4) {
+      if (!fullName.trim() || !email.trim() || !phone.trim()) {
+        setRegError('Please complete your contact and program information on Step 1 first.');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setRegError('Please create a portal password (min. 6 characters) on Step 2 first.');
+        return;
+      }
+      if (!agreeTerms) {
+        setRegError('Please accept the institutional attendance & honesty policy on Step 2.');
+        return;
+      }
+      const requiredList = (docRequirementsByDegree[degreeType] || []).filter(d => d.required);
+      const missing = requiredList.filter(d => !uploadedDocs[d.id]);
+      if (missing.length > 0) {
+        setRegError(`Please upload all mandatory documents (${missing.map(m => m.label).join(', ')}) on Step 3 before proceeding.`);
+        return;
+      }
+      setCurrentStep(4);
+      return;
+    }
+  };
+
+  // Enrolment Step 3 Validation -> Proceed to Step 4 (Payment Verification)
+  const handleStep3Next = (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
-    if (!fullName.trim() || !email.trim() || !phone.trim()) {
+    const requiredList = (docRequirementsByDegree[degreeType] || []).filter(d => d.required);
+    const missing = requiredList.filter(d => !uploadedDocs[d.id]);
+    if (missing.length > 0) {
+      setRegError(`Please upload all mandatory documents (${missing.map(m => m.label).join(', ')}) before continuing.`);
+      return;
+    }
+    saveDraft({ currentStep: 4 });
+    setCurrentStep(4);
+  };
+
+  // Enrolment Step 1 Validation & Database Email Check
+  const handleStep1Next = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    const cleanFullname = fullName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+
+    if (!cleanFullname || !cleanEmail || !cleanPhone) {
       setRegError('Please fill in your full name, email address, and mobile phone number.');
       return;
     }
-    saveDraft({ currentStep: 2 });
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setRegError('Please enter a valid email address (e.g. your.name@gmail.com).');
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const res = await fetch(`/api/admissions/check-email?email=${encodeURIComponent(cleanEmail)}`);
+      const data = await res.json();
+      if (data?.exists) {
+        setRegError('An account with this email is already registered. Please log in to your Student Portal below or use another email.');
+        setCheckingEmail(false);
+        return;
+      }
+    } catch {
+      // Allow proceeding if offline/local dev check has network hiccup
+    } finally {
+      setCheckingEmail(false);
+    }
+
+    saveDraft({ fullName: cleanFullname, email: cleanEmail, phone: cleanPhone, currentStep: 2 });
     setCurrentStep(2);
   };
 
-  // Enrolment Step 2 Validation
+  // Enrolment Step 2 Validation (Password min 6 & Terms)
   const handleStep2Next = (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
-    if (!password || password.length < 6) {
-      setRegError('Please create a portal password with at least 6 characters.');
+    if (!password || password.length < 6 || password.length > 128) {
+      setRegError('Please create a secure portal password of at least 6 characters (up to 128).');
       return;
     }
     if (!agreeTerms) {
@@ -409,11 +502,73 @@ function StudentPortalContent() {
     });
   };
 
+  const handleRegistrationPaymentProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+
+    const maxSlotBytes = 2.5 * 1024 * 1024; // 2.5 MB limit
+    setRegPaymentUploading(true);
+    setRegError('');
+
+    try {
+      const file = await compressImageFile(rawFile);
+      if (file.size > maxSlotBytes) {
+        const actualMb = (file.size / (1024 * 1024)).toFixed(2);
+        e.target.value = '';
+        setRegError(`⚠️ Payment Proof Rejected: File is too large! Selected file "${file.name}" is ${actualMb} MB. Maximum allowed limit is 2.5 MB. Please select or compress your file.`);
+        setRegPaymentUploading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('slotId', 'payment_proof');
+      formData.append('category', 'payment-proofs');
+
+      const res = await fetch('/api/admissions/upload-doc', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        e.target.value = '';
+        setRegError(data.message || '⚠️ Upload failed: Payment proof file was rejected by server.');
+        setRegPaymentUploading(false);
+        return;
+      }
+
+      if (res.ok && data.success && data.url) {
+        setRegPaymentProofUrl(data.url);
+        setRegPaymentFileName(data.fileName || file.name);
+        setRegPaymentFileSize(data.size || ((file.size / 1024).toFixed(0) + ' KB'));
+      }
+    } catch {
+      setRegError('Connection error uploading payment proof. Please try again.');
+    } finally {
+      setRegPaymentUploading(false);
+    }
+  };
+
+  const handleRemoveRegPaymentProof = () => {
+    setRegPaymentProofUrl('');
+    setRegPaymentFileName('');
+    setRegPaymentFileSize('');
+    setRegPaymentTxId('');
+  };
+
   // Final Registration Submission -> Logs student into portal directly
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegLoading(true);
     setRegError('');
+
+    if (!password || password.length < 6 || password.length > 128) {
+      setRegLoading(false);
+      setCurrentStep(2);
+      setRegError('Please create a portal password (min. 6 characters) on Step 2 before submitting.');
+      return;
+    }
 
     const requiredList = (docRequirementsByDegree[degreeType] || []).filter(d => d.required);
     const missing = requiredList.filter(d => !uploadedDocs[d.id]);
@@ -432,9 +587,11 @@ function StudentPortalContent() {
         url: uploadedDocs[k].url
       }));
 
+      const regFee = getApplicationFee(degreeType);
       const res = await fetch('/api/admissions/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           full_name: fullName,
           email,
@@ -444,7 +601,10 @@ function StudentPortalContent() {
           program_type: programType,
           study_format: studyFormat,
           document_url: docsList.length > 0 ? docsList[0].url : '',
-          documents: docsList
+          documents: docsList,
+          payment_proof_url: regPaymentProofUrl || '',
+          payment_amount: regPaymentProofUrl ? regFee : 0,
+          payment_transaction_id: regPaymentTxId || ''
         })
       });
 
@@ -459,8 +619,6 @@ function StudentPortalContent() {
 
       if (res.ok && data.success && data.data) {
         if (typeof window !== 'undefined') {
-          localStorage.setItem('liah_student_session', JSON.stringify(data.data));
-          sessionStorage.setItem('liah_student_session', JSON.stringify(data.data));
           localStorage.removeItem('liah_admission_draft');
         }
         setStudent(data.data);
@@ -485,6 +643,7 @@ function StudentPortalContent() {
       const res = await fetch('/api/admissions/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: loginEmail,
           password: loginPassword
@@ -498,10 +657,7 @@ function StudentPortalContent() {
         const studentObj = data.student || data.data;
         setStudent(studentObj);
         setPayAmountOption(getApplicationFee(studentObj.degree_type));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('liah_student_session', JSON.stringify(studentObj));
-          sessionStorage.setItem('liah_student_session', JSON.stringify(studentObj));
-        }
+        localStorage.removeItem('liah_admission_draft');
       } else {
         setLoginError(data.message || 'Invalid email or password. If you do not have an account, please enrol.');
       }
@@ -512,11 +668,13 @@ function StudentPortalContent() {
   };
 
   // Handle Student Logout
-  const handleStudentLogout = () => {
+  const handleStudentLogout = async () => {
+    try {
+      await fetch('/api/admissions/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
     setStudent(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('liah_student_session');
-      sessionStorage.removeItem('liah_student_session');
+      localStorage.removeItem('liah_admission_draft');
     }
     setGatewayTab('login');
   };
@@ -534,8 +692,9 @@ function StudentPortalContent() {
     try {
       navigator.clipboard.writeText(code);
     } catch {}
-    const dialUri = `tel:*126*14*670265493*${amount}%23`;
-    window.location.href = dialUri;
+    // Encode # for tel: URI and trigger the phone dialer
+    const encodedCode = code.replace(/#/g, '%23');
+    window.location.href = `tel:${encodedCode}`;
   };
 
   const handleScreenshotChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -592,6 +751,7 @@ function StudentPortalContent() {
 
       const res = await fetch('/api/payments/upload-proof', {
         method: 'POST',
+        credentials: 'include',
         body: formData
       });
 
@@ -609,12 +769,11 @@ function StudentPortalContent() {
         } : null;
 
         if (updatedStudent) {
-          setStudent(updatedStudent);
-          localStorage.setItem('liah_student_session', JSON.stringify(updatedStudent));
+          setStudent(data.data?.student || updatedStudent);
+          localStorage.removeItem('liah_admission_draft');
         }
 
         setTimeout(() => {
-          setShowCheckout(false);
           setPaySuccess(false);
           setPayScreenshotFile(null);
           setPayScreenshotPreview(null);
@@ -750,11 +909,23 @@ function StudentPortalContent() {
                     borderRadius: '4px', 
                     fontSize: '0.85rem', 
                     fontWeight: 700,
-                    background: student.payment_status === 'Paid' ? '#ECFDF5' : '#FEF2F2',
-                    color: student.payment_status === 'Paid' ? '#059669' : '#DC2626'
+                    background: student.payment_status === 'Paid' 
+                      ? '#ECFDF5' 
+                      : (student.payment_proof_url || student.payment_status === 'Pending Verification') 
+                        ? '#EFF6FF' 
+                        : '#FEF2F2',
+                    color: student.payment_status === 'Paid' 
+                      ? '#059669' 
+                      : (student.payment_proof_url || student.payment_status === 'Pending Verification') 
+                        ? '#1D4ED8' 
+                        : '#DC2626'
                   }}
                 >
-                  {student.payment_status === 'Paid' ? 'Paid' : 'Pending Payment'}
+                  {student.payment_status === 'Paid' 
+                    ? '✓ Paid' 
+                    : (student.payment_proof_url || student.payment_status === 'Pending Verification') 
+                      ? '⏳ Verification in Progress' 
+                      : 'Pending Payment'}
                 </span>
               </div>
             </div>
@@ -784,79 +955,355 @@ function StudentPortalContent() {
               </div>
             </div>
 
-            {/* Uploaded Documents List */}
-            {student.documents && Array.isArray(student.documents) && student.documents.length > 0 && (
-              <div style={{ marginBottom: '36px', background: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <h4 style={{ color: '#081F3E', margin: '0 0 16px 0', fontSize: '1.15rem', fontWeight: 800 }}>
-                  Submitted Academic Dossier Files
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {student.documents.map((doc: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Complete Submitted Files & Dossier Documents (All Files Submitted) */}
+            {(() => {
+              // Gather all submitted files: academic documents, single document_url, and payment proof
+              let docItems: any[] = [];
+              if (Array.isArray(student.documents)) {
+                docItems = [...student.documents];
+              } else if (typeof student.documents === 'string') {
+                try {
+                  const parsed = JSON.parse(student.documents);
+                  if (Array.isArray(parsed)) docItems = parsed;
+                } catch {}
+              }
+
+              // Fallback for single document_url if not already in docItems
+              if (student.document_url && !docItems.some((d: any) => d.url === student.document_url)) {
+                docItems.unshift({
+                  id: 'primary_doc',
+                  label: 'Academic Qualification / Dossier',
+                  fileName: 'Official Academic Document',
+                  url: student.document_url,
+                  type: 'academic'
+                });
+              }
+
+              // Add Application Fee Payment Proof if submitted
+              if (student.payment_proof_url) {
+                docItems.push({
+                  id: 'payment_proof',
+                  label: 'Application Fee Proof of Payment',
+                  fileName: student.payment_transaction_id 
+                    ? `MTN MoMo Confirmation (Tx ID: ${student.payment_transaction_id})` 
+                    : 'MTN MoMo Payment Screenshot / Receipt',
+                  size: 'Payment Proof',
+                  url: student.payment_proof_url,
+                  type: 'payment',
+                  status: student.payment_status === 'Paid' ? '✓ Verified' : '⏳ Verification in Progress'
+                });
+              }
+
+              if (docItems.length === 0) return null;
+
+              return (
+                <div style={{ marginBottom: '36px', background: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <FileText size={18} color="#0284C7" />
-                        <div>
-                          <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', color: '#081F3E' }}>
-                            {doc.label || doc.fileName || `Document ${idx + 1}`}
-                          </p>
-                          <span style={{ fontSize: '0.76rem', color: '#64748B' }}>
-                            {doc.fileName} {doc.size ? `(${doc.size})` : ''}
-                          </span>
-                        </div>
                       </div>
-                      {doc.url && (
-                        <a
-                          href={doc.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={doc.fileName || 'document'}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            background: '#FFFFFF',
-                            border: '1px solid #CBD5E1',
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            color: '#081F3E',
-                            textDecoration: 'none'
+                      <h4 style={{ color: '#081F3E', margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                        Submitted Application &amp; Dossier Files
+                      </h4>
+                    </div>
+                    <span style={{ fontSize: '0.76rem', background: '#F1F5F9', color: '#475569', padding: '3px 10px', borderRadius: '20px', fontWeight: 700 }}>
+                      {docItems.length} file{docItems.length !== 1 ? 's' : ''} submitted
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {docItems.map((doc: any, idx: number) => {
+                      const isPayment = doc.type === 'payment' || doc.id === 'payment_proof';
+                      return (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            background: isPayment ? '#FFFBEB' : '#F8FAFC', 
+                            padding: '14px 18px', 
+                            borderRadius: '10px', 
+                            border: '1px solid ' + (isPayment ? '#FDE68A' : '#E2E8F0'),
+                            flexWrap: 'wrap',
+                            gap: '10px'
                           }}
                         >
-                          <Download size={14} /> Download
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '8px',
+                              background: isPayment ? '#FEF3C7' : '#E0F2FE',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}>
+                              {isPayment ? <Smartphone size={20} color="#B45309" /> : <FileText size={20} color="#0284C7" />}
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: '#081F3E' }}>
+                                  {doc.label || doc.fileName || `Document ${idx + 1}`}
+                                </p>
+                                {doc.status && (
+                                  <span style={{ 
+                                    fontSize: '0.72rem', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '12px', 
+                                    fontWeight: 700, 
+                                    background: doc.status.includes('Verified') ? '#ECFDF5' : '#EFF6FF', 
+                                    color: doc.status.includes('Verified') ? '#059669' : '#1D4ED8',
+                                    border: '1px solid ' + (doc.status.includes('Verified') ? '#A7F3D0' : '#BFDBFE')
+                                  }}>
+                                    {doc.status}
+                                  </span>
+                                )}
+                              </div>
+                              <span style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                                {doc.fileName} {doc.size ? `(${doc.size})` : ''}
+                              </span>
+                            </div>
+                          </div>
+
+                          {doc.url && (
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <a
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  background: '#FFFFFF',
+                                  border: '1px solid #CBD5E1',
+                                  padding: '6px 14px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: '#081F3E',
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <Eye size={13} /> View
+                              </a>
+                              <a
+                                href={doc.url ? (doc.url.includes('?') ? `${doc.url}&download=1` : `${doc.url}?download=1`) : '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={doc.fileName || 'file'}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  background: '#081F3E',
+                                  border: 'none',
+                                  padding: '6px 14px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: '#FFFFFF',
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <Download size={13} /> Download
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              );
+            })()}
+
+            {/* Direct Application Fee Payment & Direct Proof Upload Section - ONLY shows if student has NOT initially submitted payment proof */}
+            {!student.payment_proof_url && student.payment_status !== 'Paid' && student.payment_status !== 'Pending Verification' && (
+              <div style={{ marginBottom: '36px', background: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1.5px solid #FDE68A', boxShadow: '0 4px 20px rgba(245, 166, 35, 0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Smartphone size={18} color="#B45309" />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#081F3E', margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                        Application Fee Payment Clearance
+                      </h4>
+                      <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
+                        MTN Mobile Money Only &bull; Direct Proof of Payment Submission
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    background: '#FEF3C7',
+                    color: '#92400E',
+                    border: '1px solid #FDE68A'
+                  }}>
+                    ⚠️ Action Required
+                  </span>
+                </div>
+
+                {/* Program & Fee Banner */}
+                <div style={{ background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <span style={{ fontSize: '0.74rem', color: '#0369A1', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                        Your Program ({student.degree_type})
+                      </span>
+                      <span style={{ fontSize: '0.94rem', fontWeight: 800, color: '#081F3E' }}>
+                        {student.program_type}
+                      </span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.74rem', color: '#0369A1', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                        Application Fee Required
+                      </span>
+                      <span suppressHydrationWarning style={{ fontSize: '1.25rem', fontWeight: 900, color: '#059669' }}>
+                        {getApplicationFee(student.degree_type).toLocaleString('en-US')} XAF
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '8px', fontSize: '0.76rem', color: '#0369A1', background: '#FFFFFF', borderRadius: '6px', padding: '6px 10px', border: '1px solid #E0F2FE' }}>
+                    ℹ️ <strong>Application Fee Only:</strong> No tuition fees are required on this website. Tuition is settled directly at the campus finance office after admission.
+                  </div>
+                </div>
+
+                {/* MoMo Process Description */}
+                <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#92400E', display: 'block', marginBottom: '6px' }}>
+                    📌 How to pay via MTN MoMo:
+                  </span>
+                  <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '0.78rem', color: '#78350F', lineHeight: 1.7 }}>
+                    <li>Open your phone <strong>dialer</strong> (call pad).</li>
+                    <li>Dial: <strong style={{ color: '#081F3E', fontFamily: 'monospace' }}>{`*126*14*670265493*${getApplicationFee(student.degree_type)}#`}</strong></li>
+                    <li>Confirm transaction with your <strong>MoMo PIN</strong>.</li>
+                    <li>Take a <strong>screenshot</strong> of the confirmation message.</li>
+                    <li>Attach the screenshot below and tap <strong>&quot;Submit Payment Proof&quot;</strong>.</li>
+                  </ol>
+                </div>
+
+                {/* Direct Upload Form */}
+                <form onSubmit={handleProofSubmit}>
+                  {payError && (
+                    <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.84rem' }}>
+                      {payError}
+                    </div>
+                  )}
+
+                  {paySuccess && (
+                    <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.84rem' }}>
+                      ✓ Payment proof submitted successfully! Verification is in progress.
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', margin: 0 }}>
+                        📸 Attach Proof of Payment (Screenshot or PDF) *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', background: '#E2E8F0', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                        Max 2.5 MB
+                      </span>
+                    </div>
+
+                    <label
+                      htmlFor="dashboard_payment_proof"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '16px',
+                        border: '2px dashed ' + (payScreenshotPreview ? '#10B981' : '#CBD5E1'),
+                        borderRadius: '8px',
+                        background: payScreenshotPreview ? '#F0FDF4' : '#FAFAFA',
+                        cursor: 'pointer',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {payScreenshotPreview ? (
+                        <>
+                          <CheckCircle size={22} color="#10B981" />
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#065F46' }}>
+                            {payScreenshotFile ? payScreenshotFile.name : 'Screenshot ready to submit'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>
+                            Click to choose a different screenshot or receipt
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon size={24} color="#64748B" />
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E' }}>
+                            Click to select your transaction screenshot or receipt
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                            Max 2.5 MB &bull; PNG, JPG, JPEG, PDF (Auto-compressed)
+                          </span>
+                        </>
+                      )}
+                      <input
+                        id="dashboard_payment_proof"
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.webp,.pdf"
+                        onChange={handleScreenshotChange}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      placeholder="MoMo Transaction ID / Reference (Optional)"
+                      value={payTransactionId}
+                      onChange={(e) => setPayTransactionId(e.target.value)}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.82rem',
+                        flex: 1,
+                        minWidth: '200px'
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={payLoading}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '10px 22px',
+                        fontSize: '0.88rem',
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#081F3E',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: payLoading ? 'wait' : 'pointer'
+                      }}
+                    >
+                      {payLoading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                      <span>{payLoading ? 'Uploading...' : 'Submit Payment Proof'}</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-              {student.payment_status !== 'Paid' && (
-                <button 
-                  onClick={() => setShowCheckout(true)} 
-                  style={{ 
-                    background: '#F5A623', 
-                    color: '#081F3E', 
-                    fontWeight: 800, 
-                    padding: '14px 28px', 
-                    borderRadius: '8px', 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    border: 'none', 
-                    cursor: 'pointer', 
-                    fontSize: '0.92rem', 
-                    boxShadow: '0 4px 14px rgba(245, 166, 35, 0.3)' 
-                  }}
-                >
-                  <CreditCard size={18} /> 
-                  Pay via Mobile Money (670265493)
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setShowAdmissionLetterModal(true)}
@@ -1024,29 +1471,82 @@ function StudentPortalContent() {
                   </div>
                 )}
 
-                {/* 3-Step Breadcrumb Tracker */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 1 ? 1 : 0.4 }}>
+                {/* 4-Step Breadcrumb Tracker (Interactive Navigation) */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleJumpToStep(1)}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 1 ? 1 : 0.4 }}
+                  >
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 1 ? '#081F3E' : '#CBD5E1', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
                       {currentStep > 1 ? '✓' : '1'}
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E' }}>Bio &amp; Program</span>
-                  </div>
-                  <div style={{ flex: 1, height: '2px', background: currentStep >= 2 ? '#081F3E' : '#E2E8F0', margin: '0 12px' }} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 2 ? 1 : 0.4 }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E', textDecoration: currentStep === 1 ? 'underline' : 'none' }}>Bio &amp; Program</span>
+                  </button>
+                  <div style={{ flex: 1, height: '2px', background: currentStep >= 2 ? '#081F3E' : '#E2E8F0', margin: '0 8px' }} />
+                  <button
+                    type="button"
+                    onClick={() => handleJumpToStep(2)}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 2 ? 1 : 0.4 }}
+                  >
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 2 ? '#081F3E' : '#CBD5E1', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
                       {currentStep > 2 ? '✓' : '2'}
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E' }}>Security &amp; Terms</span>
-                  </div>
-                  <div style={{ flex: 1, height: '2px', background: currentStep >= 3 ? '#081F3E' : '#E2E8F0', margin: '0 12px' }} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 3 ? 1 : 0.4 }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E', textDecoration: currentStep === 2 ? 'underline' : 'none' }}>Security &amp; Terms</span>
+                  </button>
+                  <div style={{ flex: 1, height: '2px', background: currentStep >= 3 ? '#081F3E' : '#E2E8F0', margin: '0 8px' }} />
+                  <button
+                    type="button"
+                    onClick={() => handleJumpToStep(3)}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 3 ? 1 : 0.4 }}
+                  >
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 3 ? '#081F3E' : '#CBD5E1', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
-                      3
+                      {currentStep > 3 ? '✓' : '3'}
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E' }}>Documents</span>
-                  </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E', textDecoration: currentStep === 3 ? 'underline' : 'none' }}>Documents</span>
+                  </button>
+                  <div style={{ flex: 1, height: '2px', background: currentStep >= 4 ? '#081F3E' : '#E2E8F0', margin: '0 8px' }} />
+                  <button
+                    type="button"
+                    onClick={() => handleJumpToStep(4)}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: currentStep >= 4 ? 1 : 0.4 }}
+                  >
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= 4 ? '#081F3E' : '#CBD5E1', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+                      4
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#081F3E', textDecoration: currentStep === 4 ? 'underline' : 'none' }}>Payment Proof</span>
+                  </button>
                 </div>
+
+                {/* Sub-header Step Indicator with Quick Previous Link */}
+                {currentStep > 1 && (
+                  <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '8px 14px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#0284C7',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '2px 0'
+                      }}
+                    >
+                      <ArrowLeft size={14} /> ← Go back to Step {currentStep - 1}: {
+                        currentStep === 2 ? 'Bio & Program' :
+                        currentStep === 3 ? 'Security & Terms' : 'Documents'
+                      }
+                    </button>
+                    <span style={{ fontSize: '0.78rem', color: '#1E40AF', fontWeight: 600 }}>
+                      Step {currentStep} of 4
+                    </span>
+                  </div>
+                )}
 
                 {regError && (
                   <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1159,11 +1659,21 @@ function StudentPortalContent() {
 
                     <button
                       type="submit"
+                      disabled={checkingEmail}
                       className="btn btn-primary"
                       style={{ width: '100%', padding: '14px', fontSize: '0.95rem', fontWeight: 800, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
-                      <span>Next: Security &amp; Terms</span>
-                      <ArrowRight size={16} />
+                      {checkingEmail ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Checking Email Availability...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Next: Security &amp; Terms</span>
+                          <ArrowRight size={16} />
+                        </>
+                      )}
                     </button>
                   </form>
                 )}
@@ -1185,7 +1695,13 @@ function StudentPortalContent() {
                           placeholder="Min. 6 characters for portal login"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          style={{ width: '100%', padding: '12px 42px 12px 14px', borderRadius: '8px', fontSize: '0.92rem' }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 42px 12px 14px',
+                            borderRadius: '8px',
+                            fontSize: '0.92rem',
+                            border: password.length > 0 && password.length < 6 ? '1.5px solid #EF4444' : password.length >= 6 ? '1.5px solid #10B981' : undefined
+                          }}
                         />
                         <button
                           type="button"
@@ -1195,9 +1711,23 @@ function StudentPortalContent() {
                           {showEnrolPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
-                      <span style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
-                        You will use this password alongside your email to log into the Student Portal.
-                      </span>
+                      
+                      {/* Real-Time Password Validity Feedback */}
+                      <div style={{ marginTop: '6px', fontSize: '0.78rem' }}>
+                        {password.length === 0 ? (
+                          <span style={{ color: '#64748B' }}>
+                            🔒 Choose at least 6 characters (used to sign into your Student Portal).
+                          </span>
+                        ) : password.length < 6 ? (
+                          <span style={{ color: '#DC2626', fontWeight: 600 }}>
+                            ⚠️ Password too short: {password.length}/6 characters typed (minimum 6 required).
+                          </span>
+                        ) : (
+                          <span style={{ color: '#059669', fontWeight: 700 }}>
+                            ✓ Password length valid ({password.length} characters).
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '24px' }}>
@@ -1218,10 +1748,24 @@ function StudentPortalContent() {
                       <button
                         type="button"
                         onClick={() => setCurrentStep(1)}
-                        className="btn btn-secondary"
-                        style={{ padding: '12px 20px', borderRadius: '8px' }}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: '#F1F5F9',
+                          border: '1.5px solid #CBD5E1',
+                          color: '#334155',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.borderColor = '#94A3B8'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
                       >
-                        <ArrowLeft size={16} /> Back
+                        <ArrowLeft size={16} /> Back to Bio
                       </button>
                       <button
                         type="submit"
@@ -1237,7 +1781,7 @@ function StudentPortalContent() {
 
                 {/* STEP 3: DOCUMENT UPLOADS */}
                 {currentStep === 3 && (
-                  <form onSubmit={handleRegisterSubmit}>
+                  <form onSubmit={handleStep3Next}>
                     {/* Budget Information Box (Green Alert Card) */}
                     <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <Sparkles size={20} color="#059669" style={{ marginTop: '2px', flexShrink: 0 }} />
@@ -1355,10 +1899,253 @@ function StudentPortalContent() {
                       <button
                         type="button"
                         onClick={() => setCurrentStep(2)}
-                        className="btn btn-secondary"
-                        style={{ padding: '12px 20px', borderRadius: '8px' }}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: '#F1F5F9',
+                          border: '1.5px solid #CBD5E1',
+                          color: '#334155',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.borderColor = '#94A3B8'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
                       >
-                        <ArrowLeft size={16} /> Back
+                        <ArrowLeft size={16} /> Back to Security
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        style={{ flex: 1, padding: '14px', fontSize: '0.95rem', fontWeight: 800, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      >
+                        <span>Next: Payment Proof</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* STEP 4: APPLICATION FEE PAYMENT PROOF */}
+                {currentStep === 4 && (
+                  <form onSubmit={handleRegisterSubmit}>
+                    {/* Program & Fee Summary Banner */}
+                    <div style={{
+                      background: '#F0F9FF',
+                      border: '1px solid #BAE6FD',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      marginBottom: '18px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <span style={{ fontSize: '0.74rem', color: '#0369A1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '2px' }}>
+                            Your Program ({degreeType})
+                          </span>
+                          <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#081F3E' }}>
+                            {programType}
+                          </h4>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.74rem', color: '#0369A1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '2px' }}>
+                            Application Fee
+                          </span>
+                          <span suppressHydrationWarning style={{ fontSize: '1.35rem', fontWeight: 900, color: '#059669' }}>
+                            {getApplicationFee(degreeType).toLocaleString('en-US')} XAF
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{
+                        marginTop: '10px',
+                        padding: '8px 12px',
+                        background: '#FFFFFF',
+                        borderRadius: '6px',
+                        border: '1px solid #E0F2FE',
+                        fontSize: '0.78rem',
+                        color: '#0369A1',
+                        fontWeight: 600
+                      }}>
+                        ℹ️ <strong>Application Fee Only:</strong> No tuition fees are required on this website. Tuition is settled directly at the campus finance office after admission.
+                      </div>
+                    </div>
+
+                    {/* Step-by-Step Payment Instructions */}
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '14px 18px', marginBottom: '18px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#92400E', display: 'block', marginBottom: '8px' }}>
+                        📌 How to pay via MTN MoMo:
+                      </span>
+                      <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '0.8rem', color: '#78350F', lineHeight: 1.8 }}>
+                        <li>Open your phone <strong>dialer</strong> (call pad).</li>
+                        <li>
+                          Dial the code below:{' '}
+                          <strong style={{ color: '#081F3E', fontFamily: 'monospace' }}>
+                            {`*126*14*670265493*${getApplicationFee(degreeType)}#`}
+                          </strong>
+                        </li>
+                        <li>Confirm the transaction with your <strong>MoMo PIN</strong>.</li>
+                        <li>Take a <strong>screenshot</strong> of the confirmation message.</li>
+                        <li>Attach the screenshot below and tap <strong>&quot;Submit Application &amp; Open Portal&quot;</strong>.</li>
+                      </ol>
+                    </div>
+
+                    {/* Attach Proof of Payment (Screenshot) Holder */}
+                    <div style={{
+                      background: regPaymentProofUrl ? '#F0FDF4' : '#FFFFFF',
+                      border: regPaymentProofUrl ? '1.5px solid #86EFAC' : '2px dashed #CBD5E1',
+                      borderRadius: '12px',
+                      padding: '18px',
+                      marginBottom: '16px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <label style={{ fontSize: '0.86rem', fontWeight: 800, color: '#081F3E', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          📸 Attach Proof of Payment (Screenshot)
+                        </label>
+                        <span style={{ fontSize: '0.72rem', background: '#F1F5F9', color: '#475569', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                          Max 2.5 MB
+                        </span>
+                      </div>
+
+                      {regPaymentProofUrl ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', padding: '12px 16px', borderRadius: '8px', border: '1px solid #BBF7D0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <CheckCircle size={22} color="#16A34A" />
+                            <div>
+                              <strong style={{ fontSize: '0.86rem', color: '#166534', display: 'block' }}>
+                                ✓ Screenshot Attached: {regPaymentFileName}
+                              </strong>
+                              <span style={{ fontSize: '0.74rem', color: '#15803D' }}>
+                                {regPaymentFileSize} &bull; Ready for verification upon submission
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveRegPaymentProof}
+                            style={{
+                              background: '#FEE2E2',
+                              border: '1px solid #FCA5A5',
+                              color: '#DC2626',
+                              borderRadius: '6px',
+                              padding: '6px 12px',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Trash2 size={13} /> Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <label
+                            htmlFor="reg_payment_proof_step4"
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              padding: '24px 16px',
+                              background: '#FAFAFA',
+                              borderRadius: '8px',
+                              cursor: regPaymentUploading ? 'wait' : 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {regPaymentUploading ? (
+                              <>
+                                <Loader2 size={26} color="#081F3E" className="animate-spin" />
+                                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#081F3E' }}>Compressing and uploading screenshot...</span>
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon size={28} color="#64748B" />
+                                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#081F3E' }}>
+                                  Click to select your transaction screenshot or receipt
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                                  PNG, JPG, JPEG, WEBP, PDF &bull; Auto-compressed to under 2.5 MB
+                                </span>
+                              </>
+                            )}
+                            <input
+                              id="reg_payment_proof_step4"
+                              type="file"
+                              accept=".png,.jpg,.jpeg,.webp,.pdf"
+                              disabled={regPaymentUploading}
+                              onChange={handleRegistrationPaymentProofUpload}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+
+                          <div style={{ marginTop: '12px' }}>
+                            <input
+                              type="text"
+                              placeholder="MoMo Transaction ID / Reference (Optional)"
+                              value={regPaymentTxId}
+                              onChange={(e) => setRegPaymentTxId(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '6px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '0.82rem'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Informative Guidance Notice */}
+                    <div style={{
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                      background: '#EFF6FF',
+                      border: '1px solid #BFDBFE',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      lineHeight: 1.5
+                    }}>
+                      <span style={{ fontSize: '1rem', marginTop: '-1px' }}>💡</span>
+                      <span>
+                        <strong>Optional at registration:</strong> If you have not completed your MoMo payment yet, you can leave this empty and click <em>&quot;Submit Application &amp; Open Portal&quot;</em>. You can run the dial code and upload your payment proof anytime directly in your Student Portal after registering.
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: '#F1F5F9',
+                          border: '1.5px solid #CBD5E1',
+                          color: '#334155',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.borderColor = '#94A3B8'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
+                      >
+                        <ArrowLeft size={16} /> Back to Documents
                       </button>
                       <button
                         type="submit"
@@ -1491,214 +2278,6 @@ function StudentPortalContent() {
           </div>
         )}
 
-        {/* =========================================================
-            C. DIRECT MTN MOBILE MONEY CHECKOUT MODAL
-            ========================================================= */}
-        {showCheckout && (
-          <div 
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(4, 16, 33, 0.85)',
-              zIndex: 9999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px',
-              backdropFilter: 'blur(6px)'
-            }}
-          >
-            <div 
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '16px',
-                maxWidth: '560px',
-                width: '100%',
-                maxHeight: '92vh',
-                overflowY: 'auto',
-                padding: '28px 24px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                position: 'relative'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #E2E8F0' }}>
-                <div>
-                  <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#B45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
-                    DIRECT MTN MOMO SETTLEMENT
-                  </span>
-                  <h3 style={{ margin: '6px 0 0 0', color: '#081F3E', fontSize: '1.25rem', fontWeight: 800 }}>
-                    Official Fee Payment
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setShowCheckout(false)}
-                  style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {paySuccess ? (
-                <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <CheckCircle size={36} color="#10B981" />
-                  </div>
-                  <h4 style={{ color: '#065F46', fontSize: '1.2rem', fontWeight: 800, margin: '0 0 8px 0' }}>
-                    Payment Submitted Successfully!
-                  </h4>
-                  <p style={{ color: '#475569', fontSize: '0.9rem', marginBottom: '20px' }}>
-                    Your transaction details have been registered. The finance office will confirm your clearance shortly.
-                  </p>
-                  <button
-                    onClick={() => setShowCheckout(false)}
-                    className="btn btn-primary"
-                    style={{ padding: '10px 24px' }}
-                  >
-                    Return to Dashboard
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleProofSubmit}>
-                  {payError && (
-                    <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.84rem' }}>
-                      {payError}
-                    </div>
-                  )}
-
-                  {/* Fee Selector */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '8px' }}>
-                      Select Fee to Pay:
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption(getApplicationFee(student?.degree_type))}
-                        style={{
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: payAmountOption === getApplicationFee(student?.degree_type) ? '2px solid #F5A623' : '1px solid #CBD5E1',
-                          background: payAmountOption === getApplicationFee(student?.degree_type) ? '#FEF3C7' : '#FFFFFF',
-                          fontWeight: 700,
-                          fontSize: '0.84rem',
-                          color: '#081F3E',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Application Fee ({getApplicationFee(student?.degree_type).toLocaleString()} XAF)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPayAmountOption(50000)}
-                        style={{
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: payAmountOption === 50000 ? '2px solid #F5A623' : '1px solid #CBD5E1',
-                          background: payAmountOption === 50000 ? '#FEF3C7' : '#FFFFFF',
-                          fontWeight: 700,
-                          fontSize: '0.84rem',
-                          color: '#081F3E',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        1st Tuition Installment (50,000 XAF)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Dial Code Card */}
-                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                      MTN MoMo Merchant Direct Code
-                    </span>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: '#081F3E', margin: '4px 0' }}>
-                      *126*14*670265493*{payAmountOption}#
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyShortCode(`*126*14*670265493*${payAmountOption}#`)}
-                        style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Copy size={12} /> {copiedShortCode ? 'Copied Code!' : 'Copy Code'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenMoMo(`*126*14*670265493*${payAmountOption}#`, payAmountOption)}
-                        style={{ background: '#10B981', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Smartphone size={12} /> Dial on Phone
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Screenshot Upload with 2.5 MB allocation */}
-                  <div style={{ marginBottom: '18px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', margin: 0 }}>
-                        Attach Proof of Payment (Screenshot) *
-                      </label>
-                      <span style={{ fontSize: '0.72rem', background: '#E2E8F0', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                        Max 2.5 MB
-                      </span>
-                    </div>
-                    <label
-                      htmlFor="portal_payment_proof"
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        padding: '18px 16px',
-                        border: '2px dashed ' + (payScreenshotPreview ? '#10B981' : '#CBD5E1'),
-                        borderRadius: '8px',
-                        background: '#FFFFFF',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <ImageIcon size={24} color={payScreenshotPreview ? '#10B981' : '#64748B'} />
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#081F3E' }}>
-                        {payScreenshotFile ? payScreenshotFile.name : 'Click to select transaction screenshot or receipt'}
-                      </span>
-                      <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
-                        Max file size: <strong>2.5 MB</strong> &bull; PNG, JPG, JPEG, PDF (Auto-compressed for fast upload)
-                      </span>
-                      <input
-                        id="portal_payment_proof"
-                        type="file"
-                        accept=".png,.jpg,.jpeg,.webp,.pdf"
-                        onChange={handleScreenshotChange}
-                        style={{ display: 'none' }}
-                      />
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowCheckout(false)}
-                      className="btn btn-secondary"
-                      style={{ flex: 1, padding: '10px' }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={payLoading}
-                      className="btn btn-primary"
-                      style={{ flex: 2, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                    >
-                      {payLoading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                      <span>{payLoading ? 'Submitting...' : 'Submit Payment Proof'}</span>
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* =========================================================
             D. OFFICIAL ADMISSION LETTER & FORM MODAL

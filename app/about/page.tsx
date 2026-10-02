@@ -116,27 +116,31 @@ export default function AboutPage() {
                 alignItems: 'center'
               }}
             >
+              {/* Mr. NSAH ESLI Official Portrait */}
               <div 
                 style={{ 
-                  width: '96px', 
-                  height: '96px', 
+                  position: 'relative',
+                  width: '140px', 
+                  height: '140px', 
                   borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, #081F3E 0%, #0D2D59 100%)', 
-                  color: '#F5A623', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '1.75rem', 
-                  fontWeight: 900, 
+                  overflow: 'hidden',
                   marginBottom: '20px',
-                  boxShadow: '0 8px 24px rgba(8,31,62,0.25)',
-                  border: '3px solid #F5A623'
+                  boxShadow: '0 12px 30px rgba(8,31,62,0.22)',
+                  border: '4px solid #F5A623',
+                  background: '#F1F5F9'
                 }}
               >
-                NE
+                <Image
+                  src="/assets/images/nsah_esli_ceo.png"
+                  alt="Mr. NSAH ESLI - Chief Executive Officer (CEO) & Founder of Liah Academy"
+                  fill
+                  sizes="140px"
+                  style={{ objectFit: 'cover', objectPosition: 'center 12%' }}
+                  priority
+                />
               </div>
 
-              <h3 style={{ color: '#081F3E', fontSize: '1.6rem', fontWeight: 900, marginBottom: '6px' }}>
+              <h3 style={{ color: '#081F3E', fontSize: '1.65rem', fontWeight: 900, marginBottom: '6px' }}>
                 Mr. NSAH ESLI
               </h3>
 
@@ -152,7 +156,7 @@ export default function AboutPage() {
                   padding: '4px 14px',
                   borderRadius: '20px'
                 }}>
-                  Founder, Owner &amp; Managing Director
+                  Chief Executive Officer (CEO), Founder &amp; Managing Director
                 </span>
                 <span style={{ 
                   fontFamily: 'var(--font-mono)', 

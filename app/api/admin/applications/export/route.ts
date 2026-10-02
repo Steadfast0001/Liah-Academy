@@ -1,17 +1,24 @@
 import { NextResponse } from 'next/server';
-import { adminStore } from '@/lib/db';
-import { verifyAdminAuth } from '@/lib/auth';
+import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
+import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 import { exportApplicantsToCSVString, RawApplicantRecord } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const students = adminStore.getStudents();
+    let students;
+    if (getDatabaseSourceMode() === 'mysql') {
+      await ensureMySQLTables();
+      const [rows] = await getMySQLPool().execute('SELECT * FROM students ORDER BY id DESC');
+      students = rows as any[];
+    } else {
+      students = adminStore.getStudents();
+    }
     const rawRecords: RawApplicantRecord[] = students.map(s => ({
       id: s.id,
       matricule: s.matricule,
@@ -37,6 +44,6 @@ export async function GET(request: Request) {
       }
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Unable to export applications.' }, { status: getDatabaseSourceMode() === 'mysql' ? 503 : 500 });
   }
 }

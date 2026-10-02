@@ -1,6 +1,11 @@
 // ============================================================================
 // LIAH ACADEMY - PRODUCTION CPANEL SERVER (Phusion Passenger / Linux)
 // ============================================================================
+// 0. HIGH-CONCURRENCY LIBUV THREADPOOL CONFIGURATION (Handles 100+ concurrent users)
+if (!process.env.UV_THREADPOOL_SIZE) {
+  process.env.UV_THREADPOOL_SIZE = '32';
+}
+
 const http = require('http');
 const { parse } = require('url');
 const fs = require('fs');
@@ -46,7 +51,39 @@ for (const dir of keyDirs) {
 }
 log('Permissions self-healing completed for core directories');
 
-// 2. CHECK NEXT.JS RUNTIME
+// 2. ASSERT PRODUCTION SECURITY ENVIRONMENT
+if (process.env.NODE_ENV === 'production') {
+  const requiredSecrets = [
+    'ADMIN_SESSION_SECRET',
+    'STUDENT_SESSION_SECRET',
+    'FILE_URL_SIGNING_SECRET'
+  ];
+  const missingOrShort = [];
+  for (const key of requiredSecrets) {
+    const val = process.env[key];
+    if (!val || val.length < 32) {
+      missingOrShort.push(key);
+    }
+  }
+  if (missingOrShort.length > 0) {
+    const errText = `CRITICAL SECURITY CONFIGURATION: The following environment secret(s) must be defined with at least 32 characters in production: ${missingOrShort.join(', ')}. Please configure them in your cPanel Setup Node.js App Environment Variables.`;
+    log('FATAL: Security assertion failed', new Error(errText));
+    http.createServer((req, res) => {
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`
+        <div style="font-family:sans-serif;padding:30px;max-width:700px;margin:50px auto;border:1px solid #ef4444;border-radius:10px;background:#fff5f5;">
+          <h2 style="color:#b91c1c;">Liah Academy — Production Security Configuration Required</h2>
+          <p style="color:#7f1d1d;line-height:1.6;">Before launching in production, the following cryptographic secrets must be configured with at least 32 characters in cPanel Environment Variables:</p>
+          <ul>${missingOrShort.map(k => `<li style="font-family:monospace;font-weight:bold;color:#991b1b;">${k}</li>`).join('')}</ul>
+          <p style="font-size:13px;color:#6b7280;">Log in to cPanel &rarr; Setup Node.js App &rarr; Edit Application &rarr; Add Environment Variables &rarr; Restart App.</p>
+        </div>
+      `);
+    }).listen(port);
+    return;
+  }
+}
+
+// 3. CHECK NEXT.JS RUNTIME
 let next;
 try {
   next = require('next');

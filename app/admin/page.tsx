@@ -173,6 +173,35 @@ export default function AdminDashboardPage() {
   const [previewProofItem, setPreviewProofItem] = useState<Application | null>(null);
   const [previewDocItem, setPreviewDocItem] = useState<{ title: string; url: string; fileName: string; studentName: string } | null>(null);
 
+  // File Preview & Download Helpers
+  const isImageFile = (url?: string, fileName?: string): boolean => {
+    if (!url && !fileName) return false;
+    const str = `${url || ''} ${fileName || ''}`.toLowerCase();
+    if (str.includes('data:image')) return true;
+    return (
+      str.includes('.png') ||
+      str.includes('.jpg') ||
+      str.includes('.jpeg') ||
+      str.includes('.webp') ||
+      str.includes('.gif') ||
+      str.includes('.bmp') ||
+      str.includes('.svg')
+    );
+  };
+
+  const isPdfFile = (url?: string, fileName?: string): boolean => {
+    if (!url && !fileName) return false;
+    const str = `${url || ''} ${fileName || ''}`.toLowerCase();
+    return str.includes('.pdf') || str.includes('application/pdf');
+  };
+
+  const getDownloadUrl = (url?: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return url.includes('download=1') ? url : `${url}${separator}download=1`;
+  };
+
   // Modal Dialog States
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseItem | null>(null);
@@ -234,37 +263,19 @@ export default function AdminDashboardPage() {
   const [replySubmitting, setReplySubmitting] = useState(false);
 
 
-  const getAuthHeaders = (explicitToken?: string) => {
-    const token = explicitToken || (typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '');
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {})
-    };
-  };
+  const getAuthHeaders = () => ({ 'Content-Type': 'application/json' });
 
   const checkAuth = async () => {
     try {
-      const storedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
       const res = await fetch('/api/admin/auth/check', {
-        headers: storedToken ? { 'Authorization': `Bearer ${storedToken}`, 'x-admin-token': storedToken } : {},
+        headers: getAuthHeaders(),
         credentials: 'include'
       });
       const data = await res.json();
       if (data.authenticated) {
         setIsAuthenticated(true);
-        // Extract admin identity from stored token (format: email:role:timestamp:hmac in base64)
-        if (storedToken) {
-          try {
-            const decoded = atob(storedToken);
-            const parts = decoded.split(':');
-            if (parts.length >= 4) {
-              setCurrentAdmin({ email: parts[0], full_name: data.admin?.full_name || 'Administrator', role: parts[1] as any, source: 'env' });
-            } else if (parts.length >= 3) {
-              setCurrentAdmin({ email: parts[0], full_name: 'Master Administrator', role: 'SuperAdmin', source: 'env' });
-            }
-          } catch {}
-        }
-        loadDashboardData(storedToken || '');
+        if (data.admin) setCurrentAdmin({ ...data.admin, source: 'cookie' });
+        loadDashboardData();
       } else {
         setIsAuthenticated(false);
         setLoading(false);
@@ -299,17 +310,13 @@ export default function AdminDashboardPage() {
         data = { success: false, message: `Server error (${res.status}). Please check server logs.` };
       }
 
-      if (res.ok && data.success && data.token) {
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('liah_admin_token', data.token);
-          localStorage.setItem('liah_admin_token', data.token);
-        }
+      if (res.ok && data.success) {
         setIsAuthenticated(true);
         if (data.admin) {
           setCurrentAdmin({ email: data.admin.email, full_name: data.admin.full_name || 'Administrator', role: data.admin.role || 'SuperAdmin', source: data.admin.source });
         }
         showNotification('Administrator authenticated. Welcome to Master Studio.');
-        loadDashboardData(data.token);
+        loadDashboardData();
       } else {
         setAuthError(data.message || 'Invalid administrative credentials. Access restricted.');
       }
@@ -325,18 +332,14 @@ export default function AdminDashboardPage() {
     try {
       await fetch('/api/admin/auth/logout', { method: 'POST', credentials: 'include' });
     } catch {}
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('liah_admin_token');
-      localStorage.removeItem('liah_admin_token');
-    }
     setIsAuthenticated(false);
     showNotification('Administrative session locked and signed out.');
   };
 
   // Fetch all admin data
-  const loadDashboardData = async (explicitToken?: string) => {
+  const loadDashboardData = async () => {
     setLoading(true);
-    const headers = getAuthHeaders(explicitToken);
+    const headers = getAuthHeaders();
     try {
       const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes, chatRes] = await Promise.all([
         fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()),
@@ -401,6 +404,8 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
+    sessionStorage.removeItem('liah_admin_token');
+    localStorage.removeItem('liah_admin_token');
     checkAuth();
   }, []);
 
@@ -800,8 +805,7 @@ export default function AdminDashboardPage() {
         }
         // Refresh email logs
         try {
-          const storedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
-          const logRes = await fetch('/api/admin/emails', { headers: getAuthHeaders(storedToken || '') });
+          const logRes = await fetch('/api/admin/emails', { headers: getAuthHeaders(), credentials: 'include' });
           const logData = await logRes.json();
           if (logData.success) setEmailLogs(logData.data);
         } catch {}
@@ -959,8 +963,6 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    const token = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
-
     setActionLoading(true);
     try {
       let fileToSend = uploadFile;
@@ -975,7 +977,6 @@ export default function AdminDashboardPage() {
 
       const res = await fetch('/api/admin/media', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {},
         credentials: 'include',
         body: formData
       });
@@ -1616,7 +1617,7 @@ export default function AdminDashboardPage() {
               <RefreshCw size={15} className={loading ? 'spin' : ''} /> Refresh Data
             </button>
             <Link 
-              href="/admissions" 
+              href="/" 
               className="btn btn-primary"
               style={{ padding: '10px 18px', fontSize: '0.85rem' }}
             >
@@ -2064,7 +2065,7 @@ export default function AdminDashboardPage() {
                           color: app.admission_status === 'Approved' ? '#059669' : app.admission_status === 'Rejected' ? '#DC2626' : '#B45309',
                           flexShrink: 0
                         }}>
-                          {app.admission_status}
+                          {['Approved', 'Rejected', 'Under Review', 'Pending Review'].includes(app.admission_status) ? app.admission_status : 'Under Review'}
                         </span>
                       </div>
                     ))}
@@ -2610,7 +2611,7 @@ export default function AdminDashboardPage() {
                                         onClick={() => setPreviewDocItem({
                                           title: 'Enrolment Credential',
                                           url: app.document_url || '',
-                                          fileName: app.document_url || 'document.pdf',
+                                          fileName: 'enrolment_credential.pdf',
                                           studentName: app.full_name
                                         })}
                                         style={{
@@ -2654,8 +2655,8 @@ export default function AdminDashboardPage() {
                               }}>
                                 {app.admission_status === 'Approved' && <CheckCircle size={13} />}
                                 {app.admission_status === 'Rejected' && <XCircle size={13} />}
-                                {(app.admission_status === 'Under Review' || app.admission_status === 'Pending Review') && <Clock size={13} />}
-                                {app.admission_status}
+                                {(app.admission_status === 'Under Review' || app.admission_status === 'Pending Review' || !['Approved', 'Rejected'].includes(app.admission_status)) && <Clock size={13} />}
+                                {['Approved', 'Rejected', 'Under Review', 'Pending Review'].includes(app.admission_status) ? app.admission_status : 'Under Review'}
                               </span>
                             </td>
 
@@ -2938,7 +2939,7 @@ export default function AdminDashboardPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
                       <span style={{ color: '#64748B' }}>Admission Status:</span>
                       <span style={{ fontWeight: 800, color: selectedApp.admission_status === 'Approved' ? '#059669' : selectedApp.admission_status === 'Rejected' ? '#DC2626' : '#B45309' }}>
-                        {selectedApp.admission_status}
+                        {['Approved', 'Rejected', 'Under Review', 'Pending Review'].includes(selectedApp.admission_status) ? selectedApp.admission_status : 'Under Review'}
                       </span>
                     </div>
 
@@ -3005,7 +3006,7 @@ export default function AdminDashboardPage() {
                             justifyContent: 'center'
                           }}
                         >
-                          {selectedApp.payment_proof_url.startsWith('data:image') || selectedApp.payment_proof_url.endsWith('.png') || selectedApp.payment_proof_url.endsWith('.jpg') || selectedApp.payment_proof_url.endsWith('.jpeg') ? (
+                          {isImageFile(selectedApp.payment_proof_url) ? (
                             <img 
                               src={selectedApp.payment_proof_url} 
                               alt="Payment Screenshot" 
@@ -3087,7 +3088,7 @@ export default function AdminDashboardPage() {
 
                   {/* Uploaded Documents List */}
                   <div style={{ marginTop: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                       <h4 style={{ margin: 0, fontSize: '0.88rem', color: '#081F3E', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         📁 Submitted Credentials &amp; Documents
                       </h4>
@@ -3097,36 +3098,27 @@ export default function AdminDashboardPage() {
                     </div>
 
                     {Array.isArray(selectedApp.documents) && selectedApp.documents.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {selectedApp.documents.map((doc, idx) => (
                           <div 
                             key={idx} 
                             style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'space-between', 
                               background: '#FFFFFF', 
-                              padding: '10px 14px', 
+                              padding: '14px', 
                               borderRadius: '8px', 
-                              border: '1px solid #E2E8F0', 
-                              fontSize: '0.84rem' 
+                              border: '1px solid #CBD5E1',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                             }}
                           >
-                            <div style={{ flex: 1, minWidth: 0, marginRight: '10px' }}>
-                              <strong style={{ color: '#081F3E', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {doc.label || `Document #${idx + 1}`}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <strong style={{ color: '#081F3E', fontSize: '0.86rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {doc.label || `Credential #${idx + 1}`}
                               </strong>
-                              <span style={{ color: '#64748B', fontSize: '0.78rem' }}>
-                                {doc.fileName} {doc.size ? `(${doc.size})` : ''}
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
                               <button
                                 type="button"
                                 onClick={() => {
                                   setPreviewDocItem({
-                                    title: doc.label || `Document #${idx + 1}`,
+                                    title: doc.label || `Credential #${idx + 1}`,
                                     url: doc.url || doc.fileName || '',
                                     fileName: doc.fileName || 'document.pdf',
                                     studentName: selectedApp.full_name
@@ -3136,78 +3128,264 @@ export default function AdminDashboardPage() {
                                   background: '#081F3E',
                                   color: '#FFFFFF',
                                   border: 'none',
-                                  borderRadius: '6px',
-                                  padding: '5px 10px',
-                                  fontSize: '0.76rem',
+                                  borderRadius: '4px',
+                                  padding: '4px 8px',
+                                  fontSize: '0.74rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}
-                                title="Inspect document preview"
+                                title="Expand and preview full credential"
                               >
-                                <Eye size={12} /> View File
+                                <Eye size={12} /> Expand
                               </button>
+                            </div>
 
-                              {doc.url && (
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  download={doc.fileName}
-                                  style={{
-                                    background: '#F1F5F9',
-                                    color: '#081F3E',
-                                    border: '1px solid #CBD5E1',
-                                    borderRadius: '6px',
-                                    padding: '5px 8px',
-                                    fontSize: '0.76rem',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    cursor: 'pointer'
-                                  }}
-                                  title="Download / Open external file"
-                                >
-                                  <Download size={12} />
-                                </a>
-                              )}
+                            {/* Direct Visual Frame */}
+                            {doc.url ? (
+                              <div 
+                                onClick={() => {
+                                  setPreviewDocItem({
+                                    title: doc.label || `Credential #${idx + 1}`,
+                                    url: doc.url || doc.fileName || '',
+                                    fileName: doc.fileName || 'document.pdf',
+                                    studentName: selectedApp.full_name
+                                  });
+                                }}
+                                style={{ 
+                                  cursor: 'pointer',
+                                  background: '#0F172A',
+                                  borderRadius: '6px',
+                                  border: '1px solid #CBD5E1',
+                                  overflow: 'hidden',
+                                  position: 'relative',
+                                  marginBottom: '10px',
+                                  maxHeight: '160px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Click to expand credential"
+                              >
+                                {isImageFile(doc.url, doc.fileName) ? (
+                                  <img 
+                                    src={doc.url} 
+                                    alt={doc.label || 'Credential Document'} 
+                                    style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
+                                  />
+                                ) : isPdfFile(doc.url, doc.fileName) ? (
+                                  <iframe 
+                                    src={`${doc.url}#toolbar=0&navpanes=0`} 
+                                    title={doc.label} 
+                                    style={{ width: '100%', height: '160px', border: 'none', background: '#FFFFFF', pointerEvents: 'none' }} 
+                                  />
+                                ) : (
+                                  <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8' }}>
+                                    <FileCheck size={32} color="#2563EB" style={{ margin: '0 auto 8px auto' }} />
+                                    <span style={{ fontSize: '0.82rem', display: 'block', fontWeight: 700, color: '#FFFFFF' }}>{doc.fileName || 'Official Credential Attached'}</span>
+                                    <span style={{ fontSize: '0.75rem' }}>Click to view document</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+
+                            {/* Metadata & Actions */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '0.78rem' }}>
+                              <span style={{ color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {doc.fileName} {doc.size ? `(${doc.size})` : ''}
+                              </span>
+
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                                {doc.url && (
+                                  <a
+                                    href={getDownloadUrl(doc.url)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download={doc.fileName}
+                                    style={{
+                                      background: '#F1F5F9',
+                                      color: '#081F3E',
+                                      border: '1px solid #CBD5E1',
+                                      borderRadius: '4px',
+                                      padding: '4px 8px',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      cursor: 'pointer',
+                                      textDecoration: 'none'
+                                    }}
+                                    title="Download file"
+                                  >
+                                    <Download size={12} /> Download
+                                  </a>
+                                )}
+                                {doc.url && (
+                                  <a
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      background: '#F1F5F9',
+                                      color: '#081F3E',
+                                      border: '1px solid #CBD5E1',
+                                      borderRadius: '4px',
+                                      padding: '4px 6px',
+                                      fontSize: '0.74rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      cursor: 'pointer',
+                                      textDecoration: 'none'
+                                    }}
+                                    title="Open file in new tab"
+                                  >
+                                    <ExternalLink size={12} />
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : selectedApp.document_url ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.84rem' }}>
-                        <div>
-                          <strong style={{ color: '#081F3E', display: 'block' }}>Primary Uploaded Document</strong>
-                          <span style={{ color: '#64748B', fontSize: '0.78rem' }}>{selectedApp.document_url}</span>
+                      <div 
+                        style={{ 
+                          background: '#FFFFFF', 
+                          padding: '14px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #CBD5E1',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <strong style={{ color: '#081F3E', fontSize: '0.86rem', display: 'block' }}>
+                            Primary Uploaded Credential
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewDocItem({
+                                title: 'Primary Uploaded Document',
+                                url: selectedApp.document_url || '',
+                                fileName: 'enrolment_credential.pdf',
+                                studentName: selectedApp.full_name
+                              });
+                            }}
+                            style={{
+                              background: '#081F3E',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Expand and preview full credential"
+                          >
+                            <Eye size={12} /> Expand
+                          </button>
                         </div>
-                        <button
-                          type="button"
+
+                        {/* Direct Visual Frame */}
+                        <div 
                           onClick={() => {
                             setPreviewDocItem({
                               title: 'Primary Uploaded Document',
                               url: selectedApp.document_url || '',
-                              fileName: selectedApp.document_url || 'document.pdf',
+                              fileName: 'enrolment_credential.pdf',
                               studentName: selectedApp.full_name
                             });
                           }}
-                          style={{
-                            background: '#081F3E',
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '5px 10px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
+                          style={{ 
                             cursor: 'pointer',
-                            display: 'inline-flex',
+                            background: '#0F172A',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            marginBottom: '10px',
+                            maxHeight: '160px',
+                            display: 'flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            justifyContent: 'center'
                           }}
+                          title="Click to expand credential"
                         >
-                          <Eye size={12} /> View File
-                        </button>
+                          {isImageFile(selectedApp.document_url) ? (
+                            <img 
+                              src={selectedApp.document_url} 
+                              alt="Primary Document" 
+                              style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
+                            />
+                          ) : isPdfFile(selectedApp.document_url) ? (
+                            <iframe 
+                              src={`${selectedApp.document_url}#toolbar=0&navpanes=0`} 
+                              title="Primary Document" 
+                              style={{ width: '100%', height: '160px', border: 'none', background: '#FFFFFF', pointerEvents: 'none' }} 
+                            />
+                          ) : (
+                            <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8' }}>
+                              <FileCheck size={32} color="#2563EB" style={{ margin: '0 auto 8px auto' }} />
+                              <span style={{ fontSize: '0.82rem', display: 'block', fontWeight: 700, color: '#FFFFFF' }}>Primary Document Attached</span>
+                              <span style={{ fontSize: '0.75rem' }}>Click to view document</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '0.78rem' }}>
+                          <span style={{ color: '#64748B' }}>Primary credential dossier file</span>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <a
+                              href={getDownloadUrl(selectedApp.document_url)}
+                              target="_blank"
+                              rel="noreferrer"
+                              download="enrolment_credential.pdf"
+                              style={{
+                                background: '#F1F5F9',
+                                color: '#081F3E',
+                                border: '1px solid #CBD5E1',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '0.74rem',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                cursor: 'pointer',
+                                textDecoration: 'none'
+                              }}
+                            >
+                              <Download size={12} /> Download
+                            </a>
+                            <a
+                              href={selectedApp.document_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                background: '#F1F5F9',
+                                color: '#081F3E',
+                                border: '1px solid #CBD5E1',
+                                borderRadius: '4px',
+                                padding: '4px 6px',
+                                fontSize: '0.74rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                textDecoration: 'none'
+                              }}
+                              title="Open file in new tab"
+                            >
+                              <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.82rem', fontStyle: 'italic', textAlign: 'center', padding: '12px' }}>
@@ -4224,10 +4402,8 @@ export default function AdminDashboardPage() {
                             fd.append('file', opt);
                             fd.append('title', newsForm.title || f.name);
                             fd.append('category', 'Prospectus');
-                            const token = typeof window !== 'undefined' ? (sessionStorage.getItem('liah_admin_token') || localStorage.getItem('liah_admin_token')) : '';
                             const res = await fetch('/api/admin/media', {
                               method: 'POST',
-                              headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {},
                               credentials: 'include',
                               body: fd
                             });
@@ -4900,7 +5076,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
 
-              {/* High-Resolution Screenshot Image Box */}
+              {/* High-Resolution Screenshot / Document Box */}
               <div 
                 style={{
                   background: '#0F172A',
@@ -4910,39 +5086,69 @@ export default function AdminDashboardPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: '18px',
-                  maxHeight: '440px',
-                  overflow: 'hidden'
+                  minHeight: '280px',
+                  maxHeight: '480px',
+                  overflow: 'auto'
                 }}
               >
-                {previewProofItem.payment_proof_url?.startsWith('data:image') || 
-                 previewProofItem.payment_proof_url?.endsWith('.png') || 
-                 previewProofItem.payment_proof_url?.endsWith('.jpg') || 
-                 previewProofItem.payment_proof_url?.endsWith('.jpeg') || 
-                 previewProofItem.payment_proof_url?.endsWith('.webp') ? (
-                  <img
-                    src={previewProofItem.payment_proof_url}
-                    alt="Uploaded Payment Receipt"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '400px',
-                      objectFit: 'contain',
-                      borderRadius: '6px'
-                    }}
-                  />
+                {previewProofItem.payment_proof_url && isImageFile(previewProofItem.payment_proof_url) ? (
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <img
+                      src={previewProofItem.payment_proof_url}
+                      alt="Uploaded Payment Receipt"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                        const parent = (e.target as HTMLElement).parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('div');
+                          fallback.style.padding = '30px';
+                          fallback.style.textAlign = 'center';
+                          fallback.style.color = '#FFFFFF';
+                          fallback.innerHTML = `
+                            <p style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">Uploaded Payment Receipt</p>
+                            <p style="margin: 0; font-size: 0.85rem; color: #94A3B8;">Please use 'Download' or 'Open Full View' below.</p>
+                          `;
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '440px',
+                        objectFit: 'contain',
+                        borderRadius: '6px'
+                      }}
+                    />
+                  </div>
+                ) : previewProofItem.payment_proof_url && isPdfFile(previewProofItem.payment_proof_url) ? (
+                  <div style={{ width: '100%', height: '440px', display: 'flex', flexDirection: 'column' }}>
+                    <iframe
+                      src={`${previewProofItem.payment_proof_url}#toolbar=1`}
+                      title="Uploaded Payment Receipt"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: '#FFFFFF'
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div style={{ padding: '40px 20px', textAlign: 'center', color: '#FFFFFF' }}>
                     <FileCheck size={48} color="#10B981" style={{ margin: '0 auto 12px auto' }} />
                     <p style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 700 }}>Attached Document File</p>
                     {previewProofItem.payment_proof_url && (
-                      <a
-                        href={previewProofItem.payment_proof_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-primary"
-                        style={{ padding: '8px 16px', fontSize: '0.82rem' }}
-                      >
-                        <ExternalLink size={14} /> Open Document in New Tab
-                      </a>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                        <a
+                          href={previewProofItem.payment_proof_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+                        >
+                          <ExternalLink size={14} /> Open Document
+                        </a>
+                      </div>
                     )}
                   </div>
                 )}
@@ -4989,14 +5195,14 @@ export default function AdminDashboardPage() {
               {previewProofItem.payment_proof_url && (
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
                   <a
-                    href={previewProofItem.payment_proof_url}
+                    href={getDownloadUrl(previewProofItem.payment_proof_url)}
                     target="_blank"
                     rel="noreferrer"
                     download={`proof_payment_app_${previewProofItem.id}.png`}
                     className="btn btn-secondary"
                     style={{ flex: 1, color: '#081F3E', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', fontWeight: 700 }}
                   >
-                    <Download size={15} /> Download Proof Screenshot
+                    <Download size={15} /> Download Proof File
                   </a>
                   <a
                     href={previewProofItem.payment_proof_url}
@@ -5005,7 +5211,7 @@ export default function AdminDashboardPage() {
                     className="btn btn-secondary"
                     style={{ color: '#081F3E', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem' }}
                   >
-                    <ExternalLink size={15} /> Open Full View
+                    <ExternalLink size={15} /> Open in New Tab
                   </a>
                 </div>
               )}
@@ -5129,15 +5335,7 @@ export default function AdminDashboardPage() {
                   overflow: 'hidden'
                 }}
               >
-                {previewDocItem.url && (previewDocItem.url.startsWith('data:image') || 
-                 previewDocItem.url.endsWith('.png') || 
-                 previewDocItem.url.endsWith('.jpg') || 
-                 previewDocItem.url.endsWith('.jpeg') || 
-                 previewDocItem.url.endsWith('.webp') ||
-                 previewDocItem.fileName.toLowerCase().endsWith('.png') ||
-                 previewDocItem.fileName.toLowerCase().endsWith('.jpg') ||
-                 previewDocItem.fileName.toLowerCase().endsWith('.jpeg') ||
-                 previewDocItem.fileName.toLowerCase().endsWith('.webp')) ? (
+                {previewDocItem.url && isImageFile(previewDocItem.url, previewDocItem.fileName) ? (
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <img
                       src={previewDocItem.url}
@@ -5152,7 +5350,7 @@ export default function AdminDashboardPage() {
                           fallback.style.color = '#FFFFFF';
                           fallback.innerHTML = `
                             <p style="margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">${previewDocItem.fileName}</p>
-                            <p style="margin: 0; font-size: 0.85rem; color: #94A3B8;">Official Credential Document Attached</p>
+                            <p style="margin: 0; font-size: 0.85rem; color: #94A3B8;">Official Credential Document Attached. Use Download or Open in New Tab below.</p>
                           `;
                           parent.appendChild(fallback);
                         }
@@ -5165,10 +5363,24 @@ export default function AdminDashboardPage() {
                       }}
                     />
                   </div>
-                ) : previewDocItem.url ? (
+                ) : previewDocItem.url && isPdfFile(previewDocItem.url, previewDocItem.fileName) ? (
                   <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column' }}>
                     <iframe
                       src={`${previewDocItem.url}#toolbar=1&navpanes=0`}
+                      title={previewDocItem.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: '#FFFFFF'
+                      }}
+                    />
+                  </div>
+                ) : previewDocItem.url ? (
+                  <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column' }}>
+                    <iframe
+                      src={previewDocItem.url}
                       title={previewDocItem.title}
                       style={{
                         width: '100%',
@@ -5197,7 +5409,7 @@ export default function AdminDashboardPage() {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   {previewDocItem.url && (
                     <a
-                      href={previewDocItem.url}
+                      href={getDownloadUrl(previewDocItem.url)}
                       target="_blank"
                       rel="noreferrer"
                       download={previewDocItem.fileName}

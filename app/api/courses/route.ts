@@ -1,15 +1,28 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import db, { ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, markMySQLOffline } from '@/lib/db';
 
 export async function GET() {
   try {
-    const courses = db.courses.all();
+    let courses: any[] = [];
+    if (getDatabaseSourceMode() === 'mysql') {
+      try {
+        await ensureMySQLTables();
+        const [rows] = await getMySQLPool().execute('SELECT * FROM courses ORDER BY id');
+        courses = rows as any[];
+      } catch (dbErr) {
+        console.warn('MySQL courses fetch failed, serving from local store:', dbErr);
+        markMySQLOffline();
+        courses = db.courses.all();
+      }
+    } else {
+      courses = db.courses.all();
+    }
     return NextResponse.json({
       success: true,
       data: courses,
       total: courses.length
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Could not load courses.' }, { status: 500 });
   }
 }

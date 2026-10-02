@@ -3841,20 +3841,63 @@ h4 {
 
 .york-footer-grid {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 1.2fr;
-  gap: 36px;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1.2fr;
+  gap: clamp(6px, 2vw, 36px);
   margin-bottom: 48px;
 }
 
 .york-footer-brand-col {
-  padding-right: 20px;
+  padding-right: 8px;
+}
+
+.york-footer-logo-link {
+  margin-bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.york-footer-logo-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.york-footer-logo-img {
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  max-width: 100%;
+}
+
+.york-footer-logo-text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+}
+
+.york-footer-brand-desc {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin-top: 10px;
+  color: #CBD5E1;
+}
+
+.york-footer-brand-socials {
+  margin-top: 14px;
 }
 
 .york-footer-heading {
   font-size: 0.95rem;
   font-weight: 800;
   color: #F5A623;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   text-transform: capitalize;
   letter-spacing: 0.02em;
 }
@@ -3877,6 +3920,22 @@ h4 {
 .york-footer-list a:hover {
   color: #F5A623;
   padding-left: 2px;
+}
+
+.york-footer-contact-list {
+  font-size: 0.86rem;
+  color: #CBD5E1;
+}
+
+.york-footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.york-footer-contact-icon {
+  flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .york-footer-bottom-bar {
@@ -3909,10 +3968,13 @@ h4 {
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
   .stats-impact-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
   }
-  .stats-impact-item:nth-child(2) {
+  .stats-impact-item {
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .stats-impact-item:last-child {
     border-right: none;
   }
   .york-programs-grid {
@@ -3928,24 +3990,118 @@ h4 {
   .york-news-grid {
     grid-template-columns: 1fr;
   }
+  /* Footer: 6 columns all visible at once */
   .york-footer-grid {
-    grid-template-columns: repeat(3, 1fr);
+    display: grid !important;
+    grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)) 1.2fr !important;
+    gap: 14px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Footer: Strictly 6 columns all visible at once on mobile/tablet */
+  .york-footer {
+    padding: 32px 0 18px !important;
+    overflow: visible !important;
+  }
+  .york-footer-grid {
+    display: grid !important;
+    grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)) 1.15fr !important;
+    gap: 8px !important;
+    margin-bottom: 22px !important;
+    overflow: visible !important;
+  }
+  .york-footer-brand-col {
+    padding-right: 0 !important;
+  }
+  .york-footer-logo-wrap {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .york-footer-logo-text {
+    font-size: 0.88rem !important;
+  }
+  .york-footer-brand-desc {
+    font-size: 0.62rem !important;
+    line-height: 1.25 !important;
+    margin-top: 5px !important;
+  }
+  .york-footer-heading {
+    font-size: 0.68rem !important;
+    margin-bottom: 7px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0 !important;
+  }
+  .york-footer-list {
+    gap: 4px !important;
+  }
+  .york-footer-list a {
+    font-size: 0.62rem !important;
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+  }
+  .york-footer-contact-item {
+    font-size: 0.6rem !important;
+    line-height: 1.2 !important;
+    gap: 4px !important;
+    word-break: break-word !important;
+  }
+  .york-footer-contact-icon {
+    width: 11px !important;
+    height: 11px !important;
+  }
+  .social-circle-link {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .social-circle-link svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  .social-links-grid {
+    gap: 4px !important;
+    margin-top: 6px !important;
+    flex-wrap: wrap !important;
   }
 }
 
 @media (max-width: 640px) {
+  /* Impact Statistics Bar: Strictly 1 Single Row across all mobile phones */
+  .stats-impact-bar {
+    padding: 16px 0;
+  }
   .stats-impact-grid {
-    grid-template-columns: 1fr;
-    gap: 22px;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 4px !important;
+    align-items: stretch !important;
+    text-align: center;
   }
   .stats-impact-item {
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    padding-bottom: 18px;
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-bottom: none !important;
+    padding: 0 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
   .stats-impact-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    border-right: none !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .stats-impact-num {
+    font-size: clamp(1.05rem, 4.3vw, 1.45rem) !important;
+    margin-bottom: 3px !important;
+    line-height: 1.05 !important;
+  }
+  .stats-impact-label {
+    font-size: clamp(0.5rem, 1.85vw, 0.65rem) !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.15 !important;
+    max-width: 100% !important;
+    padding: 0 2px;
   }
   .laurel-ribbon-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -3954,9 +4110,67 @@ h4 {
     min-height: 480px;
     height: auto;
   }
+}
+
+@media (max-width: 480px) {
+  /* Small phone optimizations: All 6 columns remain visible side-by-side */
+  .york-footer {
+    padding: 20px 0 14px !important;
+  }
   .york-footer-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
+    display: grid !important;
+    grid-template-columns: 1.25fr repeat(4, minmax(0, 1fr)) 1.05fr !important;
+    gap: 3px !important;
+    margin-bottom: 14px !important;
+  }
+  .york-footer-logo-wrap {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .york-footer-logo-text {
+    font-size: 0.68rem !important;
+  }
+  .york-footer-brand-desc {
+    font-size: 0.48rem !important;
+    line-height: 1.15 !important;
+    margin-top: 3px !important;
+  }
+  .york-footer-heading {
+    font-size: 0.54rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.05 !important;
+  }
+  .york-footer-list {
+    gap: 2.5px !important;
+  }
+  .york-footer-list a {
+    font-size: 0.48rem !important;
+    line-height: 1.15 !important;
+  }
+  .york-footer-contact-item {
+    font-size: 0.46rem !important;
+    line-height: 1.1 !important;
+    gap: 2px !important;
+  }
+  .york-footer-contact-icon {
+    width: 9px !important;
+    height: 9px !important;
+  }
+  .social-circle-link {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .social-circle-link svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+  .social-links-grid {
+    gap: 2px !important;
+    margin-top: 4px !important;
+  }
+  .york-footer-bottom-bar {
+    font-size: 0.65rem !important;
+    padding-top: 12px !important;
   }
 }
 

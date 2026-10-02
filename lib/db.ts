@@ -40,10 +40,86 @@ let isMySQLLive = false;
 let schemaInitialized = false;
 let lastMySQLCheckFailed = 0;
 
+export function markMySQLOffline() {
+  lastMySQLCheckFailed = Date.now();
+  isMySQLLive = false;
+}
+
+export function isMySQLConfigured(): boolean {
+  return Boolean(
+    process.env.MYSQL_HOST && 
+    !(isServerless && (process.env.MYSQL_HOST === 'localhost' || process.env.MYSQL_HOST === '127.0.0.1'))
+  );
+}
+
+export class DatabaseUnavailableError extends Error {
+  constructor(message = 'Primary database service is temporarily unavailable in production mode.') {
+    super(message);
+    this.name = 'DatabaseUnavailableError';
+  }
+}
+
+export function getDatabaseSourceMode(): 'mysql' | 'json-backup' {
+  if (isMySQLConfigured()) {
+    // In production, enforce MySQL as the sole authoritative source to prevent split-brain state
+    if (process.env.NODE_ENV === 'production') {
+      return 'mysql';
+    }
+    if (!(lastMySQLCheckFailed > 0 && !isMySQLLive && (Date.now() - lastMySQLCheckFailed < 60000))) {
+      return 'mysql';
+    }
+  }
+  return 'json-backup';
+}
+
+export function getIntegrityWarnings(data?: Schema): string[] {
+  const store = data ?? memoryCache ?? {
+    students: [],
+    payments: [],
+    reviews: [],
+    inquiries: [],
+    courses: [],
+    news: [],
+    media: [],
+    settings: initialData.settings,
+    email_logs: [],
+    admins: [],
+    chat_sessions: [],
+    _metadata: initialData._metadata
+  };
+
+  const warnings: string[] = [];
+
+  for (const student of store.students || []) {
+    if (!student.email || !student.email.includes('@')) {
+      warnings.push(`Student ${student.id} has an invalid email.`);
+    }
+    if (student.document_url && /^data:/i.test(student.document_url)) {
+      warnings.push(`Student ${student.id} still has a Base64 document payload.`);
+    }
+    if (student.payment_proof_url && /^data:/i.test(student.payment_proof_url)) {
+      warnings.push(`Student ${student.id} still has a Base64 payment proof payload.`);
+    }
+  }
+
+  for (const payment of store.payments || []) {
+    if (payment.proof_url && /^data:/i.test(payment.proof_url)) {
+      warnings.push(`Payment ${payment.reference} still has a Base64 proof payload.`);
+    }
+    if (payment.student_id && !(store.students || []).some(student => student.id === payment.student_id)) {
+      warnings.push(`Payment ${payment.reference} references a missing student ${payment.student_id}.`);
+    }
+  }
+
+  return warnings;
+}
+
 export function getMySQLPool(): mysql.Pool {
   if (!mysqlPool) {
     const host = process.env.MYSQL_HOST || 'localhost';
     const isRemote = host !== 'localhost' && host !== '127.0.0.1';
+
+    const maxConnections = parseInt(process.env.MYSQL_CONNECTION_LIMIT || '50', 10);
 
     mysqlPool = mysql.createPool({
       host: host,
@@ -53,8 +129,13 @@ export function getMySQLPool(): mysql.Pool {
       database: process.env.MYSQL_DATABASE || 'test',
       ssl: isRemote ? { rejectUnauthorized: true, minVersion: 'TLSv1.2' } : undefined,
       waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
+      connectionLimit: maxConnections,
+      maxIdle: 25,
+      idleTimeout: 60000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      queueLimit: 0,
+      connectTimeout: 8000
     });
   }
   return mysqlPool;
@@ -95,9 +176,22 @@ export async function ensureMySQLTables() {
         payment_amount INT DEFAULT 50000,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_students_email (email)
+        INDEX idx_students_email (email),
+        INDEX idx_students_matricule (matricule),
+        INDEX idx_students_status (admission_status, payment_status),
+        INDEX idx_students_created_at (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    try {
+      await pool.query('ALTER TABLE students ADD COLUMN matricule VARCHAR(50) DEFAULT "" AFTER id');
+    } catch { /* column already exists */ }
+    try {
+      await pool.query('ALTER TABLE students ADD INDEX idx_students_matricule (matricule)');
+    } catch { /* index already exists */ }
+    try {
+      await pool.query('ALTER TABLE students MODIFY id INT NOT NULL AUTO_INCREMENT');
+    } catch { /* already auto_increment */ }
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS payments (
@@ -107,7 +201,7 @@ export async function ensureMySQLTables() {
         currency VARCHAR(10) DEFAULT 'XAF',
         operator VARCHAR(50) DEFAULT 'MTN Mobile Money',
         phone VARCHAR(50) DEFAULT '',
-        status VARCHAR(50) DEFAULT 'PENDING',
+        status ENUM('PENDING', 'PENDING_VERIFICATION', 'APPROVED', 'PAID', 'FAILED', 'REJECTED') DEFAULT 'PENDING',
         description VARCHAR(255) DEFAULT 'Registration / Tuition Payment',
         proof_url TEXT,
         transaction_id VARCHAR(100) DEFAULT '',
@@ -116,7 +210,10 @@ export async function ensureMySQLTables() {
         verified_at DATETIME NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_payments_student_id (student_id)
+        INDEX idx_payments_student_id (student_id),
+        INDEX idx_payments_status (status),
+        INDEX idx_payments_created_at (created_at),
+        CONSTRAINT fk_payments_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL ON UPDATE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
@@ -128,7 +225,9 @@ export async function ensureMySQLTables() {
         subject VARCHAR(191) NOT NULL,
         message TEXT NOT NULL,
         status VARCHAR(50) DEFAULT 'new',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_inquiries_status (status),
+        INDEX idx_inquiries_created_at (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
@@ -145,7 +244,7 @@ export async function ensureMySQLTables() {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS courses (
-        id INT PRIMARY KEY,
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         degree_type VARCHAR(50) NOT NULL,
         program_type VARCHAR(100) NOT NULL,
@@ -162,7 +261,7 @@ export async function ensureMySQLTables() {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS news (
-        id INT PRIMARY KEY,
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         category VARCHAR(100) DEFAULT 'News',
         date VARCHAR(100) DEFAULT 'August 2026',
@@ -172,6 +271,9 @@ export async function ensureMySQLTables() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    await pool.query('ALTER TABLE courses MODIFY id INT NOT NULL AUTO_INCREMENT');
+    await pool.query('ALTER TABLE news MODIFY id INT NOT NULL AUTO_INCREMENT');
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS media (
@@ -216,7 +318,7 @@ export async function ensureMySQLTables() {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS admins (
-        id INT PRIMARY KEY,
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         full_name VARCHAR(191) NOT NULL,
         email VARCHAR(191) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
@@ -226,6 +328,8 @@ export async function ensureMySQLTables() {
         INDEX idx_admins_email (email)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    await pool.query('ALTER TABLE admins MODIFY id INT NOT NULL AUTO_INCREMENT');
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -241,6 +345,15 @@ export async function ensureMySQLTables() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_chat_updated (updated_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rate_limits (
+        rate_key VARCHAR(191) PRIMARY KEY,
+        attempts INT NOT NULL DEFAULT 1,
+        reset_at BIGINT NOT NULL,
+        INDEX idx_rate_limits_reset (reset_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
@@ -297,6 +410,11 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
       if (action === 'delete') {
         await pool.query('DELETE FROM payments WHERE reference = ?', [data.reference]);
       } else {
+        const normalizedStatus = String(data.status || 'PENDING').toUpperCase();
+        const paymentStatus = ['PENDING', 'PENDING_VERIFICATION', 'APPROVED', 'PAID', 'FAILED', 'REJECTED'].includes(normalizedStatus)
+          ? normalizedStatus
+          : 'PENDING';
+
         await pool.query(
           `INSERT INTO payments (reference, student_id, amount, currency, operator, phone, status, description, proof_url, transaction_id, verified_by, verified_at, external_reference, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -306,11 +424,11 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
              verified_by=VALUES(verified_by), verified_at=VALUES(verified_at),
              updated_at=NOW()`,
           [
-            data.reference, 
-            (data.student_id && data.student_id > 0) ? Number(data.student_id) : null, 
-            Number(data.amount || 0), 
+            data.reference,
+            (data.student_id && data.student_id > 0) ? Number(data.student_id) : null,
+            Number(data.amount || 0),
             data.currency || 'XAF',
-            data.operator || 'MTN Mobile Money', data.phone || '', data.status || 'PENDING',
+            data.operator || 'MTN Mobile Money', data.phone || '', paymentStatus,
             data.description || 'Tuition / Registration Payment', data.proof_url || '', data.transaction_id || '',
             data.verified_by || null, data.verified_at ? new Date(data.verified_at) : null,
             data.external_reference || '',
@@ -460,9 +578,9 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
     }
     isMySQLLive = true;
   } catch (err: any) {
-    // MySQL write error is non-blocking to prevent server crash
     lastMySQLCheckFailed = Date.now();
     isMySQLLive = false;
+    console.error(`[db] MySQL synchronization failed for table ${table}:`, err?.message || err);
     try {
       import('./email').then(({ sendSystemFaultAlert }) => {
         sendSystemFaultAlert({
@@ -473,6 +591,11 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
         }).catch(() => {});
       }).catch(() => {});
     } catch {}
+
+    // In production, prohibit silent fallback to avoid split-brain database divergence
+    if (process.env.NODE_ENV === 'production') {
+      throw new DatabaseUnavailableError(`Database write failed in production for table: ${table}. Please ensure MySQL is accessible.`);
+    }
   }
 }
 
@@ -752,7 +875,7 @@ const initialData: Schema = {
   courses: [
     {
       id: 1,
-      title: 'Software Engineering (HND)',
+      title: 'HND in Software Engineering',
       degree_type: 'HND',
       program_type: 'Software Engineering',
       study_format: 'oncampus',
@@ -765,7 +888,7 @@ const initialData: Schema = {
     },
     {
       id: 2,
-      title: 'Cybersecurity & Cloud Defense (HND)',
+      title: 'HND in Cybersecurity & Cloud Defense',
       degree_type: 'HND',
       program_type: 'Cybersecurity',
       study_format: 'oncampus',
@@ -804,7 +927,7 @@ const initialData: Schema = {
     },
     {
       id: 5,
-      title: 'Computer Engineering (ND)',
+      title: 'ND in Computer Engineering',
       degree_type: 'ND',
       program_type: 'Computer Engineering',
       study_format: 'oncampus',
@@ -817,7 +940,7 @@ const initialData: Schema = {
     },
     {
       id: 6,
-      title: 'Web & Graphics Design (HND)',
+      title: 'HND in Web & Graphics Design',
       degree_type: 'HND',
       program_type: 'Web & Graphics Design',
       study_format: 'fulltime',
@@ -1069,6 +1192,11 @@ export function writeDb(data: Schema, backup = true) {
       }
     }
 
+    const integrityWarnings = getIntegrityWarnings();
+    if (integrityWarnings.length > 0 && getDatabaseSourceMode() === 'mysql') {
+      console.warn('[db] Data integrity warnings detected in authoritative source mode:', integrityWarnings.slice(0, 5));
+    }
+
     // Immediate memory update for ultra-low latency
     memoryCache = data;
 
@@ -1212,60 +1340,6 @@ export const adminStore = {
 
     writeDb(store, true);
     syncToMySQL('payments', 'insert', newPayment);
-
-    return { payment: newPayment, student: student || null };
-  },
-
-  recordMoMoPayment: (paymentData: {
-    student_id?: number;
-    student_name?: string;
-    student_email?: string;
-    amount: number;
-    phone?: string;
-    operator?: string;
-    description?: string;
-  }): { payment: Payment; student: Student | null } => {
-    const store = readDb();
-    let student: Student | undefined;
-    if (paymentData.student_id) {
-      student = store.students.find(s => s.id === Number(paymentData.student_id));
-    } else if (paymentData.student_email) {
-      student = store.students.find(s => s.email.toLowerCase() === paymentData.student_email?.toLowerCase());
-    }
-
-    const reference = `MOMO-MTN-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
-    const newPayment: Payment = {
-      id: (store.payments && store.payments.length ? Math.max(...store.payments.map(p => p.id || 0)) : 0) + 1,
-      reference,
-      student_id: student ? student.id : undefined,
-      student_name: student?.full_name || paymentData.student_name || 'Valued Candidate',
-      student_email: student?.email || paymentData.student_email || '',
-      amount: Number(paymentData.amount),
-      currency: 'XAF',
-      operator: paymentData.operator || 'MTN Mobile Money',
-      phone: paymentData.phone || student?.phone || '670265493',
-      status: 'PAID',
-      description: paymentData.description || `MTN MoMo USSD Payment (*126*14*670265493*${paymentData.amount}#)`,
-      transaction_id: `MTN-USSD-${Date.now()}`,
-      verified_by: 'MTN MoMo Gateway Verified',
-      verified_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
-    };
-
-    if (!store.payments) store.payments = [];
-    store.payments.unshift(newPayment);
-
-    if (student) {
-      student.payment_status = 'Paid';
-      student.admission_status = 'Approved';
-      student.payment_amount = Number(paymentData.amount);
-      student.payment_transaction_id = newPayment.transaction_id || '';
-      student.updated_at = new Date().toISOString();
-      syncToMySQL('students', 'update', student).catch(() => {});
-    }
-
-    writeDb(store, true);
-    syncToMySQL('payments', 'insert', newPayment).catch(() => {});
 
     return { payment: newPayment, student: student || null };
   },
@@ -1740,10 +1814,14 @@ export const db = {
     const store = readDb();
     const stats = fs.existsSync(jsonDbPath) ? fs.statSync(jsonDbPath) : null;
     const backupFiles = fs.existsSync(backupsDir) ? fs.readdirSync(backupsDir) : [];
+    const integrityWarnings = getIntegrityWarnings();
+    const sourceMode = getDatabaseSourceMode();
 
     return {
-      status: 'HEALTHY',
-      integrity: '100% OK',
+      status: integrityWarnings.length === 0 ? 'HEALTHY' : 'WARN',
+      integrity: integrityWarnings.length === 0 ? '100% OK' : `${integrityWarnings.length} warning(s)`,
+      source_of_truth: sourceMode,
+      local_backup_enabled: true,
       engine: 'MySQL 8.0 (liah_db) + High-Speed In-Memory Cache v2.2.0',
       mysql: {
         connected: isMySQLLive,
@@ -1757,6 +1835,7 @@ export const db = {
       database_size_kb: stats ? (stats.size / 1024).toFixed(2) + ' KB' : '0 KB',
       total_writes: totalWritesCount,
       backups_count: backupFiles.length,
+      integrity_warnings: integrityWarnings.slice(0, 10),
       metrics: {
         students: store.students.length,
         courses: store.courses.length,
@@ -1810,7 +1889,11 @@ export const db = {
 
         if (q.includes('FROM STUDENTS') && (q.includes('EMAIL = ?') || q.includes('LOWER(EMAIL) = ?') || q.includes('EMAIL'))) {
           const [email] = params;
-          return store.students.find(s => s.email.toLowerCase() === (email || '').toLowerCase().trim());
+          const requiresStoredPassword = q.includes('PASSWORD IS NOT NULL') && q.includes("TRIM(PASSWORD) <> ''");
+          return store.students.find(s =>
+            s.email.toLowerCase() === (email || '').toLowerCase().trim() &&
+            (!requiresStoredPassword || (typeof s.password === 'string' && s.password.trim().length > 0))
+          );
         }
 
         if (q.includes('FROM STUDENTS WHERE ID = ?') || (q.includes('FROM STUDENTS') && q.includes('ID = ?'))) {
@@ -1872,7 +1955,33 @@ export const db = {
         const store = readDb();
 
         if (q.includes('INSERT INTO STUDENTS')) {
-          const [full_name, email, password, phone, degree_type, program_type, study_format, document_url] = params;
+          let full_name: any, email: any, password: any, phone: any, degree_type: any, program_type: any, study_format: any, document_url: any,
+            documents_param: any, payment_status_param: any, admission_status_param: any, payment_proof_url_param: any,
+            payment_amount_param: any, payment_transaction_id_param: any;
+
+          if (params.length === 13) {
+            [
+              full_name, email, password, phone, degree_type, program_type, study_format, document_url,
+              documents_param, payment_status_param, payment_proof_url_param,
+              payment_amount_param, payment_transaction_id_param
+            ] = params;
+            admission_status_param = 'Under Review';
+          } else {
+            [
+              full_name, email, password, phone, degree_type, program_type, study_format, document_url,
+              documents_param, payment_status_param, admission_status_param, payment_proof_url_param,
+              payment_amount_param, payment_transaction_id_param
+            ] = params;
+          }
+
+          // Defensive guard: Ensure a file URI is never assigned to admission_status
+          if (typeof admission_status_param === 'string' && (admission_status_param.includes('private-file://') || admission_status_param.includes('payment-proofs') || admission_status_param.includes('/'))) {
+            if (!payment_proof_url_param) {
+              payment_proof_url_param = admission_status_param;
+            }
+            admission_status_param = 'Under Review';
+          }
+
           const existingIds = new Set(store.students.map(s => s.id));
           let newId = (store.students.length ? Math.max(...store.students.map(s => s.id || 0)) : 1000) + 1;
           while (existingIds.has(newId)) {
@@ -1904,8 +2013,11 @@ export const db = {
             study_format: study_format || 'oncampus',
             document_url: typeof document_url === 'string' ? document_url : JSON.stringify(document_url || []),
             documents: Array.isArray(parsedDocs) ? parsedDocs : [parsedDocs],
-            payment_status: 'Pending',
-            admission_status: 'Under Review',
+            payment_status: (payment_status_param as any) || (payment_proof_url_param ? 'Pending Verification' : 'Pending'),
+            admission_status: (admission_status_param as any) || 'Under Review',
+            payment_proof_url: payment_proof_url_param || undefined,
+            payment_amount: payment_amount_param ? Number(payment_amount_param) : undefined,
+            payment_transaction_id: payment_transaction_id_param || undefined,
             created_at: new Date().toISOString()
           };
           store.students.push(newStudent);

@@ -246,13 +246,11 @@ console.log('   npm run dev\n');
 console.log('To build and run in production:');
 console.log('   npm run build');
 console.log('   npm run start\n');
-console.log('Default Credentials:');
+console.log('Authentication & Credentials:');
 console.log('   🛡️ Admin Portal:    http://localhost:3000/admin');
-console.log('      Email:           info@liahacademy.com');
-console.log('      Password:        LiahAdmin2026!#\n');
+console.log('      Verified via database administrators table (PBKDF2 encrypted)');
 console.log('   🎓 Student Portal:  http://localhost:3000/admissions');
-console.log('      Email:           student@liahacademy.com');
-console.log('      Password:        Student2026!#\n');
+console.log('      Verified via database student credentials (PBKDF2 encrypted)\n');
 console.log('Optional MySQL Setup:');
 console.log('   Import /data/schema.sql into your MySQL database (liah_db)\n');
 

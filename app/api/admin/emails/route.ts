@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { adminStore } from '@/lib/db';
-import { verifyAdminAuth } from '@/lib/auth';
+import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    if (!verifyAdminAuth(request)) {
+    if (!(await verifyAdminAuth(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Administrator credentials required.' },
         { status: 401 }

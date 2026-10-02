@@ -164,7 +164,7 @@ export default function ProgramCategoryPage() {
             Ready to Begin Your Tech Training at Liah Academy?
           </h2>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <Link href="/admissions#apply" className="york-hero-btn" style={{ background: '#F5A623', color: '#081F3E' }}>
+            <Link href="/portal?tab=enrol" className="york-hero-btn" style={{ background: '#F5A623', color: '#081F3E' }}>
               Start Your Application <ArrowRight size={18} />
             </Link>
             <Link href="/contact#inquiry" className="york-full-cta-btn">
