@@ -104,13 +104,13 @@ CREATE TABLE IF NOT EXISTS `admins` (
   INDEX `idx_admins_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed Initial Super Administrator (Cryptographic PBKDF2 Hash)
+-- Seed Initial Super Administrator (Default Login: info@liahacademy.com / AdminSecure2026!)
 INSERT INTO `admins` (`id`, `full_name`, `email`, `password`, `role`, `created_at`)
 VALUES (
   1,
   'Master Administrator',
   'info@liahacademy.com',
-  'pbkdf2$10000$85221b819bd684ff30fe3e39f4780e7f$1e07e918a9d7b34a0a554a22169961c4cd37d743bc1578b11447938a115d347965c40efb1b1219dcad80c39627ec8d1a88ff5ce71eedea9e27493d209ed7f4c6',
+  'pbkdf2$100000$8b93b5290e47c6ac2a7e6201b85e1b9d$52212ac58d39fb54a2d56bf14a091d32b1799f444e1d0831189ad4726abc10a0a5281b8cbe46405c77191f23370b68a835b1ea2adac0335b64cbaf1393547580',
   'SuperAdmin',
   NOW()
 )
