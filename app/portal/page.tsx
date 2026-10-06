@@ -1439,7 +1439,7 @@ function StudentPortalContent() {
                       Student Ambassador Program (Refer &amp; Earn)
                     </h4>
                     <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                      Earn <strong>5,000 XAF</strong> paid to your MoMo for every student who enrolls using your link
+                      Earn <strong>15,000 XAF</strong> paid to your MoMo for every student who enrolls using your link
                     </span>
                   </div>
                 </div>
@@ -1459,7 +1459,7 @@ function StudentPortalContent() {
                   textAlign: 'center'
                 }}>
                   <p style={{ margin: '0 0 14px 0', fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
-                    As an official student of Liah Academy, you can earn real cash by inviting friends, classmates, and family to join our programs. When they apply using your link, their <strong>Name and Matricule</strong> are bound to your account and <strong>5,000 XAF</strong> is deposited to your MoMo upon enrolment.
+                    As an official student of Liah Academy, you can earn real cash by inviting friends, classmates, and family to join our programs. When they apply using your link, their <strong>Name and Matricule</strong> are bound to your account and <strong>15,000 XAF</strong> is deposited to your MoMo upon enrolment.
                   </p>
                   <button
                     type="button"
@@ -1646,7 +1646,7 @@ function StudentPortalContent() {
                                     </span>
                                   </td>
                                   <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
-                                    {isPaid ? `${(d.commission_earned || 5000).toLocaleString()} XAF` : '5,000 XAF'}
+                                    {isPaid ? `${(d.commission_amount || d.commission_earned || 15000).toLocaleString()} XAF` : '15,000 XAF'}
                                   </td>
                                 </tr>
                               );

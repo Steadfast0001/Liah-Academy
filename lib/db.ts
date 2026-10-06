@@ -368,7 +368,7 @@ export async function ensureMySQLTables() {
         phone VARCHAR(50) DEFAULT '',
         student_id INT NULL,
         student_matricule VARCHAR(50) DEFAULT '',
-        commission_per_student INT DEFAULT 5000,
+        commission_per_student INT DEFAULT 15000,
         total_referrals INT DEFAULT 0,
         paid_referrals INT DEFAULT 0,
         total_earned INT DEFAULT 0,
@@ -395,7 +395,7 @@ export async function ensureMySQLTables() {
         program_type VARCHAR(100) DEFAULT '',
         payment_status VARCHAR(50) DEFAULT 'Pending',
         admission_status VARCHAR(50) DEFAULT 'Under Review',
-        commission_amount INT DEFAULT 5000,
+        commission_amount INT DEFAULT 15000,
         commission_status VARCHAR(20) DEFAULT 'pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -662,7 +662,7 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
           [
             data.id, data.code, data.full_name, data.momo_number, data.momo_name || '',
             data.email || '', data.phone || '', data.student_id || null, data.student_matricule || '',
-            data.commission_per_student || 5000, data.total_referrals || 0, data.paid_referrals || 0,
+            data.commission_per_student || 15000, data.total_referrals || 0, data.paid_referrals || 0,
             data.total_earned || 0, data.total_paid || 0, data.balance || 0, data.status || 'active',
             data.created_at ? new Date(data.created_at) : new Date(),
             data.updated_at ? new Date(data.updated_at) : new Date()
@@ -684,7 +684,7 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
             data.id, data.agent_id, data.agent_code, data.student_id, data.student_name,
             data.student_matricule || '', data.student_email, data.student_phone || '',
             data.program_type || '', data.payment_status || 'Pending', data.admission_status || 'Under Review',
-            data.commission_amount || 5000, data.commission_status || 'pending',
+            data.commission_amount || 15000, data.commission_status || 'pending',
             data.created_at ? new Date(data.created_at) : new Date(),
             data.updated_at ? new Date(data.updated_at) : new Date()
           ]
@@ -1984,7 +1984,7 @@ export const adminStore = {
         phone: agent.phone || '',
         student_id: agent.student_id || null,
         student_matricule: agent.student_matricule || '',
-        commission_per_student: agent.commission_per_student || 5000,
+        commission_per_student: agent.commission_per_student || 15000,
         total_referrals: agent.total_referrals || 0,
         paid_referrals: agent.paid_referrals || 0,
         total_earned: agent.total_earned || 0,
@@ -2034,7 +2034,7 @@ export const adminStore = {
       ? Math.max(...store.referrals.map(r => r.id || 0)) + 1
       : 1;
 
-    const commissionAmount = agent.commission_per_student || 5000;
+    const commissionAmount = agent.commission_per_student || 15000;
     const isPaid = (data.payment_status || '').toLowerCase().includes('paid');
 
     const newRef: ReferralItem = {

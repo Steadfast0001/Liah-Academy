@@ -706,7 +706,7 @@ CREATE TABLE IF NOT EXISTS \`referral_agents\` (
   \`student_id\` INT NULL,
   \`student_matricule\` VARCHAR(50) DEFAULT '',
   \`status\` ENUM('active', 'suspended') DEFAULT 'active',
-  \`commission_per_student\` INT DEFAULT 5000,
+  \`commission_per_student\` INT DEFAULT 15000,
   \`total_referrals\` INT DEFAULT 0,
   \`paid_referrals\` INT DEFAULT 0,
   \`total_earned\` INT DEFAULT 0,
@@ -732,7 +732,7 @@ ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`referred_by\` VARCHAR(50) DE
     const studentId = a.student_id ? Number(a.student_id) : 'NULL';
     const studentMatricule = escapeSqlString(a.student_matricule || '');
     const status = escapeSqlString(a.status || 'active');
-    const comm = a.commission_per_student || 5000;
+    const comm = a.commission_per_student || 15000;
     const totalRef = a.total_referrals || 0;
     const paidRef = a.paid_referrals || 0;
     const totalEarned = a.total_earned || 0;
@@ -763,9 +763,9 @@ CREATE TABLE IF NOT EXISTS \`referrals\` (
   \`degree_type\` VARCHAR(50) DEFAULT 'HND',
   \`payment_status\` VARCHAR(50) DEFAULT 'Pending',
   \`admission_status\` VARCHAR(50) DEFAULT 'Under Review',
-  \`commission_amount\` INT DEFAULT 5000,
+  \`commission_amount\` INT DEFAULT 15000,
   \`commission_status\` VARCHAR(20) DEFAULT 'pending',
-  \`commission_earned\` INT DEFAULT 5000,
+  \`commission_earned\` INT DEFAULT 15000,
   \`status\` VARCHAR(20) DEFAULT 'pending',
   \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
   \`updated_at\` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -778,7 +778,7 @@ ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_matricule\` VARCHAR
 ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_email\` VARCHAR(191) DEFAULT '';
 ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_phone\` VARCHAR(50) DEFAULT '';
 ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`admission_status\` VARCHAR(50) DEFAULT 'Under Review';
-ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_amount\` INT DEFAULT 5000;
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_amount\` INT DEFAULT 15000;
 ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_status\` VARCHAR(20) DEFAULT 'pending';
 
 `;
@@ -796,7 +796,7 @@ ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_status\` VARCHAR
     const degreeType = escapeSqlString(r.degree_type || 'HND');
     const paymentStatus = escapeSqlString(r.payment_status || 'Pending');
     const admissionStatus = escapeSqlString(r.admission_status || 'Under Review');
-    const commAmount = Number(r.commission_amount || r.commission_earned || 5000);
+    const commAmount = Number(r.commission_amount || r.commission_earned || 15000);
     const commStatus = escapeSqlString(r.commission_status || r.status || 'pending');
     const createdAt = escapeSqlString(r.created_at || new Date());
 

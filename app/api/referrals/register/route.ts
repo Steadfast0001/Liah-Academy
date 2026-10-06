@@ -115,7 +115,7 @@ export async function POST(request: Request) {
         const pool = getMySQLPool();
         const [insResult] = await pool.execute(
           `INSERT INTO referral_agents (code, full_name, momo_number, momo_name, email, phone, student_id, student_matricule, commission_per_student, total_referrals, paid_referrals, total_earned, total_paid, balance, status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 5000, 0, 0, 0, 0, 0, 'active', NOW(), NOW())`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 15000, 0, 0, 0, 0, 0, 'active', NOW(), NOW())`,
           [newCode, fullName, cleanMomo, momoName || fullName, email, cleanMomo, studentId, studentMatricule || '']
         );
       } catch (sqlInsErr) {
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       phone: cleanMomo,
       student_id: studentId,
       student_matricule: studentMatricule,
-      commission_per_student: 5000,
+      commission_per_student: 15000,
       total_referrals: 0,
       paid_referrals: 0,
       total_earned: 0,

@@ -98,7 +98,7 @@ export async function PUT(request: Request) {
             if (Array.isArray(refRows) && refRows.length > 0) {
               const refItem = (refRows as any[])[0];
               if (refItem.commission_status !== 'approved' && refItem.commission_status !== 'paid') {
-                const comm = Number(refItem.commission_amount || 5000);
+                const comm = Number(refItem.commission_amount || 15000);
                 await pool.execute(
                   'UPDATE referrals SET payment_status = "Paid", commission_status = "approved", updated_at = NOW() WHERE id = ?',
                   [refItem.id]

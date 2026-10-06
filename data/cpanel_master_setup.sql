@@ -316,7 +316,7 @@ CREATE TABLE IF NOT EXISTS `referral_agents` (
   `phone` VARCHAR(50) DEFAULT '',
   `student_id` INT NULL,
   `student_matricule` VARCHAR(50) DEFAULT '',
-  `commission_per_student` INT DEFAULT 5000,
+  `commission_per_student` INT DEFAULT 15000,
   `total_referrals` INT DEFAULT 0,
   `paid_referrals` INT DEFAULT 0,
   `total_earned` INT DEFAULT 0,
@@ -344,7 +344,7 @@ CREATE TABLE IF NOT EXISTS `referrals` (
   `program_type` VARCHAR(100) DEFAULT '',
   `payment_status` VARCHAR(50) DEFAULT 'Pending',
   `admission_status` VARCHAR(50) DEFAULT 'Under Review',
-  `commission_amount` INT DEFAULT 5000,
+  `commission_amount` INT DEFAULT 15000,
   `commission_status` VARCHAR(20) DEFAULT 'pending',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -357,7 +357,7 @@ ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_matricule` VARCHAR(50)
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_email` VARCHAR(191) DEFAULT '';
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_phone` VARCHAR(50) DEFAULT '';
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `admission_status` VARCHAR(50) DEFAULT 'Under Review';
-ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 5000;
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 15000;
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_status` VARCHAR(20) DEFAULT 'pending';
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
 

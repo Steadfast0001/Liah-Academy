@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         const [pRows] = await pool.execute('SELECT * FROM referral_payouts ORDER BY id DESC');
         agents = (aRows as any[]).map(a => ({
           ...a,
-          commission_per_student: Number(a.commission_per_student || 5000),
+          commission_per_student: Number(a.commission_per_student || 15000),
           total_referrals: Number(a.total_referrals || 0),
           paid_referrals: Number(a.paid_referrals || 0),
           total_earned: Number(a.total_earned || 0),
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
         }));
         referrals = (rRows as any[]).map(r => ({
           ...r,
-          commission_amount: Number(r.commission_amount || 5000)
+          commission_amount: Number(r.commission_amount || 15000)
         }));
         payouts = (pRows as any[]).map(p => ({
           ...p,

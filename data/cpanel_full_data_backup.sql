@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-06T14:07:48.389Z
+-- Generated: 2026-10-06T15:00:34.983Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -854,7 +854,7 @@ CREATE TABLE IF NOT EXISTS `referral_agents` (
   `student_id` INT NULL,
   `student_matricule` VARCHAR(50) DEFAULT '',
   `status` ENUM('active', 'suspended') DEFAULT 'active',
-  `commission_per_student` INT DEFAULT 5000,
+  `commission_per_student` INT DEFAULT 15000,
   `total_referrals` INT DEFAULT 0,
   `paid_referrals` INT DEFAULT 0,
   `total_earned` INT DEFAULT 0,
@@ -886,9 +886,9 @@ CREATE TABLE IF NOT EXISTS `referrals` (
   `degree_type` VARCHAR(50) DEFAULT 'HND',
   `payment_status` VARCHAR(50) DEFAULT 'Pending',
   `admission_status` VARCHAR(50) DEFAULT 'Under Review',
-  `commission_amount` INT DEFAULT 5000,
+  `commission_amount` INT DEFAULT 15000,
   `commission_status` VARCHAR(20) DEFAULT 'pending',
-  `commission_earned` INT DEFAULT 5000,
+  `commission_earned` INT DEFAULT 15000,
   `status` VARCHAR(20) DEFAULT 'pending',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -901,7 +901,7 @@ ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_matricule` VARCHAR(50)
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_email` VARCHAR(191) DEFAULT '';
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_phone` VARCHAR(50) DEFAULT '';
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `admission_status` VARCHAR(50) DEFAULT 'Under Review';
-ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 5000;
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 15000;
 ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_status` VARCHAR(20) DEFAULT 'pending';
 
 -- DATA: 0 Referral Downlines

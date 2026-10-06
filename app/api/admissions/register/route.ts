@@ -138,7 +138,7 @@ export async function POST(request: Request) {
             );
             if (Array.isArray(agentRows) && agentRows.length > 0) {
               const dbAgent = (agentRows as any[])[0];
-              const comm = Number(dbAgent.commission_per_student || 5000);
+              const comm = Number(dbAgent.commission_per_student || 15000);
               const isPaid = (initialPaymentStatus || '').toLowerCase().includes('paid');
 
               await pool.execute(

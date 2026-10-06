@@ -43,7 +43,7 @@ export async function GET(request: Request) {
           const a = agentRows[0];
           agent = {
             ...a,
-            commission_per_student: Number(a.commission_per_student || 5000),
+            commission_per_student: Number(a.commission_per_student || 15000),
             total_referrals: Number(a.total_referrals || 0),
             paid_referrals: Number(a.paid_referrals || 0),
             total_earned: Number(a.total_earned || 0),
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
           const [refRows] = await pool.execute('SELECT * FROM referrals WHERE agent_id = ? OR UPPER(agent_code) = ? ORDER BY id DESC', [agent.id, agent.code.toUpperCase()]);
           referrals = (refRows as any[]).map(r => ({
             ...r,
-            commission_amount: Number(r.commission_amount || 5000)
+            commission_amount: Number(r.commission_amount || 15000)
           }));
 
           const [payoutRows] = await pool.execute('SELECT * FROM referral_payouts WHERE agent_id = ? OR UPPER(agent_code) = ? ORDER BY id DESC', [agent.id, agent.code.toUpperCase()]);

@@ -313,7 +313,7 @@ function ReferPageContent() {
             margin: '0 0 16px 0',
             letterSpacing: '-0.02em'
           }}>
-            Refer Students &amp; Earn <span style={{ color: '#F5A623' }}>5,000 XAF</span> per Enrolment
+            Refer Students &amp; Earn <span style={{ color: '#F5A623' }}>15,000 XAF</span> per Enrolment
           </h1>
 
           <p style={{
@@ -323,7 +323,7 @@ function ReferPageContent() {
             margin: '0 auto 28px auto',
             lineHeight: 1.6
           }}>
-            Become an official Ambassador or Referral Agent for Liah Academy. Share your link with friends, tech lovers, and prospective students. Whenever someone enrolls, you receive 5,000 XAF sent directly to your MTN or Orange MoMo.
+            Become an official Ambassador or Referral Agent for Liah Academy. Share your link with friends, tech lovers, and prospective students. Whenever someone enrolls, you receive 15,000 XAF sent directly to your MTN or Orange MoMo.
           </p>
 
           {/* Quick value badges */}
@@ -596,7 +596,7 @@ function ReferPageContent() {
                   {(agent.total_earned || 0).toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600 }}>XAF</span>
                 </strong>
                 <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
-                  5,000 XAF per paid student
+                  15,000 XAF per paid student
                 </span>
               </div>
 
@@ -719,7 +719,7 @@ function ReferPageContent() {
                               </span>
                             </td>
                             <td style={{ padding: '14px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
-                              {isPaid ? `${(item.commission_earned || 5000).toLocaleString()} XAF` : '5,000 XAF (Pending)'}
+                              {isPaid ? `${(item.commission_earned || 15000).toLocaleString()} XAF` : '15,000 XAF (Pending)'}
                             </td>
                           </tr>
                         );
@@ -1183,7 +1183,7 @@ function ReferPageContent() {
                 Get Paid Direct to MoMo
               </h3>
               <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.6, margin: 0 }}>
-                Once the student settles their application fee, 5,000 XAF is credited to your balance. Request a payout anytime and receive the MTN MoMo deposit along with the verification screenshot!
+                Once the student settles their application fee, 15,000 XAF is credited to your balance. Request a payout anytime and receive the MTN MoMo deposit along with the verification screenshot!
               </p>
             </div>
           </div>

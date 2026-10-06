@@ -5687,7 +5687,7 @@ export default function AdminDashboardPage() {
                                 </span>
                               </td>
                               <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
-                                {isPaid ? `${(r.commission_earned || 5000).toLocaleString()} XAF` : '5,000 XAF'}
+                                {isPaid ? `${(r.commission_amount || r.commission_earned || 15000).toLocaleString()} XAF` : '15,000 XAF'}
                               </td>
                             </tr>
                           );

@@ -290,7 +290,7 @@ export default function Header() {
                     fontWeight: 800,
                     letterSpacing: '0.02em'
                   }}>
-                    5K XAF
+                    15K XAF
                   </span>
                 </Link>
               </li>
@@ -320,7 +320,7 @@ export default function Header() {
                     <DollarSign size={16} color="#F5A623" /> Refer &amp; Earn
                   </span>
                   <span style={{ fontSize: '0.72rem', background: '#10B981', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
-                    5,000 XAF
+                    15,000 XAF
                   </span>
                 </Link>
                 <Link
