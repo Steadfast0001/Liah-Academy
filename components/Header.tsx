@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, ChevronDown, Phone, ShieldCheck, UserCheck } from 'lucide-react';
+import { Search, Menu, X, ChevronDown, Phone, ShieldCheck, UserCheck, DollarSign } from 'lucide-react';
 import HeaderSearch from './HeaderSearch';
 
 export default function Header() {
@@ -72,6 +72,9 @@ export default function Header() {
           <div className="top-utility-links">
             <Link href="/portal" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <UserCheck size={13} color="#F5A623" /> Student Portal
+            </Link>
+            <Link href="/refer" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#F5A623', fontWeight: 700 }}>
+              <DollarSign size={13} color="#F5A623" /> Refer &amp; Earn
             </Link>
             <Link href="/contact#inquiry">Request Info</Link>
             <a href="tel:+237699526607" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -263,11 +266,63 @@ export default function Header() {
                   Contact
                 </Link>
               </li>
+
+              <li className={`menu-item ${isActive('/refer') ? 'active' : ''}`}>
+                <Link 
+                  href="/refer" 
+                  className="menu-link" 
+                  onClick={closeAll}
+                  style={{ 
+                    color: '#F5A623', 
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>Refer &amp; Earn</span>
+                  <span style={{ 
+                    fontSize: '0.68rem', 
+                    background: '#10B981', 
+                    color: '#FFFFFF', 
+                    padding: '1px 6px', 
+                    borderRadius: '10px', 
+                    fontWeight: 800,
+                    letterSpacing: '0.02em'
+                  }}>
+                    5K XAF
+                  </span>
+                </Link>
+              </li>
             </ul>
 
             {/* Mobile Drawer Bottom Quick Contacts */}
             <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} className="mobile-drawer-bottom">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <Link
+                  href="/refer"
+                  onClick={closeAll}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    background: 'rgba(245, 166, 35, 0.15)',
+                    border: '1px solid rgba(245, 166, 35, 0.3)',
+                    borderRadius: '8px',
+                    color: '#F5A623',
+                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    textDecoration: 'none'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <DollarSign size={16} color="#F5A623" /> Refer &amp; Earn
+                  </span>
+                  <span style={{ fontSize: '0.72rem', background: '#10B981', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
+                    5,000 XAF
+                  </span>
+                </Link>
                 <Link
                   href="/portal"
                   onClick={closeAll}

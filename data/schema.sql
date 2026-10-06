@@ -196,3 +196,73 @@ CREATE TABLE IF NOT EXISTS `chat_sessions` (
   INDEX `idx_chat_updated` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- Table 12: referral_agents (Referral & Affiliate Agents)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_agents` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `code` VARCHAR(50) NOT NULL UNIQUE,
+  `full_name` VARCHAR(191) NOT NULL,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `momo_name` VARCHAR(100) DEFAULT '',
+  `email` VARCHAR(191) DEFAULT '',
+  `phone` VARCHAR(50) DEFAULT '',
+  `student_id` INT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `commission_per_student` INT DEFAULT 5000,
+  `total_referrals` INT DEFAULT 0,
+  `paid_referrals` INT DEFAULT 0,
+  `total_earned` INT DEFAULT 0,
+  `total_paid` INT DEFAULT 0,
+  `balance` INT DEFAULT 0,
+  `status` VARCHAR(20) DEFAULT 'active',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_ref_code` (`code`),
+  INDEX `idx_ref_momo` (`momo_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 13: referrals (Downline Enrolments)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referrals` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `student_id` INT NOT NULL,
+  `student_name` VARCHAR(191) NOT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `student_email` VARCHAR(191) NOT NULL,
+  `student_phone` VARCHAR(50) DEFAULT '',
+  `program_type` VARCHAR(100) DEFAULT '',
+  `payment_status` VARCHAR(50) DEFAULT 'Pending',
+  `admission_status` VARCHAR(50) DEFAULT 'Under Review',
+  `commission_amount` INT DEFAULT 5000,
+  `commission_status` VARCHAR(20) DEFAULT 'pending',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_referrals_agent` (`agent_id`),
+  INDEX `idx_referrals_code` (`agent_code`),
+  INDEX `idx_referrals_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- Table 14: referral_payouts (Agent Payout Requests & Proof Screenshots)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_payouts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `agent_name` VARCHAR(191) NOT NULL,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `amount` INT NOT NULL,
+  `status` VARCHAR(20) DEFAULT 'pending',
+  `transaction_id` VARCHAR(100) DEFAULT '',
+  `proof_screenshot` LONGTEXT DEFAULT NULL,
+  `admin_notes` TEXT DEFAULT NULL,
+  `requested_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `processed_at` DATETIME DEFAULT NULL,
+  INDEX `idx_payouts_agent` (`agent_id`),
+  INDEX `idx_payouts_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

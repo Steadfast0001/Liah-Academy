@@ -48,6 +48,7 @@ ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_transaction_id` VARCHAR
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_amount` INT DEFAULT 15000;
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `cohort` VARCHAR(50) DEFAULT '2026/2027 Academic Year';
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `qualification` VARCHAR(100) DEFAULT 'GCE Advanced Level / Baccalauréat';
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
 ALTER TABLE `students` MODIFY `document_url` LONGTEXT DEFAULT NULL;
 ALTER TABLE `students` MODIFY `payment_proof_url` LONGTEXT DEFAULT NULL;
 ALTER TABLE `students` MODIFY `payment_status` VARCHAR(50) DEFAULT 'Pending';
@@ -303,7 +304,85 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 13. DATA INTEGRITY & SELF-HEALING REPAIRS
+-- 13. TABLE: referral_agents (Referral Agents, MoMo Payout Details & Performance)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_agents` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `code` VARCHAR(50) NOT NULL UNIQUE,
+  `full_name` VARCHAR(191) NOT NULL,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `momo_name` VARCHAR(100) DEFAULT '',
+  `email` VARCHAR(191) DEFAULT '',
+  `phone` VARCHAR(50) DEFAULT '',
+  `student_id` INT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `commission_per_student` INT DEFAULT 5000,
+  `total_referrals` INT DEFAULT 0,
+  `paid_referrals` INT DEFAULT 0,
+  `total_earned` INT DEFAULT 0,
+  `total_paid` INT DEFAULT 0,
+  `balance` INT DEFAULT 0,
+  `status` VARCHAR(20) DEFAULT 'active',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_ref_code` (`code`),
+  INDEX `idx_ref_momo` (`momo_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 14. TABLE: referrals (Downline Students & Commission Status Ledger)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referrals` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `student_id` INT NOT NULL,
+  `student_name` VARCHAR(191) NOT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `student_email` VARCHAR(191) NOT NULL,
+  `student_phone` VARCHAR(50) DEFAULT '',
+  `program_type` VARCHAR(100) DEFAULT '',
+  `payment_status` VARCHAR(50) DEFAULT 'Pending',
+  `admission_status` VARCHAR(50) DEFAULT 'Under Review',
+  `commission_amount` INT DEFAULT 5000,
+  `commission_status` VARCHAR(20) DEFAULT 'pending',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_referrals_agent` (`agent_id`),
+  INDEX `idx_referrals_code` (`agent_code`),
+  INDEX `idx_referrals_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_matricule` VARCHAR(50) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_email` VARCHAR(191) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_phone` VARCHAR(50) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `admission_status` VARCHAR(50) DEFAULT 'Under Review';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 5000;
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_status` VARCHAR(20) DEFAULT 'pending';
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
+
+-- ----------------------------------------------------------------------------
+-- 15. TABLE: referral_payouts (Agent Payout Requests & Admin Proof Deposit Screenshots)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_payouts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `agent_name` VARCHAR(191) NOT NULL,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `amount` INT NOT NULL,
+  `status` VARCHAR(20) DEFAULT 'pending',
+  `transaction_id` VARCHAR(100) DEFAULT '',
+  `proof_screenshot` LONGTEXT DEFAULT NULL,
+  `admin_notes` TEXT DEFAULT NULL,
+  `requested_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `processed_at` DATETIME DEFAULT NULL,
+  INDEX `idx_payouts_agent` (`agent_id`),
+  INDEX `idx_payouts_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 16. DATA INTEGRITY & SELF-HEALING REPAIRS
 -- ----------------------------------------------------------------------------
 -- Automatically sanitize any historical student records where a document path was stored in admission_status
 UPDATE `students` 

@@ -8,7 +8,8 @@ import {
   LogIn, LogOut, Download, AlertCircle, RefreshCw, Sparkles, Check,
   UploadCloud, FileCheck, Smartphone, Loader2, Copy, Image as ImageIcon,
   Clock, Printer, Building, Mail, MapPin, ArrowRight, ArrowLeft, Lock, Zap,
-  UserPlus, FileText, Trash2, Paperclip, Eye, EyeOff, ExternalLink
+  UserPlus, FileText, Trash2, Paperclip, Eye, EyeOff, ExternalLink,
+  Share2, DollarSign, Award, Users, CheckCircle2
 } from 'lucide-react';
 import { compressImageFile } from '../../lib/imageOptimizer';
 
@@ -196,6 +197,102 @@ function StudentPortalContent() {
   const [shortCodeDialed, setShortCodeDialed] = useState(false);
   const [paymentPhase, setPaymentPhase] = useState<'IDLE' | 'DIALED' | 'CHECKING' | 'CONFIRMED'>('IDLE');
 
+  // Student Referral / Ambassador Program State
+  const [studentRefData, setStudentRefData] = useState<any>(null);
+  const [studentRefLoading, setStudentRefLoading] = useState(false);
+  const [studentRefActivating, setStudentRefActivating] = useState(false);
+  const [studentRefCopiedLink, setStudentRefCopiedLink] = useState(false);
+  const [studentRefPayoutOpen, setStudentRefPayoutOpen] = useState(false);
+  const [studentRefPayoutAmount, setStudentRefPayoutAmount] = useState('');
+  const [studentRefPayoutMoMo, setStudentRefPayoutMoMo] = useState('');
+  const [studentRefPayoutLoading, setStudentRefPayoutLoading] = useState(false);
+  const [studentRefPayoutMsg, setStudentRefPayoutMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [studentRefProofModal, setStudentRefProofModal] = useState<string | null>(null);
+
+  const loadStudentReferral = async (studId: number, studPhone?: string) => {
+    setStudentRefLoading(true);
+    try {
+      const res = await fetch(`/api/referrals/stats?student_id=${studId}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setStudentRefData(data.data);
+        setStudentRefPayoutMoMo(data.data.agent?.momo_number || studPhone || '');
+      } else {
+        setStudentRefData(null);
+      }
+    } catch {
+      setStudentRefData(null);
+    } finally {
+      setStudentRefLoading(false);
+    }
+  };
+
+  const handleActivateStudentReferral = async () => {
+    if (!student) return;
+    setStudentRefActivating(true);
+    try {
+      const res = await fetch('/api/referrals/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: student.id,
+          student_matricule: student.matricule || `LA26-${String(student.id || '001').padStart(4, '0')}`,
+          name: student.full_name,
+          momo_number: student.phone,
+          email: student.email
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadStudentReferral(student.id, student.phone);
+      }
+    } catch (err) {
+      console.error('Error activating referral:', err);
+    } finally {
+      setStudentRefActivating(false);
+    }
+  };
+
+  const handleStudentPayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentRefData?.agent) return;
+    const amt = Number(studentRefPayoutAmount);
+    if (!amt || amt < 2000) {
+      setStudentRefPayoutMsg({ type: 'error', text: 'Minimum withdrawal amount is 2,000 XAF.' });
+      return;
+    }
+    if (amt > studentRefData.agent.balance) {
+      setStudentRefPayoutMsg({ type: 'error', text: `Amount exceeds available balance of ${studentRefData.agent.balance.toLocaleString()} XAF.` });
+      return;
+    }
+
+    setStudentRefPayoutLoading(true);
+    setStudentRefPayoutMsg(null);
+    try {
+      const res = await fetch('/api/referrals/payout-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_code: studentRefData.agent.code,
+          amount: amt,
+          momo_number: studentRefPayoutMoMo.trim() || studentRefData.agent.momo_number
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStudentRefPayoutMsg({ type: 'success', text: 'Withdrawal request submitted! Admin will deposit to your MoMo and upload confirmation proof.' });
+        setStudentRefPayoutAmount('');
+        await loadStudentReferral(student.id, student.phone);
+      } else {
+        setStudentRefPayoutMsg({ type: 'error', text: data.message || 'Failed to submit withdrawal request.' });
+      }
+    } catch {
+      setStudentRefPayoutMsg({ type: 'error', text: 'Network error submitting payout request.' });
+    } finally {
+      setStudentRefPayoutLoading(false);
+    }
+  };
+
   // Keep the current UI state authoritative. Do not hydrate from old saved session/draft data
   // after a refresh, otherwise stale values overwrite the latest user change.
   useEffect(() => {
@@ -234,6 +331,12 @@ function StudentPortalContent() {
       .catch(() => {})
       .finally(() => setIsClientReady(true));
   }, [tabParam, degreeParam, programParam]);
+
+  useEffect(() => {
+    if (student?.id) {
+      loadStudentReferral(student.id, student.phone);
+    }
+  }, [student?.id]);
 
   // Keep Program synced when Degree Category changes
   const handleDegreeChange = (newDeg: 'HND' | 'ND' | 'Certification') => {
@@ -588,6 +691,18 @@ function StudentPortalContent() {
       }));
 
       const regFee = getApplicationFee(degreeType);
+      
+      let detectedRef = searchParams.get('ref') || searchParams.get('referral') || '';
+      if (!detectedRef && typeof window !== 'undefined') {
+        try {
+          detectedRef = localStorage.getItem('liah_ref') || '';
+          if (!detectedRef) {
+            const m = document.cookie.match(/(?:^|; )liah_ref=([^;]*)/);
+            if (m) detectedRef = decodeURIComponent(m[1]);
+          }
+        } catch {}
+      }
+
       const res = await fetch('/api/admissions/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -604,7 +719,8 @@ function StudentPortalContent() {
           documents: docsList,
           payment_proof_url: regPaymentProofUrl || '',
           payment_amount: regPaymentProofUrl ? regFee : 0,
-          payment_transaction_id: regPaymentTxId || ''
+          payment_transaction_id: regPaymentTxId || '',
+          ref: detectedRef ? detectedRef.trim().toUpperCase() : undefined
         })
       });
 
@@ -1301,6 +1417,307 @@ function StudentPortalContent() {
                 </form>
               </div>
             )}
+
+            {/* =========================================================
+                STUDENT REFERRAL & AMBASSADOR PROGRAM (REFER & EARN)
+                ========================================================= */}
+            <div style={{
+              marginBottom: '36px',
+              background: '#FFFFFF',
+              padding: '24px',
+              borderRadius: '12px',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 16px rgba(8, 31, 62, 0.04)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(245, 166, 35, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Award size={18} color="#D97706" />
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#081F3E', margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                      Student Ambassador Program (Refer &amp; Earn)
+                    </h4>
+                    <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
+                      Earn <strong>5,000 XAF</strong> paid to your MoMo for every student who enrolls using your link
+                    </span>
+                  </div>
+                </div>
+                {studentRefData?.agent && (
+                  <span style={{ fontSize: '0.76rem', background: '#ECFDF5', color: '#059669', padding: '3px 10px', borderRadius: '20px', fontWeight: 800 }}>
+                    ● Code Active: {studentRefData.agent.code}
+                  </span>
+                )}
+              </div>
+
+              {!studentRefData?.agent ? (
+                <div style={{
+                  background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                  padding: '20px',
+                  borderRadius: '10px',
+                  border: '1px dashed #CBD5E1',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ margin: '0 0 14px 0', fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
+                    As an official student of Liah Academy, you can earn real cash by inviting friends, classmates, and family to join our programs. When they apply using your link, their <strong>Name and Matricule</strong> are bound to your account and <strong>5,000 XAF</strong> is deposited to your MoMo upon enrolment.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleActivateStudentReferral}
+                    disabled={studentRefActivating}
+                    style={{
+                      background: '#081F3E',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 24px',
+                      fontSize: '0.9rem',
+                      fontWeight: 800,
+                      cursor: studentRefActivating ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(8, 31, 62, 0.15)'
+                    }}
+                  >
+                    <DollarSign size={16} color="#F5A623" />
+                    <span>{studentRefActivating ? 'Activating Referral...' : 'Activate My Referral Link (1-Click)'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  {/* Referral Link & Share Box */}
+                  <div style={{
+                    background: '#F8FAFC',
+                    padding: '16px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    marginBottom: '16px'
+                  }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#081F3E', display: 'block', marginBottom: '8px' }}>
+                      🔗 Your Unique Referral Link:
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{
+                        flex: 1,
+                        minWidth: '220px',
+                        background: '#FFFFFF',
+                        border: '1px solid #CBD5E1',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        fontFamily: 'monospace',
+                        fontSize: '0.82rem',
+                        color: '#081F3E',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {typeof window !== 'undefined' ? `${window.location.origin}/portal?tab=enrol&ref=${studentRefData.agent.code}` : `https://liahacademy.org/portal?tab=enrol&ref=${studentRefData.agent.code}`}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}/portal?tab=enrol&ref=${studentRefData.agent.code}`;
+                          navigator.clipboard.writeText(url);
+                          setStudentRefCopiedLink(true);
+                          setTimeout(() => setStudentRefCopiedLink(false), 2500);
+                        }}
+                        style={{
+                          background: studentRefCopiedLink ? '#10B981' : '#081F3E',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 14px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        {studentRefCopiedLink ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{studentRefCopiedLink ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(`Hey! Check out Liah Academy in Buea for top Software Engineering & IT diplomas. Apply using my referral link here: ${typeof window !== 'undefined' ? window.location.origin : 'https://liahacademy.org'}/portal?tab=enrol&ref=${studentRefData.agent.code}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: '#25D366',
+                          color: '#FFFFFF',
+                          borderRadius: '6px',
+                          padding: '8px 14px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Smartphone size={14} /> Share
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* 3 Metric Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ background: '#F8FAFC', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <span style={{ fontSize: '0.76rem', color: '#64748B', display: 'block' }}>Students Referred</span>
+                      <strong style={{ fontSize: '1.3rem', color: '#081F3E', fontWeight: 800 }}>
+                        {studentRefData.summary?.total_referrals ?? (studentRefData.downline?.length || 0)}
+                      </strong>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <span style={{ fontSize: '0.76rem', color: '#64748B', display: 'block' }}>Enrolled &amp; Paid</span>
+                      <strong style={{ fontSize: '1.3rem', color: '#10B981', fontWeight: 800 }}>
+                        {studentRefData.summary?.paid_referrals ?? 0}
+                      </strong>
+                    </div>
+
+                    <div style={{ background: '#F0FDF4', padding: '12px 16px', borderRadius: '8px', border: '1px solid #BBF7D0' }}>
+                      <span style={{ fontSize: '0.76rem', color: '#166534', display: 'block' }}>Available MoMo Balance</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '1.3rem', color: '#166534', fontWeight: 800 }}>
+                          {(studentRefData.agent?.balance || 0).toLocaleString()} XAF
+                        </strong>
+                        <button
+                          type="button"
+                          onClick={() => setStudentRefPayoutOpen(true)}
+                          disabled={(studentRefData.agent?.balance || 0) < 2000}
+                          style={{
+                            background: (studentRefData.agent?.balance || 0) >= 2000 ? '#10B981' : '#94A3B8',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '4px 10px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: (studentRefData.agent?.balance || 0) >= 2000 ? 'pointer' : 'not-allowed'
+                          }}
+                        >
+                          Withdraw
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Downline Table */}
+                  <div style={{ marginTop: '16px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#081F3E', display: 'block', marginBottom: '8px' }}>
+                      👥 Your Referred Applicants ({studentRefData.downline?.length || 0}):
+                    </span>
+                    {(!studentRefData.downline || studentRefData.downline.length === 0) ? (
+                      <p style={{ margin: 0, fontSize: '0.82rem', color: '#94A3B8', fontStyle: 'italic' }}>
+                        No applicants yet. Share your referral link with prospective students to start earning!
+                      </p>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ background: '#F1F5F9', color: '#64748B', textAlign: 'left' }}>
+                              <th style={{ padding: '8px 10px', borderRadius: '6px 0 0 6px' }}>Student Name</th>
+                              <th style={{ padding: '8px 10px' }}>Matricule</th>
+                              <th style={{ padding: '8px 10px' }}>Program</th>
+                              <th style={{ padding: '8px 10px' }}>Status</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', borderRadius: '0 6px 6px 0' }}>Commission</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {studentRefData.downline.map((d: any, idx: number) => {
+                              const isPaid = (d.payment_status || '').toLowerCase().includes('paid');
+                              return (
+                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                  <td style={{ padding: '8px 10px', fontWeight: 700, color: '#081F3E' }}>{d.student_name}</td>
+                                  <td style={{ padding: '8px 10px', fontFamily: 'monospace', color: '#0284C7', fontWeight: 700 }}>{d.student_matricule || 'In Review'}</td>
+                                  <td style={{ padding: '8px 10px', color: '#64748B' }}>{d.program_type}</td>
+                                  <td style={{ padding: '8px 10px' }}>
+                                    <span style={{
+                                      fontSize: '0.72rem',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      fontWeight: 700,
+                                      background: isPaid ? '#ECFDF5' : '#FEF3C7',
+                                      color: isPaid ? '#059669' : '#B45309'
+                                    }}>
+                                      {isPaid ? '✓ Paid' : '⏳ Pending'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
+                                    {isPaid ? `${(d.commission_earned || 5000).toLocaleString()} XAF` : '5,000 XAF'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Payout Receipts / Proofs */}
+                  {studentRefData.payouts && studentRefData.payouts.length > 0 && (
+                    <div style={{ marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#081F3E', display: 'block', marginBottom: '8px' }}>
+                        💳 Your MoMo Withdrawal History:
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {studentRefData.payouts.map((p: any, idx: number) => (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            background: '#F8FAFC',
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            flexWrap: 'wrap',
+                            gap: '6px'
+                          }}>
+                            <div>
+                              <strong>{p.amount.toLocaleString()} XAF</strong> to {p.momo_number}
+                              <span style={{ color: '#94A3B8', marginLeft: '6px' }}>({new Date(p.created_at).toLocaleDateString()})</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                background: p.status === 'completed' ? '#ECFDF5' : '#EFF6FF',
+                                color: p.status === 'completed' ? '#059669' : '#1D4ED8'
+                              }}>
+                                {p.status === 'completed' ? '✓ Paid & Deposited' : '⏳ Pending Admin Deposit'}
+                              </span>
+                              {p.proof_screenshot && (
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentRefProofModal(p.proof_screenshot)}
+                                  style={{
+                                    background: '#EFF6FF',
+                                    color: '#0284C7',
+                                    border: '1px solid #BAE6FD',
+                                    borderRadius: '4px',
+                                    padding: '2px 8px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  View Deposit Proof
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
@@ -2417,6 +2834,238 @@ function StudentPortalContent() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            MODAL: STUDENT REFERRAL WITHDRAWAL REQUEST
+            ======================================================== */}
+        {studentRefPayoutOpen && studentRefData?.agent && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(8, 31, 62, 0.75)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.25rem', fontWeight: 800 }}>
+                  Withdraw Ambassador Commission
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setStudentRefPayoutOpen(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748B' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '0 0 16px 0' }}>
+                Available Balance: <strong style={{ color: '#10B981', fontSize: '1.1rem' }}>{studentRefData.agent.balance.toLocaleString()} XAF</strong>
+              </p>
+
+              {studentRefPayoutMsg && (
+                <div style={{
+                  background: studentRefPayoutMsg.type === 'error' ? '#FEF2F2' : '#ECFDF5',
+                  color: studentRefPayoutMsg.type === 'error' ? '#DC2626' : '#065F46',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  fontSize: '0.84rem',
+                  marginBottom: '14px'
+                }}>
+                  {studentRefPayoutMsg.text}
+                </div>
+              )}
+
+              <form onSubmit={handleStudentPayoutSubmit}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    Withdrawal Amount (XAF) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={2000}
+                    max={studentRefData.agent.balance}
+                    step={1000}
+                    placeholder={`Min 2,000 up to ${studentRefData.agent.balance}`}
+                    value={studentRefPayoutAmount}
+                    onChange={(e) => setStudentRefPayoutAmount(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.92rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    Confirm MoMo Number for Deposit *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={studentRefPayoutMoMo}
+                    onChange={(e) => setStudentRefPayoutMoMo(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.92rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                    Admin will deposit via MoMo and upload the screenshot receipt.
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setStudentRefPayoutOpen(false)}
+                    style={{
+                      flex: 1,
+                      background: '#F1F5F9',
+                      color: '#475569',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={studentRefPayoutLoading}
+                    style={{
+                      flex: 2,
+                      background: '#10B981',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      fontWeight: 800,
+                      cursor: studentRefPayoutLoading ? 'wait' : 'pointer'
+                    }}
+                  >
+                    {studentRefPayoutLoading ? 'Submitting...' : 'Confirm Withdrawal'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            MODAL: VIEW MOMO DEPOSIT PROOF IN PORTAL
+            ======================================================== */}
+        {studentRefProofModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(8, 31, 62, 0.85)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '24px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h4 style={{ margin: 0, color: '#081F3E', fontSize: '1.15rem', fontWeight: 800 }}>
+                  Official MoMo Deposit Proof
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setStudentRefProofModal(null)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748B' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', textAlign: 'center', background: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
+                <img
+                  src={studentRefProofModal}
+                  alt="MoMo Deposit Proof"
+                  style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '8px' }}
+                />
+              </div>
+
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <a
+                  href={studentRefProofModal}
+                  download="liah_momo_deposit_proof"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#081F3E',
+                    color: '#FFFFFF',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Download size={15} /> Download Proof
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setStudentRefProofModal(null)}
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#475569',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

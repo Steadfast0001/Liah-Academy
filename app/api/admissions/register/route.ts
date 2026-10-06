@@ -28,7 +28,8 @@ export async function POST(request: Request) {
     const degree_type = sanitizeInput(body.degree_type) || 'HND';
     const program_type = sanitizeInput(body.program_type) || 'Software Engineering HND';
     const study_format = sanitizeInput(body.study_format) || 'oncampus';
-    const { document_url, documents, payment_proof_url, payment_amount, payment_transaction_id } = body;
+    const { document_url, documents, payment_proof_url, payment_amount, payment_transaction_id, ref, referral_code } = body;
+    const refCode = (ref || referral_code) ? sanitizeInput(String(ref || referral_code)).toUpperCase().trim() : '';
 
     const containsEmbeddedFile = (value: unknown, fieldName = ''): boolean => {
       if (typeof value === 'string') {
@@ -107,11 +108,11 @@ export async function POST(request: Request) {
         await ensureMySQLTables();
         const pool = getMySQLPool();
         const [result] = await pool.execute(
-          `INSERT INTO students (full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, admission_status, payment_proof_url, payment_amount, payment_transaction_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, ?, ?)`,
+          `INSERT INTO students (full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, admission_status, payment_proof_url, payment_amount, payment_transaction_id, referred_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, ?, ?, ?)`,
           [
             fullname, email, hashedPassword, phone, degree_type, program_type, study_format, docPayload, documentsPayload,
-            initialPaymentStatus, cleanProofUrl || null, cleanProofUrl ? effectiveFee : 0, cleanTxId
+            initialPaymentStatus, cleanProofUrl || null, cleanProofUrl ? effectiveFee : 0, cleanTxId, refCode || null
           ]
         );
         studentId = Number((result as { insertId: number }).insertId);
@@ -126,6 +127,56 @@ export async function POST(request: Request) {
              VALUES (?, ?, ?, 'XAF', 'MTN Mobile Money', ?, 'PENDING_VERIFICATION', ?, ?, ?, NOW())`,
             [payRef, studentId, effectiveFee, phone, `Enrolment Application Fee for #${studentId}`, cleanProofUrl, cleanTxId]
           ).catch(payErr => console.warn('Payment record insert notice:', payErr));
+        }
+
+        // Record downline referral directly in MySQL and local store
+        if (refCode) {
+          try {
+            const [agentRows] = await pool.execute(
+              'SELECT id, code, commission_per_student, total_referrals, paid_referrals, total_earned, balance FROM referral_agents WHERE UPPER(code) = ?',
+              [refCode.toUpperCase()]
+            );
+            if (Array.isArray(agentRows) && agentRows.length > 0) {
+              const dbAgent = (agentRows as any[])[0];
+              const comm = Number(dbAgent.commission_per_student || 5000);
+              const isPaid = (initialPaymentStatus || '').toLowerCase().includes('paid');
+
+              await pool.execute(
+                `INSERT INTO referrals (agent_id, agent_code, student_id, student_name, student_matricule, student_email, student_phone, program_type, payment_status, admission_status, commission_amount, commission_status, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, ?, NOW(), NOW())`,
+                [
+                  dbAgent.id, dbAgent.code, studentId, fullname, mysqlMatricule, email, phone, program_type,
+                  initialPaymentStatus, comm, isPaid ? 'approved' : 'pending'
+                ]
+              );
+
+              if (isPaid) {
+                await pool.execute(
+                  `UPDATE referral_agents SET total_referrals = total_referrals + 1, paid_referrals = paid_referrals + 1, total_earned = total_earned + ?, balance = balance + ?, updated_at = NOW() WHERE id = ?`,
+                  [comm, comm, dbAgent.id]
+                );
+              } else {
+                await pool.execute(
+                  `UPDATE referral_agents SET total_referrals = total_referrals + 1, updated_at = NOW() WHERE id = ?`,
+                  [dbAgent.id]
+                );
+              }
+            }
+
+            adminStore.recordReferral({
+              agent_code: refCode,
+              student_id: studentId,
+              student_name: fullname,
+              student_matricule: mysqlMatricule,
+              student_email: email,
+              student_phone: phone,
+              program_type,
+              payment_status: initialPaymentStatus,
+              admission_status: 'Under Review'
+            });
+          } catch (refErr) {
+            console.warn('Referral recording notice:', refErr);
+          }
         }
 
         insertedViaMySQL = true;
@@ -157,12 +208,12 @@ export async function POST(request: Request) {
       }
 
       const insert = db.prepare(`
-        INSERT INTO students (full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, admission_status, payment_proof_url, payment_amount, payment_transaction_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO students (full_name, email, password, phone, degree_type, program_type, study_format, document_url, documents, payment_status, admission_status, payment_proof_url, payment_amount, payment_transaction_id, referred_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       const result = insert.run(
         fullname, email, hashedPassword, phone, degree_type, program_type, study_format, docPayload, documentsPayload,
-        initialPaymentStatus, 'Under Review', cleanProofUrl, cleanProofUrl ? effectiveFee : 0, cleanTxId
+        initialPaymentStatus, 'Under Review', cleanProofUrl, cleanProofUrl ? effectiveFee : 0, cleanTxId, refCode || null
       );
       studentId = Number((result as any)?.lastInsertRowid || Date.now());
 
@@ -179,6 +230,26 @@ export async function POST(request: Request) {
           });
         } catch (payErr) {
           console.warn('Local payment proof record notice:', payErr);
+        }
+      }
+
+      if (refCode) {
+        try {
+          const year = String(new Date().getFullYear()).slice(-2);
+          const fallbackMatricule = `${getDegreePrefix(degree_type)}${year}${getProgramCode(program_type)}${String(studentId).padStart(3, '0')}`;
+          adminStore.recordReferral({
+            agent_code: refCode,
+            student_id: studentId,
+            student_name: fullname,
+            student_matricule: fallbackMatricule,
+            student_email: email,
+            student_phone: phone,
+            program_type,
+            payment_status: initialPaymentStatus,
+            admission_status: 'Under Review'
+          });
+        } catch (refErr) {
+          console.warn('Fallback referral recording notice:', refErr);
         }
       }
     }

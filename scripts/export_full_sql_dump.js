@@ -173,6 +173,26 @@ async function main() {
   const settings = store.settings || {};
   console.log(`⚙️  Institutional settings loaded`);
 
+  // 11. RECONCILE REFERRAL AGENTS
+  const agentsMap = new Map();
+  for (const a of (store.referral_agents || [])) agentsMap.set(a.code, a);
+  if (mysqlConn) {
+    try {
+      const [dbAgents] = await mysqlConn.query('SELECT * FROM referral_agents');
+      for (const a of dbAgents) agentsMap.set(a.code, { ...agentsMap.get(a.code), ...a });
+    } catch {}
+  }
+  const mergedAgents = Array.from(agentsMap.values());
+  console.log(`🤝 Referral agents reconciled: ${mergedAgents.length} records`);
+
+  // 12. RECONCILE REFERRALS (DOWNLINES)
+  const referrals = store.referrals || [];
+  console.log(`👥 Downlines reconciled: ${referrals.length} records`);
+
+  // 13. RECONCILE REFERRAL PAYOUTS
+  const payouts = store.referral_payouts || [];
+  console.log(`💸 Payout requests reconciled: ${payouts.length} records`);
+
   // Close MySQL
   if (mysqlConn) await mysqlConn.end();
 
@@ -668,9 +688,170 @@ CREATE TABLE IF NOT EXISTS \`rate_limits\` (
   \`reset_at\` BIGINT NOT NULL,
   INDEX \`idx_rate_limits_reset\` (\`reset_at\`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
 
+  // ----------------------------------------------------------------------------
+  // 13. TABLE: referral_agents
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 13. TABLE: referral_agents (Affiliates, Student Ambassadors & MoMo Payout Profiles)
 -- ----------------------------------------------------------------------------
--- 13. DATA SANITIZATION & SELF-HEALING REPAIRS
+CREATE TABLE IF NOT EXISTS \`referral_agents\` (
+  \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+  \`full_name\` VARCHAR(191) NOT NULL,
+  \`code\` VARCHAR(50) NOT NULL UNIQUE,
+  \`momo_number\` VARCHAR(50) NOT NULL,
+  \`momo_name\` VARCHAR(191) DEFAULT '',
+  \`email\` VARCHAR(191) DEFAULT '',
+  \`student_id\` INT NULL,
+  \`student_matricule\` VARCHAR(50) DEFAULT '',
+  \`status\` ENUM('active', 'suspended') DEFAULT 'active',
+  \`commission_per_student\` INT DEFAULT 5000,
+  \`total_referrals\` INT DEFAULT 0,
+  \`paid_referrals\` INT DEFAULT 0,
+  \`total_earned\` INT DEFAULT 0,
+  \`total_paid\` INT DEFAULT 0,
+  \`balance\` INT DEFAULT 0,
+  \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX \`idx_agent_code\` (\`code\`),
+  INDEX \`idx_agent_momo\` (\`momo_number\`),
+  INDEX \`idx_agent_student\` (\`student_id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`referred_by\` VARCHAR(50) DEFAULT NULL;
+
+`;
+  sql += `-- DATA: ${mergedAgents.length} Referral Agents\n`;
+  for (const a of mergedAgents) {
+    const id = a.id && !isNaN(Number(a.id)) ? Number(a.id) : 'NULL';
+    const fullName = escapeSqlString(a.full_name);
+    const code = escapeSqlString(a.code);
+    const momoNumber = escapeSqlString(a.momo_number);
+    const momoName = escapeSqlString(a.momo_name || '');
+    const email = escapeSqlString(a.email || '');
+    const studentId = a.student_id ? Number(a.student_id) : 'NULL';
+    const studentMatricule = escapeSqlString(a.student_matricule || '');
+    const status = escapeSqlString(a.status || 'active');
+    const comm = a.commission_per_student || 5000;
+    const totalRef = a.total_referrals || 0;
+    const paidRef = a.paid_referrals || 0;
+    const totalEarned = a.total_earned || 0;
+    const totalPaid = a.total_paid || 0;
+    const balance = a.balance || 0;
+    const createdAt = escapeSqlString(a.created_at || new Date());
+
+    sql += `INSERT IGNORE INTO \`referral_agents\` (\`id\`, \`full_name\`, \`code\`, \`momo_number\`, \`momo_name\`, \`email\`, \`student_id\`, \`student_matricule\`, \`status\`, \`commission_per_student\`, \`total_referrals\`, \`paid_referrals\`, \`total_earned\`, \`total_paid\`, \`balance\`, \`created_at\`)
+VALUES (${id}, ${fullName}, ${code}, ${momoNumber}, ${momoName}, ${email}, ${studentId}, ${studentMatricule}, ${status}, ${comm}, ${totalRef}, ${paidRef}, ${totalEarned}, ${totalPaid}, ${balance}, ${createdAt});\n`;
+  }
+
+  // ----------------------------------------------------------------------------
+  // 14. TABLE: referrals (Downlines)
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 14. TABLE: referrals (Applicant Downlines & Commission Log)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS \`referrals\` (
+  \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+  \`agent_id\` INT NOT NULL,
+  \`agent_code\` VARCHAR(50) NOT NULL,
+  \`student_id\` INT NOT NULL,
+  \`student_name\` VARCHAR(191) NOT NULL,
+  \`student_matricule\` VARCHAR(50) DEFAULT '',
+  \`student_email\` VARCHAR(191) DEFAULT '',
+  \`student_phone\` VARCHAR(50) DEFAULT '',
+  \`program_type\` VARCHAR(191) DEFAULT '',
+  \`degree_type\` VARCHAR(50) DEFAULT 'HND',
+  \`payment_status\` VARCHAR(50) DEFAULT 'Pending',
+  \`admission_status\` VARCHAR(50) DEFAULT 'Under Review',
+  \`commission_amount\` INT DEFAULT 5000,
+  \`commission_status\` VARCHAR(20) DEFAULT 'pending',
+  \`commission_earned\` INT DEFAULT 5000,
+  \`status\` VARCHAR(20) DEFAULT 'pending',
+  \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  \`updated_at\` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX \`idx_referrals_agent\` (\`agent_id\`),
+  INDEX \`idx_referrals_code\` (\`agent_code\`),
+  INDEX \`idx_referrals_student\` (\`student_id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_matricule\` VARCHAR(50) DEFAULT '';
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_email\` VARCHAR(191) DEFAULT '';
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`student_phone\` VARCHAR(50) DEFAULT '';
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`admission_status\` VARCHAR(50) DEFAULT 'Under Review';
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_amount\` INT DEFAULT 5000;
+ALTER TABLE \`referrals\` ADD COLUMN IF NOT EXISTS \`commission_status\` VARCHAR(20) DEFAULT 'pending';
+
+`;
+  sql += `-- DATA: ${referrals.length} Referral Downlines\n`;
+  for (const r of referrals) {
+    const id = r.id && !isNaN(Number(r.id)) ? Number(r.id) : 'NULL';
+    const agentId = Number(r.agent_id);
+    const agentCode = escapeSqlString(r.agent_code);
+    const studentId = Number(r.student_id);
+    const studentName = escapeSqlString(r.student_name);
+    const studentMatricule = escapeSqlString(r.student_matricule || '');
+    const studentEmail = escapeSqlString(r.student_email || '');
+    const studentPhone = escapeSqlString(r.student_phone || '');
+    const programType = escapeSqlString(r.program_type || '');
+    const degreeType = escapeSqlString(r.degree_type || 'HND');
+    const paymentStatus = escapeSqlString(r.payment_status || 'Pending');
+    const admissionStatus = escapeSqlString(r.admission_status || 'Under Review');
+    const commAmount = Number(r.commission_amount || r.commission_earned || 5000);
+    const commStatus = escapeSqlString(r.commission_status || r.status || 'pending');
+    const createdAt = escapeSqlString(r.created_at || new Date());
+
+    sql += `INSERT IGNORE INTO \`referrals\` (\`id\`, \`agent_id\`, \`agent_code\`, \`student_id\`, \`student_name\`, \`student_matricule\`, \`student_email\`, \`student_phone\`, \`program_type\`, \`degree_type\`, \`payment_status\`, \`admission_status\`, \`commission_amount\`, \`commission_status\`, \`commission_earned\`, \`status\`, \`created_at\`)
+VALUES (${id}, ${agentId}, ${agentCode}, ${studentId}, ${studentName}, ${studentMatricule}, ${studentEmail}, ${studentPhone}, ${programType}, ${degreeType}, ${paymentStatus}, ${admissionStatus}, ${commAmount}, ${commStatus}, ${commAmount}, ${commStatus}, ${createdAt});\n`;
+  }
+
+  // ----------------------------------------------------------------------------
+  // 15. TABLE: referral_payouts
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 15. TABLE: referral_payouts (Withdrawal Ledger, Proof Screenshots & Tx Refs)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS \`referral_payouts\` (
+  \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+  \`agent_id\` INT NOT NULL,
+  \`agent_code\` VARCHAR(50) NOT NULL,
+  \`agent_name\` VARCHAR(191) NOT NULL,
+  \`momo_number\` VARCHAR(50) NOT NULL,
+  \`amount\` INT NOT NULL,
+  \`status\` ENUM('pending', 'completed', 'rejected') DEFAULT 'pending',
+  \`transaction_id\` VARCHAR(100) DEFAULT '',
+  \`proof_screenshot\` LONGTEXT DEFAULT NULL,
+  \`admin_notes\` TEXT DEFAULT NULL,
+  \`processed_at\` DATETIME NULL,
+  \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX \`idx_payouts_agent\` (\`agent_id\`),
+  INDEX \`idx_payouts_status\` (\`status\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+`;
+  sql += `-- DATA: ${payouts.length} Referral Payout Requests\n`;
+  for (const p of payouts) {
+    const id = p.id && !isNaN(Number(p.id)) ? Number(p.id) : 'NULL';
+    const agentId = Number(p.agent_id);
+    const agentCode = escapeSqlString(p.agent_code);
+    const agentName = escapeSqlString(p.agent_name);
+    const momoNumber = escapeSqlString(p.momo_number);
+    const amount = Number(p.amount);
+    const status = escapeSqlString(p.status || 'pending');
+    const txId = escapeSqlString(p.transaction_id || '');
+    const proof = escapeSqlString(p.proof_screenshot || null);
+    const notes = escapeSqlString(p.admin_notes || null);
+    const processedAt = escapeSqlString(p.processed_at || null);
+    const createdAt = escapeSqlString(p.created_at || new Date());
+
+    sql += `INSERT IGNORE INTO \`referral_payouts\` (\`id\`, \`agent_id\`, \`agent_code\`, \`agent_name\`, \`momo_number\`, \`amount\`, \`status\`, \`transaction_id\`, \`proof_screenshot\`, \`admin_notes\`, \`processed_at\`, \`created_at\`)
+VALUES (${id}, ${agentId}, ${agentCode}, ${agentName}, ${momoNumber}, ${amount}, ${status}, ${txId}, ${proof}, ${notes}, ${processedAt}, ${createdAt});\n`;
+  }
+
+  // ----------------------------------------------------------------------------
+  // 16. DATA SANITIZATION & SELF-HEALING REPAIRS
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 16. DATA SANITIZATION & SELF-HEALING REPAIRS
 -- ----------------------------------------------------------------------------
 UPDATE \`students\` 
 SET 

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
-export const PRIVATE_FILE_CATEGORIES = ['student-documents', 'payment-proofs'] as const;
+export const PRIVATE_FILE_CATEGORIES = ['student-documents', 'payment-proofs', 'payout-proofs'] as const;
 export type PrivateFileCategory = typeof PRIVATE_FILE_CATEGORIES[number];
 
 const MAX_SIGNED_URL_TTL_SECONDS = 15 * 60;
@@ -35,7 +35,7 @@ function getSigningSecret(): string {
 }
 
 function parseReference(reference: string): { category: PrivateFileCategory; fileName: string } | null {
-  const match = /^private-file:\/\/(student-documents|payment-proofs)\/([a-f0-9-]{36}\.[a-z0-9]{1,8})$/i.exec(reference);
+  const match = /^private-file:\/\/(student-documents|payment-proofs|payout-proofs)\/([a-f0-9-]{36}\.[a-z0-9]{1,8})$/i.exec(reference);
   if (!match || !FILE_NAME_PATTERN.test(match[2])) return null;
   return { category: match[1] as PrivateFileCategory, fileName: match[2] };
 }

@@ -59,6 +59,7 @@ export default function Footer() {
             <h3 className="york-footer-heading">Admissions</h3>
             <ul className="york-footer-list">
               <li><Link href="/portal?tab=enrol">Apply Now</Link></li>
+              <li><Link href="/refer" style={{ color: '#F5A623', fontWeight: 700 }}>Refer &amp; Earn (5K XAF)</Link></li>
               <li><Link href="/portal">Student Portal</Link></li>
               <li><Link href="/admissions">Fees</Link></li>
               <li><Link href="/admissions#requirements">Requirements</Link></li>

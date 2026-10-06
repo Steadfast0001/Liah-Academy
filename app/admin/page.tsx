@@ -9,11 +9,61 @@ import {
   Settings, RefreshCw, Eye, Plus, ArrowRight, Shield, 
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronLeft, ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
-  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2
+  Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2,
+  DollarSign, Award, Share2, UploadCloud
 } from 'lucide-react';
 
 import { exportApplicantsToCSVString } from '../../lib/csv';
 import { compressImageFile } from '@/lib/imageOptimizer';
+
+interface AdminReferralAgent {
+  id: number;
+  full_name: string;
+  code: string;
+  momo_number: string;
+  momo_name?: string;
+  email?: string;
+  student_id?: number | null;
+  student_matricule?: string;
+  status: 'active' | 'suspended';
+  commission_per_student: number;
+  total_referrals: number;
+  paid_referrals: number;
+  total_earned: number;
+  total_paid: number;
+  balance: number;
+  created_at: string;
+}
+
+interface AdminReferralItem {
+  id: number;
+  agent_id: number;
+  agent_code: string;
+  student_id: number;
+  student_name: string;
+  student_matricule: string;
+  program_type: string;
+  degree_type: string;
+  commission_earned: number;
+  status: 'pending' | 'approved' | 'rejected';
+  payment_status: string;
+  created_at: string;
+}
+
+interface AdminReferralPayout {
+  id: number;
+  agent_id: number;
+  agent_code: string;
+  agent_name: string;
+  momo_number: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'rejected';
+  created_at: string;
+  processed_at?: string;
+  transaction_id?: string;
+  proof_screenshot?: string;
+  admin_notes?: string;
+}
 
 interface Application {
   id: number;
@@ -109,7 +159,7 @@ interface LiveChatSession {
 }
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'chat' | 'media' | 'courses' | 'news' | 'settings' | 'admins'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'chat' | 'media' | 'courses' | 'news' | 'settings' | 'admins' | 'referrals'>('overview');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [updatingAppId, setUpdatingAppId] = useState<number | null>(null);
@@ -125,6 +175,30 @@ export default function AdminDashboardPage() {
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+
+  // Referral Management States
+  const [referralStats, setReferralStats] = useState<{
+    total_agents: number;
+    total_referrals: number;
+    paid_referrals: number;
+    total_earned: number;
+    total_paid_out: number;
+    pending_payouts_count: number;
+    pending_payouts_amount: number;
+  } | null>(null);
+  const [referralAgents, setReferralAgents] = useState<AdminReferralAgent[]>([]);
+  const [referralList, setReferralList] = useState<AdminReferralItem[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<AdminReferralPayout[]>([]);
+  const [selectedAgentForDownline, setSelectedAgentForDownline] = useState<AdminReferralAgent | null>(null);
+  const [payoutModalItem, setPayoutModalItem] = useState<AdminReferralPayout | null>(null);
+  const [payoutModalTxId, setPayoutModalTxId] = useState('');
+  const [payoutModalNotes, setPayoutModalNotes] = useState('');
+  const [payoutProofFile, setPayoutProofFile] = useState<File | null>(null);
+  const [payoutProofPreview, setPayoutProofPreview] = useState<string | null>(null);
+  const [payoutProcessSubmitting, setPayoutProcessSubmitting] = useState(false);
+  const [referralSearch, setReferralSearch] = useState('');
+  const [payoutFilter, setPayoutFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [viewingAdminProofUrl, setViewingAdminProofUrl] = useState<string | null>(null);
 
   // Live Chat Management States
   const [chatSessions, setChatSessions] = useState<LiveChatSession[]>([]);
@@ -341,7 +415,7 @@ export default function AdminDashboardPage() {
     setLoading(true);
     const headers = getAuthHeaders();
     try {
-      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes, chatRes] = await Promise.all([
+      const [statsRes, appsRes, inqRes, mediaRes, contentRes, emailsRes, adminsRes, chatRes, refRes] = await Promise.all([
         fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/inquiries', { headers, credentials: 'include' }).then(r => r.json()),
@@ -349,7 +423,8 @@ export default function AdminDashboardPage() {
         fetch('/api/admin/content', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/emails', { headers, credentials: 'include' }).then(r => r.json()),
         fetch('/api/admin/admins', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false })),
-        fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
+        fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false })),
+        fetch('/api/admin/referrals', { headers, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
       ]);
 
       if (statsRes.success) {
@@ -371,6 +446,12 @@ export default function AdminDashboardPage() {
       if (chatRes.success) {
         setChatSessions(chatRes.sessions || []);
         setUnreadChatCount(chatRes.unreadCount || 0);
+      }
+      if (refRes.success && refRes.data) {
+        setReferralStats(refRes.data.stats || null);
+        setReferralAgents(refRes.data.agents || []);
+        setReferralList(refRes.data.referrals || []);
+        setPayoutRequests(refRes.data.payouts || []);
       }
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -403,11 +484,125 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleCompletePayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payoutModalItem) return;
+
+    setPayoutProcessSubmitting(true);
+    try {
+      let uploadedProofUrl = '';
+
+      if (payoutProofFile) {
+        setPayoutProofUploading(true);
+        const compressed = await compressImageFile(payoutProofFile, 1200, 0.85);
+        const formData = new FormData();
+        formData.append('file', compressed);
+        formData.append('payout_id', String(payoutModalItem.id));
+
+        const uploadRes = await fetch('/api/referrals/upload-proof', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        setPayoutProofUploading(false);
+
+        if (uploadData.success && uploadData.file_url) {
+          uploadedProofUrl = uploadData.file_url;
+        } else {
+          showNotification(uploadData.message || 'Proof upload failed', 'error');
+          setPayoutProcessSubmitting(false);
+          return;
+        }
+      }
+
+      const res = await fetch('/api/admin/referrals', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          payout_id: payoutModalItem.id,
+          transaction_id: payoutModalTxId.trim(),
+          proof_screenshot: uploadedProofUrl || payoutProofPreview || '',
+          admin_notes: payoutModalNotes.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showNotification('MoMo payout completed! Confirmation proof is now accessible by the agent.');
+        setPayoutModalItem(null);
+        setPayoutModalTxId('');
+        setPayoutModalNotes('');
+        setPayoutProofFile(null);
+        setPayoutProofPreview(null);
+        loadDashboardData();
+      } else {
+        showNotification(data.message || 'Failed to complete payout', 'error');
+      }
+    } catch {
+      showNotification('Network error processing payout', 'error');
+    } finally {
+      setPayoutProcessSubmitting(false);
+      setPayoutProofUploading(false);
+    }
+  };
+
+  const handleToggleAgentStatus = async (agentId: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    try {
+      const res = await fetch('/api/admin/referrals', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ agent_id: agentId, status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Agent status updated to ${newStatus}.`);
+        loadDashboardData();
+      } else {
+        showNotification(data.message || 'Update failed', 'error');
+      }
+    } catch {
+      showNotification('Network error updating agent status', 'error');
+    }
+  };
+
+  const fetchReferralsData = () => {
+    const headers = getAuthHeaders();
+    fetch('/api/admin/referrals', { headers, credentials: 'include' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setReferralStats(res.data.stats || null);
+          setReferralAgents(res.data.agents || []);
+          setReferralList(res.data.referrals || []);
+          setPayoutRequests(res.data.payouts || []);
+          setSelectedAgentForDownline(prev => {
+            if (!prev) return null;
+            const fresh = (res.data.agents || []).find((a: any) => a.id === prev.id || a.code.toUpperCase() === prev.code.toUpperCase());
+            return fresh || prev;
+          });
+        }
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     sessionStorage.removeItem('liah_admin_token');
     localStorage.removeItem('liah_admin_token');
     checkAuth();
   }, []);
+
+  // Live polling for referrals tab - fast 4s updates so registrations appear instantly
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'referrals') {
+      fetchReferralsData();
+      const refInterval = setInterval(fetchReferralsData, 4000);
+      return () => clearInterval(refInterval);
+    }
+  }, [isAuthenticated, activeTab]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -428,7 +623,7 @@ export default function AdminDashboardPage() {
       }).catch(() => {});
     }, 4000);
 
-    // Applications & Stats polling every 10s to keep admin store synced with minimal overhead
+    // Applications, Stats, and Referrals polling every 8s to keep admin store synced with minimal overhead
     const dataInterval = setInterval(() => {
       const headers = getAuthHeaders();
       fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
@@ -440,7 +635,8 @@ export default function AdminDashboardPage() {
       fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) setApplications(res.data || []);
       }).catch(() => {});
-    }, 10000);
+      fetchReferralsData();
+    }, 8000);
 
     // Immediate sync when tab becomes visible or focused
     const handleVisibilityOrFocus = () => {
@@ -455,6 +651,7 @@ export default function AdminDashboardPage() {
             if (res.db_health) setDbHealth(res.db_health);
           }
         }).catch(() => {});
+        fetchReferralsData();
       }
     };
 
@@ -1749,6 +1946,39 @@ export default function AdminDashboardPage() {
             }}
           >
             <Users size={16} /> Applications ({applications.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('referrals')}
+            style={{
+              padding: '12px 18px',
+              borderRadius: '8px 8px 0 0',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              border: 'none',
+              background: activeTab === 'referrals' ? '#081F3E' : 'transparent',
+              color: activeTab === 'referrals' ? '#F5A623' : '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              position: 'relative'
+            }}
+          >
+            <DollarSign size={16} /> Referrals &amp; MoMo ({referralAgents.length})
+            {referralStats && referralStats.pending_payouts_count > 0 && (
+              <span style={{
+                background: '#EF4444',
+                color: '#FFFFFF',
+                borderRadius: '10px',
+                padding: '2px 6px',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                lineHeight: 1
+              }}>
+                {referralStats.pending_payouts_count}
+              </span>
+            )}
           </button>
 
           <button
@@ -4920,6 +5150,781 @@ export default function AdminDashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB 9: REFERRAL AGENTS, DOWNLINES & MOMO PAYOUTS */}
+        {/* ======================================================== */}
+        {activeTab === 'referrals' && (
+          <div>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ color: '#081F3E', fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>
+                  💸 Referral Network, Downlines &amp; MoMo Payouts
+                </h2>
+                <p style={{ color: '#64748B', margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+                  Manage referral ambassadors, view student matricules in their downlines, and disburse Mobile Money commissions with deposit screenshot proofs.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={loadDashboardData}
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}
+                >
+                  <RefreshCw size={15} /> Refresh Referrals
+                </button>
+              </div>
+            </div>
+
+            {/* Top Stat Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '28px'
+            }}>
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '20px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                  Total Referral Agents
+                </span>
+                <strong style={{ fontSize: '1.8rem', color: '#081F3E', fontWeight: 900 }}>
+                  {referralStats?.total_agents || referralAgents.length}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
+                  Registered ambassadors
+                </span>
+              </div>
+
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '20px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                  Total Referred Students
+                </span>
+                <strong style={{ fontSize: '1.8rem', color: '#0284C7', fontWeight: 900 }}>
+                  {referralStats?.total_referrals || referralList.length}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
+                  Applied via agent links
+                </span>
+              </div>
+
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '20px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                  Enrolled &amp; Paid Downlines
+                </span>
+                <strong style={{ fontSize: '1.8rem', color: '#10B981', fontWeight: 900 }}>
+                  {referralStats?.paid_referrals || 0}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
+                  Verified admission fees
+                </span>
+              </div>
+
+              <div className="premium-card" style={{
+                background: (referralStats?.pending_payouts_count || 0) > 0 ? '#FFFBEB' : '#FFFFFF',
+                padding: '20px',
+                border: (referralStats?.pending_payouts_count || 0) > 0 ? '1px solid #F59E0B' : '1px solid #E2E8F0'
+              }}>
+                <span style={{ fontSize: '0.78rem', color: (referralStats?.pending_payouts_count || 0) > 0 ? '#B45309' : '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                  Pending MoMo Payouts
+                </span>
+                <strong style={{ fontSize: '1.8rem', color: (referralStats?.pending_payouts_count || 0) > 0 ? '#D97706' : '#081F3E', fontWeight: 900 }}>
+                  {referralStats?.pending_payouts_count || 0}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
+                  {(referralStats?.pending_payouts_amount || 0).toLocaleString()} XAF requested
+                </span>
+              </div>
+
+              <div className="premium-card" style={{ background: '#FFFFFF', padding: '20px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                  Total Paid Out
+                </span>
+                <strong style={{ fontSize: '1.8rem', color: '#059669', fontWeight: 900 }}>
+                  {(referralStats?.total_paid_out || 0).toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 600 }}>XAF</span>
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '2px' }}>
+                  Direct MoMo deposits
+                </span>
+              </div>
+            </div>
+
+            {/* SECTION 1: MOMO PAYOUT REQUESTS & VERIFICATIONS */}
+            <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px', marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.25rem', fontWeight: 800 }}>
+                    Mobile Money Payout Requests ({payoutRequests.length})
+                  </h3>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                    Process pending MoMo withdrawals, send the deposit, and attach the proof screenshot for the agent.
+                  </span>
+                </div>
+
+                {/* Filter Pills */}
+                <div style={{ display: 'flex', gap: '6px', background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
+                  {(['all', 'pending', 'completed'] as const).map(filter => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setPayoutFilter(filter)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: payoutFilter === filter ? '#081F3E' : 'transparent',
+                        color: payoutFilter === filter ? '#FFFFFF' : '#64748B',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textTransform: 'capitalize'
+                      }}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {payoutRequests.length === 0 ? (
+                <p style={{ color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No payout requests submitted yet.</p>
+              ) : (
+                <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 14px' }}>Date</th>
+                        <th style={{ padding: '12px 14px' }}>Agent Name &amp; Code</th>
+                        <th style={{ padding: '12px 14px' }}>MoMo Payout Number</th>
+                        <th style={{ padding: '12px 14px' }}>Amount</th>
+                        <th style={{ padding: '12px 14px' }}>Status</th>
+                        <th style={{ padding: '12px 14px' }}>Tx Reference</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payoutRequests
+                        .filter(p => payoutFilter === 'all' || p.status === payoutFilter)
+                        .map((p, idx) => {
+                          const isPending = p.status === 'pending';
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
+                                {new Date(p.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </td>
+                              <td style={{ padding: '14px' }}>
+                                <strong style={{ color: '#081F3E', display: 'block' }}>{p.agent_name}</strong>
+                                <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#64748B' }}>{p.agent_code}</span>
+                              </td>
+                              <td style={{ padding: '14px', fontFamily: 'monospace', fontWeight: 700, color: '#081F3E' }}>
+                                {p.momo_number}
+                              </td>
+                              <td style={{ padding: '14px', fontWeight: 900, color: '#059669' }}>
+                                {p.amount.toLocaleString()} XAF
+                              </td>
+                              <td style={{ padding: '14px' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 800,
+                                  background: isPending ? '#FEF3C7' : '#ECFDF5',
+                                  color: isPending ? '#B45309' : '#059669'
+                                }}>
+                                  {isPending ? '⏳ Pending Deposit' : '✓ Completed'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px', fontFamily: 'monospace', fontSize: '0.82rem', color: '#64748B' }}>
+                                {p.transaction_id || '—'}
+                              </td>
+                              <td style={{ padding: '14px', textAlign: 'right' }}>
+                                {isPending ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPayoutModalItem(p);
+                                      setPayoutModalTxId('');
+                                      setPayoutModalNotes('');
+                                      setPayoutProofFile(null);
+                                      setPayoutProofPreview(null);
+                                    }}
+                                    style={{
+                                      background: '#10B981',
+                                      color: '#FFFFFF',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      padding: '6px 14px',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)'
+                                    }}
+                                  >
+                                    <DollarSign size={14} /> Process Payout
+                                  </button>
+                                ) : (
+                                  <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                    {p.proof_screenshot && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setViewingAdminProofUrl(p.proof_screenshot || null)}
+                                        style={{
+                                          background: '#EFF6FF',
+                                          color: '#0284C7',
+                                          border: '1px solid #BAE6FD',
+                                          borderRadius: '6px',
+                                          padding: '6px 12px',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px'
+                                        }}
+                                      >
+                                        <Eye size={13} /> View MoMo Proof
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* SECTION 2: ALL REFERRAL AGENTS & DOWNLINES */}
+            <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.25rem', fontWeight: 800 }}>
+                    Referral Agents &amp; Student Downlines ({referralAgents.length})
+                  </h3>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                    Click &quot;View Downline&quot; on any agent to inspect referred applicants, their Names, and Matricules.
+                  </span>
+                </div>
+
+                {/* Search Bar */}
+                <div style={{ position: 'relative', width: '260px' }}>
+                  <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by name, MoMo, code..."
+                    value={referralSearch}
+                    onChange={(e) => setReferralSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px 8px 34px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.84rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {referralAgents.length === 0 ? (
+                <p style={{ color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No referral agents registered yet.</p>
+              ) : (
+                <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 14px' }}>Agent Name</th>
+                        <th style={{ padding: '12px 14px' }}>Referral Code</th>
+                        <th style={{ padding: '12px 14px' }}>MoMo Payout Number</th>
+                        <th style={{ padding: '12px 14px' }}>Student Link</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'center' }}>Total Referred</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'center' }}>Enrolled/Paid</th>
+                        <th style={{ padding: '12px 14px' }}>Total Earned</th>
+                        <th style={{ padding: '12px 14px' }}>Balance</th>
+                        <th style={{ padding: '12px 14px' }}>Status</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {referralAgents
+                        .filter(a => {
+                          if (!referralSearch.trim()) return true;
+                          const q = referralSearch.toLowerCase();
+                          return a.full_name.toLowerCase().includes(q) ||
+                            a.code.toLowerCase().includes(q) ||
+                            a.momo_number.includes(q) ||
+                            (a.student_matricule && a.student_matricule.toLowerCase().includes(q));
+                        })
+                        .map((a, idx) => {
+                          const agentDownline = referralList.filter(r => r.agent_id === a.id || r.agent_code.toUpperCase() === a.code.toUpperCase());
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
+                                {a.full_name}
+                              </td>
+                              <td style={{ padding: '14px' }}>
+                                <span style={{
+                                  background: 'rgba(245, 166, 35, 0.12)',
+                                  color: '#D97706',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  fontFamily: 'monospace',
+                                  fontWeight: 800,
+                                  fontSize: '0.82rem'
+                                }}>
+                                  {a.code}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px', fontFamily: 'monospace', color: '#334155' }}>
+                                {a.momo_number}
+                                {a.momo_name && <span style={{ display: 'block', fontSize: '0.72rem', color: '#94A3B8' }}>({a.momo_name})</span>}
+                              </td>
+                              <td style={{ padding: '14px' }}>
+                                {a.student_matricule ? (
+                                  <span style={{
+                                    background: '#EFF6FF',
+                                    color: '#0284C7',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    fontFamily: 'monospace'
+                                  }}>
+                                    🎓 {a.student_matricule}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#94A3B8', fontSize: '0.78rem' }}>External Partner</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#081F3E' }}>
+                                {agentDownline.length || a.total_referrals}
+                              </td>
+                              <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: '#10B981' }}>
+                                {agentDownline.filter(r => (r.payment_status || '').toLowerCase().includes('paid')).length || a.paid_referrals}
+                              </td>
+                              <td style={{ padding: '14px', fontWeight: 700, color: '#081F3E' }}>
+                                {(a.total_earned || 0).toLocaleString()} XAF
+                              </td>
+                              <td style={{ padding: '14px', fontWeight: 800, color: a.balance > 0 ? '#059669' : '#64748B' }}>
+                                {(a.balance || 0).toLocaleString()} XAF
+                              </td>
+                              <td style={{ padding: '14px' }}>
+                                <span style={{
+                                  fontSize: '0.75rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontWeight: 700,
+                                  background: a.status === 'active' ? '#ECFDF5' : '#FEF2F2',
+                                  color: a.status === 'active' ? '#059669' : '#DC2626'
+                                }}>
+                                  {a.status === 'active' ? '● Active' : '✕ Suspended'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px', textAlign: 'right' }}>
+                                <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedAgentForDownline(a)}
+                                    style={{
+                                      background: '#081F3E',
+                                      color: '#FFFFFF',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      padding: '6px 12px',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <Users size={13} /> View Downline ({agentDownline.length})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAgentStatus(a.id, a.status)}
+                                    style={{
+                                      background: a.status === 'active' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                      color: a.status === 'active' ? '#EF4444' : '#10B981',
+                                      border: '1px solid ' + (a.status === 'active' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'),
+                                      borderRadius: '6px',
+                                      padding: '6px 10px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {a.status === 'active' ? 'Suspend' : 'Activate'}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: VIEW AGENT DOWNLINE (STUDENT NAMES & MATRICULES) */}
+        {selectedAgentForDownline && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(4, 16, 33, 0.88)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '20px'
+            }}
+            onClick={() => setSelectedAgentForDownline(null)}
+          >
+            <div
+              className="admin-modal-card"
+              style={{
+                background: '#FFFFFF', borderRadius: '16px', padding: '28px', maxWidth: '820px', width: '100%',
+                maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.3)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div>
+                  <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.35rem', fontWeight: 800 }}>
+                    👥 Downline for {selectedAgentForDownline.full_name}
+                  </h3>
+                  <span style={{ fontSize: '0.84rem', color: '#64748B' }}>
+                    Agent Code: <strong style={{ fontFamily: 'monospace', color: '#D97706' }}>{selectedAgentForDownline.code}</strong> • MoMo: <strong>{selectedAgentForDownline.momo_number}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAgentForDownline(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {(() => {
+                const list = referralList.filter(r => r.agent_id === selectedAgentForDownline.id || r.agent_code.toUpperCase() === selectedAgentForDownline.code.toUpperCase());
+                if (list.length === 0) {
+                  return (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: '10px' }}>
+                      <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.9rem' }}>No applicants in this agent&apos;s downline yet.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '10px 14px' }}>Student Name</th>
+                          <th style={{ padding: '10px 14px' }}>Matricule</th>
+                          <th style={{ padding: '10px 14px' }}>Academic Program</th>
+                          <th style={{ padding: '10px 14px' }}>Application Date</th>
+                          <th style={{ padding: '10px 14px' }}>Enrolment Status</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'right' }}>Commission</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {list.map((r, i) => {
+                          const isPaid = (r.payment_status || '').toLowerCase().includes('paid');
+                          return (
+                            <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '12px 14px', fontWeight: 800, color: '#081F3E' }}>
+                                {r.student_name}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span style={{
+                                  background: '#EFF6FF',
+                                  color: '#0284C7',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  fontFamily: 'monospace',
+                                  fontWeight: 800,
+                                  fontSize: '0.82rem'
+                                }}>
+                                  {r.student_matricule || 'In Review'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 14px', color: '#475569' }}>
+                                {r.program_type}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: '#64748B', fontSize: '0.82rem' }}>
+                                {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  background: isPaid ? '#ECFDF5' : '#FEF3C7',
+                                  color: isPaid ? '#059669' : '#B45309'
+                                }}>
+                                  {isPaid ? '✓ Enrolled & Paid' : '⏳ Pending Payment'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
+                                {isPaid ? `${(r.commission_earned || 5000).toLocaleString()} XAF` : '5,000 XAF'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAgentForDownline(null)}
+                  className="btn btn-secondary"
+                  style={{ padding: '8px 20px', fontSize: '0.88rem' }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: PROCESS MOMO PAYOUT & ATTACH PROOF */}
+        {payoutModalItem && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(4, 16, 33, 0.88)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '20px'
+            }}
+            onClick={() => setPayoutModalItem(null)}
+          >
+            <div
+              className="admin-modal-card"
+              style={{
+                background: '#FFFFFF', borderRadius: '16px', padding: '28px', maxWidth: '520px', width: '100%',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.3)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.3rem', fontWeight: 800 }}>
+                  💸 Process MoMo Deposit
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setPayoutModalItem(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* Payout Details Summary */}
+              <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>Recipient:</span>
+                  <strong style={{ color: '#081F3E', fontSize: '0.88rem' }}>{payoutModalItem.agent_name} ({payoutModalItem.agent_code})</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>MoMo Phone:</span>
+                  <strong style={{ color: '#0284C7', fontFamily: 'monospace', fontSize: '0.92rem' }}>{payoutModalItem.momo_number}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>Withdrawal Amount:</span>
+                  <strong style={{ color: '#059669', fontSize: '1.1rem', fontWeight: 900 }}>{payoutModalItem.amount.toLocaleString()} XAF</strong>
+                </div>
+              </div>
+
+              <form onSubmit={handleCompletePayoutSubmit}>
+                {/* Transaction ID */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    Mobile Money Transaction ID / Reference (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. MTN-TX-9849204 or Orange Ref"
+                    value={payoutModalTxId}
+                    onChange={(e) => setPayoutModalTxId(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                {/* Deposit Screenshot Upload */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    📸 Deposit Screenshot / MoMo Receipt *
+                  </label>
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setPayoutProofFile(file);
+                        const reader = new FileReader();
+                        reader.onload = () => setPayoutProofPreview(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.84rem'
+                    }}
+                  />
+                  {payoutProofPreview && (
+                    <div style={{ marginTop: '10px', textAlign: 'center', background: '#F8FAFC', padding: '10px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <img src={payoutProofPreview} alt="Screenshot Preview" style={{ maxHeight: '120px', borderRadius: '6px' }} />
+                    </div>
+                  )}
+                  <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                    This screenshot will be instantly visible to the agent on their dashboard to confirm the deposit.
+                  </span>
+                </div>
+
+                {/* Admin Notes */}
+                <div style={{ marginBottom: '22px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#081F3E', marginBottom: '6px' }}>
+                    Admin Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Paid via MTN MoMo 670265493 at 14:30"
+                    value={payoutModalNotes}
+                    onChange={(e) => setPayoutModalNotes(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPayoutModalItem(null)}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, padding: '12px', fontWeight: 700 }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={payoutProcessSubmitting || payoutProofUploading}
+                    className="btn btn-primary"
+                    style={{
+                      flex: 2,
+                      background: '#10B981',
+                      color: '#FFFFFF',
+                      padding: '12px',
+                      fontWeight: 800,
+                      cursor: (payoutProcessSubmitting || payoutProofUploading) ? 'wait' : 'pointer'
+                    }}
+                  >
+                    {(payoutProcessSubmitting || payoutProofUploading) ? 'Uploading & Finalizing...' : '✓ Confirm Deposit & Send Proof'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: VIEW PROOF SCREENSHOT (ADMIN) */}
+        {viewingAdminProofUrl && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'rgba(4, 16, 33, 0.88)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '20px'
+            }}
+            onClick={() => setViewingAdminProofUrl(null)}
+          >
+            <div
+              className="admin-modal-card"
+              style={{
+                background: '#FFFFFF', borderRadius: '16px', padding: '24px', maxWidth: '600px', width: '100%',
+                maxHeight: '90vh', display: 'flex', flexDirection: 'column'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h4 style={{ margin: 0, color: '#081F3E', fontSize: '1.2rem', fontWeight: 800 }}>
+                  MoMo Deposit Confirmation Proof
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setViewingAdminProofUrl(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', textAlign: 'center', background: '#F8FAFC', borderRadius: '10px', padding: '14px', border: '1px solid #E2E8F0' }}>
+                <img
+                  src={viewingAdminProofUrl}
+                  alt="Deposit Proof"
+                  style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '8px' }}
+                />
+              </div>
+
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <a
+                  href={viewingAdminProofUrl}
+                  download="liah_momo_deposit_proof"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ padding: '8px 16px', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Download size={15} /> Download Proof
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setViewingAdminProofUrl(null)}
+                  className="btn btn-secondary"
+                  style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

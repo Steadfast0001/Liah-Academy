@@ -324,23 +324,107 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* 4 Partner White Rounded Pills */}
+          {/* Featured Strategic Partner Spotlight: New Generation Technologies */}
+          <div 
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(8, 31, 62, 0.95), rgba(4, 16, 33, 0.98))', 
+              borderRadius: '16px', 
+              padding: '32px 36px', 
+              border: '1px solid rgba(245, 166, 35, 0.3)',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.3)',
+              marginBottom: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '28px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap', flex: 1, minWidth: '280px' }}>
+              <div 
+                style={{ 
+                  background: '#FFFFFF', 
+                  borderRadius: '14px', 
+                  padding: '12px 18px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                  minWidth: '160px',
+                  height: '80px'
+                }}
+              >
+                <Image 
+                  src="/assets/images/new_generation_technologies.png" 
+                  alt="New Generation Technologies Logo" 
+                  width={150} 
+                  height={60} 
+                  style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '56px' }}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Sparkles size={16} color="#F5A623" />
+                  <span style={{ fontSize: '0.76rem', color: '#F5A623', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Featured Industry Placement Partner
+                  </span>
+                </div>
+                <h3 style={{ color: '#FFFFFF', fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+                  New Generation Technologies
+                </h3>
+                <p style={{ color: '#CBD5E1', fontSize: '0.9rem', lineHeight: '1.6', margin: 0, maxWidth: '640px' }}>
+                  Strategic corporate partnership bridging classroom theory and live enterprise systems. Providing Liah Academy students with industry internships, cloud infrastructure labs, and priority recruitment opportunities.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <span style={{ 
+                background: 'rgba(245, 166, 35, 0.12)', 
+                color: '#FEF3C7', 
+                border: '1px solid rgba(245, 166, 35, 0.35)',
+                padding: '6px 14px', 
+                borderRadius: '8px', 
+                fontSize: '0.8rem', 
+                fontWeight: 700 
+              }}>
+                ✓ Direct Student Hiring
+              </span>
+            </div>
+          </div>
+
+          {/* 5 Partner White Rounded Pills */}
           <div 
             style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '20px', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+              gap: '16px', 
               textAlign: 'center' 
             }}
           >
             <div 
               style={{ 
                 background: '#FFFFFF', 
-                padding: '22px 16px', 
+                padding: '20px 14px', 
                 borderRadius: '12px', 
                 color: '#081F3E', 
                 fontWeight: 800, 
-                fontSize: '0.88rem', 
+                fontSize: '0.84rem', 
+                letterSpacing: '0.04em',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
+              }}
+            >
+              NEW GENERATION TECHNOLOGIES
+            </div>
+            <div 
+              style={{ 
+                background: '#FFFFFF', 
+                padding: '20px 14px', 
+                borderRadius: '12px', 
+                color: '#081F3E', 
+                fontWeight: 800, 
+                fontSize: '0.84rem', 
                 letterSpacing: '0.04em',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}
@@ -350,11 +434,11 @@ export default function AboutPage() {
             <div 
               style={{ 
                 background: '#FFFFFF', 
-                padding: '22px 16px', 
+                padding: '20px 14px', 
                 borderRadius: '12px', 
                 color: '#081F3E', 
                 fontWeight: 800, 
-                fontSize: '0.88rem', 
+                fontSize: '0.84rem', 
                 letterSpacing: '0.04em',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}
@@ -364,11 +448,11 @@ export default function AboutPage() {
             <div 
               style={{ 
                 background: '#FFFFFF', 
-                padding: '22px 16px', 
+                padding: '20px 14px', 
                 borderRadius: '12px', 
                 color: '#081F3E', 
                 fontWeight: 800, 
-                fontSize: '0.88rem', 
+                fontSize: '0.84rem', 
                 letterSpacing: '0.04em',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}
@@ -378,11 +462,11 @@ export default function AboutPage() {
             <div 
               style={{ 
                 background: '#FFFFFF', 
-                padding: '22px 16px', 
+                padding: '20px 14px', 
                 borderRadius: '12px', 
                 color: '#081F3E', 
                 fontWeight: 800, 
-                fontSize: '0.88rem', 
+                fontSize: '0.84rem', 
                 letterSpacing: '0.04em',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}

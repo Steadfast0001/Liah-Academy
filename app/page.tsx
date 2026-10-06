@@ -260,6 +260,78 @@ export default function HomePage() {
       </section>
 
       {/* ===================================================
+          2B. STRATEGIC INDUSTRY & PLACEMENT PARTNERS
+          =================================================== */}
+      <section style={{ background: '#FFFFFF', padding: '28px 0', borderBottom: '1px solid #E2E8F0' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <span style={{ 
+              fontSize: '0.72rem', 
+              fontWeight: 800, 
+              color: '#64748B', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.1em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Sparkles size={13} color="#F5A623" /> Official Industry, Placement &amp; Innovation Partners
+            </span>
+          </div>
+
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            flexWrap: 'wrap', 
+            gap: '24px 36px' 
+          }}>
+            {/* New Generation Technologies */}
+            <Link 
+              href="/about#partnerships" 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                textDecoration: 'none',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                padding: '8px 16px',
+                borderRadius: '10px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Image 
+                src="/assets/images/new_generation_technologies.png" 
+                alt="New Generation Technologies Logo" 
+                width={120} 
+                height={38} 
+                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '34px' }}
+              />
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#081F3E', borderLeft: '1px solid #CBD5E1', paddingLeft: '10px' }}>
+                Technology Partner
+              </span>
+            </Link>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontWeight: 800, fontSize: '0.84rem', letterSpacing: '0.04em' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F5A623', display: 'inline-block' }} />
+              SILICON MOUNTAIN
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontWeight: 800, fontSize: '0.84rem', letterSpacing: '0.04em' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+              MINESEC CERTIFIED
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontWeight: 800, fontSize: '0.84rem', letterSpacing: '0.04em' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284C7', display: 'inline-block' }} />
+              LINUX LABS
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
           3. MISSION / VALUE PROPOSITION ("Achieve Your Possible")
           =================================================== */}
       <section className="york-mission-section">

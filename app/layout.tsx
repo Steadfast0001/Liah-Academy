@@ -8,6 +8,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 const ChatWidget = dynamic(() => import('../components/ChatWidget'), { ssr: false });
 const WhatsAppButton = dynamic(() => import('../components/WhatsAppButton'), { ssr: false });
 const BackToTop = dynamic(() => import('../components/BackToTop'), { ssr: false });
+const ReferralTracker = dynamic(() => import('../components/ReferralTracker'), { ssr: false });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -67,6 +68,8 @@ export default function RootLayout({
         <ErrorBoundary fallback={null}>
           <BackToTop />
         </ErrorBoundary>
+
+        <ReferralTracker />
       </body>
     </html>
   );

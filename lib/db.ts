@@ -357,6 +357,77 @@ export async function ensureMySQLTables() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS referral_agents (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(50) NOT NULL UNIQUE,
+        full_name VARCHAR(191) NOT NULL,
+        momo_number VARCHAR(50) NOT NULL,
+        momo_name VARCHAR(100) DEFAULT '',
+        email VARCHAR(191) DEFAULT '',
+        phone VARCHAR(50) DEFAULT '',
+        student_id INT NULL,
+        student_matricule VARCHAR(50) DEFAULT '',
+        commission_per_student INT DEFAULT 5000,
+        total_referrals INT DEFAULT 0,
+        paid_referrals INT DEFAULT 0,
+        total_earned INT DEFAULT 0,
+        total_paid INT DEFAULT 0,
+        balance INT DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_ref_code (code),
+        INDEX idx_ref_momo (momo_number)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        agent_id INT NOT NULL,
+        agent_code VARCHAR(50) NOT NULL,
+        student_id INT NOT NULL,
+        student_name VARCHAR(191) NOT NULL,
+        student_matricule VARCHAR(50) DEFAULT '',
+        student_email VARCHAR(191) NOT NULL,
+        student_phone VARCHAR(50) DEFAULT '',
+        program_type VARCHAR(100) DEFAULT '',
+        payment_status VARCHAR(50) DEFAULT 'Pending',
+        admission_status VARCHAR(50) DEFAULT 'Under Review',
+        commission_amount INT DEFAULT 5000,
+        commission_status VARCHAR(20) DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_referrals_agent (agent_id),
+        INDEX idx_referrals_code (agent_code),
+        INDEX idx_referrals_student (student_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS referral_payouts (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        agent_id INT NOT NULL,
+        agent_code VARCHAR(50) NOT NULL,
+        agent_name VARCHAR(191) NOT NULL,
+        momo_number VARCHAR(50) NOT NULL,
+        amount INT NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        transaction_id VARCHAR(100) DEFAULT '',
+        proof_screenshot LONGTEXT DEFAULT NULL,
+        admin_notes TEXT DEFAULT NULL,
+        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        processed_at DATETIME DEFAULT NULL,
+        INDEX idx_payouts_agent (agent_id),
+        INDEX idx_payouts_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    try {
+      await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS referred_by VARCHAR(50) DEFAULT NULL');
+    } catch {}
+
     schemaInitialized = true;
     isMySQLLive = true;
   } catch (err) {
@@ -575,6 +646,70 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
           ]
         );
       }
+    } else if (table === 'referral_agents') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM referral_agents WHERE id = ?', [data.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO referral_agents (id, code, full_name, momo_number, momo_name, email, phone, student_id, student_matricule, commission_per_student, total_referrals, paid_referrals, total_earned, total_paid, balance, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             full_name=VALUES(full_name), momo_number=VALUES(momo_number), momo_name=VALUES(momo_name),
+             email=VALUES(email), phone=VALUES(phone), total_referrals=VALUES(total_referrals),
+             paid_referrals=VALUES(paid_referrals), total_earned=VALUES(total_earned),
+             total_paid=VALUES(total_paid), balance=VALUES(balance), status=VALUES(status),
+             updated_at=NOW()`,
+          [
+            data.id, data.code, data.full_name, data.momo_number, data.momo_name || '',
+            data.email || '', data.phone || '', data.student_id || null, data.student_matricule || '',
+            data.commission_per_student || 5000, data.total_referrals || 0, data.paid_referrals || 0,
+            data.total_earned || 0, data.total_paid || 0, data.balance || 0, data.status || 'active',
+            data.created_at ? new Date(data.created_at) : new Date(),
+            data.updated_at ? new Date(data.updated_at) : new Date()
+          ]
+        );
+      }
+    } else if (table === 'referrals') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM referrals WHERE id = ?', [data.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO referrals (id, agent_id, agent_code, student_id, student_name, student_matricule, student_email, student_phone, program_type, payment_status, admission_status, commission_amount, commission_status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             payment_status=VALUES(payment_status), admission_status=VALUES(admission_status),
+             commission_status=VALUES(commission_status), student_matricule=VALUES(student_matricule),
+             updated_at=NOW()`,
+          [
+            data.id, data.agent_id, data.agent_code, data.student_id, data.student_name,
+            data.student_matricule || '', data.student_email, data.student_phone || '',
+            data.program_type || '', data.payment_status || 'Pending', data.admission_status || 'Under Review',
+            data.commission_amount || 5000, data.commission_status || 'pending',
+            data.created_at ? new Date(data.created_at) : new Date(),
+            data.updated_at ? new Date(data.updated_at) : new Date()
+          ]
+        );
+      }
+    } else if (table === 'referral_payouts') {
+      if (action === 'delete') {
+        await pool.query('DELETE FROM referral_payouts WHERE id = ?', [data.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO referral_payouts (id, agent_id, agent_code, agent_name, momo_number, amount, status, transaction_id, proof_screenshot, admin_notes, requested_at, processed_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE 
+             status=VALUES(status), transaction_id=VALUES(transaction_id),
+             proof_screenshot=VALUES(proof_screenshot), admin_notes=VALUES(admin_notes),
+             processed_at=VALUES(processed_at)`,
+          [
+            data.id, data.agent_id, data.agent_code, data.agent_name, data.momo_number,
+            data.amount, data.status || 'pending', data.transaction_id || '',
+            data.proof_screenshot || null, data.admin_notes || '',
+            data.requested_at ? new Date(data.requested_at) : new Date(),
+            data.processed_at ? new Date(data.processed_at) : null
+          ]
+        );
+      }
     }
     isMySQLLive = true;
   } catch (err: any) {
@@ -628,8 +763,63 @@ export interface Student {
   payment_proof_url?: string;
   payment_transaction_id?: string;
   payment_amount?: number;
+  referred_by?: string;
   created_at: string;
   updated_at?: string;
+}
+
+export interface ReferralAgent {
+  id: number;
+  code: string;
+  full_name: string;
+  momo_number: string;
+  momo_name?: string;
+  email?: string;
+  phone?: string;
+  student_id?: number | null;
+  student_matricule?: string;
+  commission_per_student: number;
+  total_referrals: number;
+  paid_referrals: number;
+  total_earned: number;
+  total_paid: number;
+  balance: number;
+  status: 'active' | 'suspended';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ReferralItem {
+  id: number;
+  agent_id: number;
+  agent_code: string;
+  student_id: number;
+  student_name: string;
+  student_matricule?: string;
+  student_email: string;
+  student_phone?: string;
+  program_type?: string;
+  payment_status: string;
+  admission_status: string;
+  commission_amount: number;
+  commission_status: 'pending' | 'approved' | 'paid';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ReferralPayout {
+  id: number;
+  agent_id: number;
+  agent_code: string;
+  agent_name: string;
+  momo_number: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'rejected';
+  transaction_id?: string;
+  proof_screenshot?: string;
+  admin_notes?: string;
+  requested_at: string;
+  processed_at?: string;
 }
 
 export interface Payment {
@@ -774,6 +964,9 @@ export interface Schema {
   email_logs: EmailLog[];
   admins: AdminUser[];
   chat_sessions?: ChatSession[];
+  referral_agents?: ReferralAgent[];
+  referrals?: ReferralItem[];
+  referral_payouts?: ReferralPayout[];
   _metadata?: {
     version: string;
     last_updated: string;
@@ -1008,6 +1201,9 @@ const initialData: Schema = {
   email_logs: [],
   admins: [],
   chat_sessions: [],
+  referral_agents: [],
+  referrals: [],
+  referral_payouts: [],
   _metadata: {
     version: '2.2.0',
     last_updated: new Date().toISOString(),
@@ -1126,6 +1322,9 @@ export function readDb(): Schema {
     if (!parsed.email_logs) { parsed.email_logs = []; modified = true; }
     if (!parsed.admins) { parsed.admins = []; modified = true; }
     if (!parsed.chat_sessions) { parsed.chat_sessions = []; modified = true; }
+    if (!parsed.referral_agents) { parsed.referral_agents = []; modified = true; }
+    if (!parsed.referrals) { parsed.referrals = []; modified = true; }
+    if (!parsed.referral_payouts) { parsed.referral_payouts = []; modified = true; }
     if (!parsed._metadata) {
       parsed._metadata = { version: '2.2.0', last_updated: new Date().toISOString(), total_writes: 0 };
       modified = true;
@@ -1233,7 +1432,14 @@ export const adminStore = {
     if (!student) return null;
 
     if (admission_status) student.admission_status = admission_status as any;
-    if (payment_status) student.payment_status = payment_status as any;
+    if (payment_status) {
+      student.payment_status = payment_status as any;
+      if (payment_status === 'Paid') {
+        try {
+          adminStore.creditReferralCommission(student.id);
+        } catch {}
+      }
+    }
     student.updated_at = new Date().toISOString();
 
     writeDb(store, true);
@@ -1367,6 +1573,9 @@ export const adminStore = {
         if (student.admission_status !== 'Rejected') {
           student.admission_status = 'Approved';
         }
+        try {
+          adminStore.creditReferralCommission(student.id);
+        } catch {}
       } else if (status === 'REJECTED' || status === 'FAILED') {
         student.payment_status = 'Rejected';
       }
@@ -1715,6 +1924,270 @@ export const adminStore = {
       return true;
     }
     return false;
+  },
+
+  // Referral System Methods
+  getReferralAgents: (): ReferralAgent[] => {
+    const store = readDb();
+    return (store.referral_agents || []).slice().reverse();
+  },
+
+  getReferralAgentByCode: (code: string): ReferralAgent | undefined => {
+    const store = readDb();
+    const clean = (code || '').trim().toUpperCase();
+    return (store.referral_agents || []).find(a => a.code.toUpperCase() === clean);
+  },
+
+  getReferralAgentByMoMo: (momo: string): ReferralAgent | undefined => {
+    const store = readDb();
+    const clean = (momo || '').replace(/[\s\-\+]/g, '');
+    return (store.referral_agents || []).find(a => a.momo_number.replace(/[\s\-\+]/g, '') === clean);
+  },
+
+  getReferralAgentByStudentId: (studentId: number): ReferralAgent | undefined => {
+    const store = readDb();
+    return (store.referral_agents || []).find(a => a.student_id === studentId);
+  },
+
+  saveReferralAgent: (agent: Omit<ReferralAgent, 'id' | 'created_at'> & { id?: number }): ReferralAgent => {
+    const store = readDb();
+    if (!store.referral_agents) store.referral_agents = [];
+
+    let existingIndex = -1;
+    if (agent.id) {
+      existingIndex = store.referral_agents.findIndex(a => a.id === agent.id);
+    } else if (agent.code) {
+      existingIndex = store.referral_agents.findIndex(a => a.code.toUpperCase() === agent.code.toUpperCase());
+    }
+
+    if (existingIndex >= 0) {
+      const updated: ReferralAgent = {
+        ...store.referral_agents[existingIndex],
+        ...agent,
+        updated_at: new Date().toISOString()
+      };
+      store.referral_agents[existingIndex] = updated;
+      writeDb(store, true);
+      syncToMySQL('referral_agents', 'update', updated);
+      return updated;
+    } else {
+      const nextId = store.referral_agents.length > 0 
+        ? Math.max(...store.referral_agents.map(a => a.id || 0)) + 1 
+        : 1;
+      const newAgent: ReferralAgent = {
+        id: nextId,
+        code: agent.code,
+        full_name: agent.full_name,
+        momo_number: agent.momo_number,
+        momo_name: agent.momo_name || '',
+        email: agent.email || '',
+        phone: agent.phone || '',
+        student_id: agent.student_id || null,
+        student_matricule: agent.student_matricule || '',
+        commission_per_student: agent.commission_per_student || 5000,
+        total_referrals: agent.total_referrals || 0,
+        paid_referrals: agent.paid_referrals || 0,
+        total_earned: agent.total_earned || 0,
+        total_paid: agent.total_paid || 0,
+        balance: agent.balance || 0,
+        status: agent.status || 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      store.referral_agents.push(newAgent);
+      writeDb(store, true);
+      syncToMySQL('referral_agents', 'insert', newAgent);
+      return newAgent;
+    }
+  },
+
+  recordReferral: (data: {
+    agent_code: string;
+    student_id: number;
+    student_name: string;
+    student_matricule?: string;
+    student_email: string;
+    student_phone?: string;
+    program_type?: string;
+    payment_status?: string;
+    admission_status?: string;
+  }): ReferralItem | null => {
+    const store = readDb();
+    if (!store.referrals) store.referrals = [];
+    if (!store.referral_agents) store.referral_agents = [];
+
+    const agent = store.referral_agents.find(a => a.code.toUpperCase() === data.agent_code.trim().toUpperCase());
+    if (!agent) return null;
+
+    const existing = store.referrals.find(r => r.student_id === data.student_id);
+    if (existing) {
+      if (data.student_matricule && !existing.student_matricule) {
+        existing.student_matricule = data.student_matricule;
+        existing.updated_at = new Date().toISOString();
+        writeDb(store, true);
+        syncToMySQL('referrals', 'update', existing);
+      }
+      return existing;
+    }
+
+    const nextId = store.referrals.length > 0
+      ? Math.max(...store.referrals.map(r => r.id || 0)) + 1
+      : 1;
+
+    const commissionAmount = agent.commission_per_student || 5000;
+    const isPaid = (data.payment_status || '').toLowerCase().includes('paid');
+
+    const newRef: ReferralItem = {
+      id: nextId,
+      agent_id: agent.id,
+      agent_code: agent.code,
+      student_id: data.student_id,
+      student_name: data.student_name,
+      student_matricule: data.student_matricule || '',
+      student_email: data.student_email,
+      student_phone: data.student_phone || '',
+      program_type: data.program_type || '',
+      payment_status: data.payment_status || 'Pending',
+      admission_status: data.admission_status || 'Under Review',
+      commission_amount: commissionAmount,
+      commission_status: isPaid ? 'approved' : 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    store.referrals.push(newRef);
+    agent.total_referrals = (agent.total_referrals || 0) + 1;
+    if (isPaid) {
+      agent.paid_referrals = (agent.paid_referrals || 0) + 1;
+      agent.total_earned = (agent.total_earned || 0) + commissionAmount;
+      agent.balance = (agent.balance || 0) + commissionAmount;
+    }
+    agent.updated_at = new Date().toISOString();
+
+    writeDb(store, true);
+    syncToMySQL('referrals', 'insert', newRef);
+    syncToMySQL('referral_agents', 'update', agent);
+    return newRef;
+  },
+
+  creditReferralCommission: (studentId: number): boolean => {
+    const store = readDb();
+    if (!store.referrals || !store.referral_agents) return false;
+
+    const refIndex = store.referrals.findIndex(r => r.student_id === studentId);
+    if (refIndex < 0) return false;
+
+    const ref = store.referrals[refIndex];
+    if (ref.commission_status === 'approved' || ref.commission_status === 'paid') {
+      return false;
+    }
+
+    const agentIndex = store.referral_agents.findIndex(a => a.id === ref.agent_id || a.code.toUpperCase() === ref.agent_code.toUpperCase());
+    if (agentIndex < 0) return false;
+
+    const agent = store.referral_agents[agentIndex];
+    ref.payment_status = 'Paid';
+    ref.commission_status = 'approved';
+    ref.updated_at = new Date().toISOString();
+
+    agent.paid_referrals = (agent.paid_referrals || 0) + 1;
+    agent.total_earned = (agent.total_earned || 0) + ref.commission_amount;
+    agent.balance = (agent.balance || 0) + ref.commission_amount;
+    agent.updated_at = new Date().toISOString();
+
+    writeDb(store, true);
+    syncToMySQL('referrals', 'update', ref);
+    syncToMySQL('referral_agents', 'update', agent);
+    return true;
+  },
+
+  getReferralsByAgent: (agentIdOrCode: number | string): ReferralItem[] => {
+    const store = readDb();
+    const clean = String(agentIdOrCode).trim().toUpperCase();
+    return (store.referrals || []).filter(r => 
+      String(r.agent_id) === String(agentIdOrCode) || r.agent_code.toUpperCase() === clean
+    ).reverse();
+  },
+
+  getAllReferrals: (): ReferralItem[] => {
+    const store = readDb();
+    return (store.referrals || []).slice().reverse();
+  },
+
+  createPayoutRequest: (data: {
+    agent_id: number;
+    agent_code: string;
+    agent_name: string;
+    momo_number: string;
+    amount: number;
+  }): ReferralPayout | { error: string } => {
+    const store = readDb();
+    if (!store.referral_payouts) store.referral_payouts = [];
+    if (!store.referral_agents) store.referral_agents = [];
+
+    const agent = store.referral_agents.find(a => a.id === data.agent_id || a.code.toUpperCase() === data.agent_code.toUpperCase());
+    if (!agent) return { error: 'Agent account not found.' };
+
+    if (agent.balance < data.amount || data.amount <= 0) {
+      return { error: `Insufficient balance. Available balance is ${agent.balance.toLocaleString()} XAF.` };
+    }
+
+    const nextId = store.referral_payouts.length > 0
+      ? Math.max(...store.referral_payouts.map(p => p.id || 0)) + 1
+      : 1;
+
+    const newPayout: ReferralPayout = {
+      id: nextId,
+      agent_id: agent.id,
+      agent_code: agent.code,
+      agent_name: data.agent_name || agent.full_name,
+      momo_number: data.momo_number || agent.momo_number,
+      amount: data.amount,
+      status: 'pending',
+      transaction_id: '',
+      proof_screenshot: '',
+      admin_notes: '',
+      requested_at: new Date().toISOString()
+    };
+
+    store.referral_payouts.unshift(newPayout);
+    writeDb(store, true);
+    syncToMySQL('referral_payouts', 'insert', newPayout);
+    return newPayout;
+  },
+
+  getPayoutRequests: (): ReferralPayout[] => {
+    const store = readDb();
+    return (store.referral_payouts || []).slice().reverse();
+  },
+
+  completePayoutRequest: (payoutId: number, transactionId: string, proofScreenshot: string, adminNotes?: string): ReferralPayout | null => {
+    const store = readDb();
+    if (!store.referral_payouts) return null;
+
+    const pIndex = store.referral_payouts.findIndex(p => p.id === payoutId);
+    if (pIndex < 0) return null;
+
+    const payout = store.referral_payouts[pIndex];
+    if (payout.status === 'completed') return payout;
+
+    payout.status = 'completed';
+    payout.transaction_id = transactionId || '';
+    payout.proof_screenshot = proofScreenshot || '';
+    payout.admin_notes = adminNotes || '';
+    payout.processed_at = new Date().toISOString();
+
+    const agent = (store.referral_agents || []).find(a => a.id === payout.agent_id);
+    if (agent) {
+      agent.balance = Math.max(0, (agent.balance || 0) - payout.amount);
+      agent.total_paid = (agent.total_paid || 0) + payout.amount;
+      agent.updated_at = new Date().toISOString();
+      syncToMySQL('referral_agents', 'update', agent);
+    }
+
+    writeDb(store, true);
+    syncToMySQL('referral_payouts', 'update', payout);
+    return payout;
   }
 };
 

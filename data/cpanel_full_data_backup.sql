@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-02T04:33:35.351Z
+-- Generated: 2026-10-06T14:07:48.389Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -842,7 +842,94 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 13. DATA SANITIZATION & SELF-HEALING REPAIRS
+-- 13. TABLE: referral_agents (Affiliates, Student Ambassadors & MoMo Payout Profiles)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_agents` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `full_name` VARCHAR(191) NOT NULL,
+  `code` VARCHAR(50) NOT NULL UNIQUE,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `momo_name` VARCHAR(191) DEFAULT '',
+  `email` VARCHAR(191) DEFAULT '',
+  `student_id` INT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `status` ENUM('active', 'suspended') DEFAULT 'active',
+  `commission_per_student` INT DEFAULT 5000,
+  `total_referrals` INT DEFAULT 0,
+  `paid_referrals` INT DEFAULT 0,
+  `total_earned` INT DEFAULT 0,
+  `total_paid` INT DEFAULT 0,
+  `balance` INT DEFAULT 0,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_agent_code` (`code`),
+  INDEX `idx_agent_momo` (`momo_number`),
+  INDEX `idx_agent_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
+
+-- DATA: 0 Referral Agents
+
+-- ----------------------------------------------------------------------------
+-- 14. TABLE: referrals (Applicant Downlines & Commission Log)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referrals` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `student_id` INT NOT NULL,
+  `student_name` VARCHAR(191) NOT NULL,
+  `student_matricule` VARCHAR(50) DEFAULT '',
+  `student_email` VARCHAR(191) DEFAULT '',
+  `student_phone` VARCHAR(50) DEFAULT '',
+  `program_type` VARCHAR(191) DEFAULT '',
+  `degree_type` VARCHAR(50) DEFAULT 'HND',
+  `payment_status` VARCHAR(50) DEFAULT 'Pending',
+  `admission_status` VARCHAR(50) DEFAULT 'Under Review',
+  `commission_amount` INT DEFAULT 5000,
+  `commission_status` VARCHAR(20) DEFAULT 'pending',
+  `commission_earned` INT DEFAULT 5000,
+  `status` VARCHAR(20) DEFAULT 'pending',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_referrals_agent` (`agent_id`),
+  INDEX `idx_referrals_code` (`agent_code`),
+  INDEX `idx_referrals_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_matricule` VARCHAR(50) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_email` VARCHAR(191) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `student_phone` VARCHAR(50) DEFAULT '';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `admission_status` VARCHAR(50) DEFAULT 'Under Review';
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_amount` INT DEFAULT 5000;
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `commission_status` VARCHAR(20) DEFAULT 'pending';
+
+-- DATA: 0 Referral Downlines
+
+-- ----------------------------------------------------------------------------
+-- 15. TABLE: referral_payouts (Withdrawal Ledger, Proof Screenshots & Tx Refs)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `referral_payouts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `agent_id` INT NOT NULL,
+  `agent_code` VARCHAR(50) NOT NULL,
+  `agent_name` VARCHAR(191) NOT NULL,
+  `momo_number` VARCHAR(50) NOT NULL,
+  `amount` INT NOT NULL,
+  `status` ENUM('pending', 'completed', 'rejected') DEFAULT 'pending',
+  `transaction_id` VARCHAR(100) DEFAULT '',
+  `proof_screenshot` LONGTEXT DEFAULT NULL,
+  `admin_notes` TEXT DEFAULT NULL,
+  `processed_at` DATETIME NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_payouts_agent` (`agent_id`),
+  INDEX `idx_payouts_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- DATA: 0 Referral Payout Requests
+
+-- ----------------------------------------------------------------------------
+-- 16. DATA SANITIZATION & SELF-HEALING REPAIRS
 -- ----------------------------------------------------------------------------
 UPDATE `students` 
 SET 
