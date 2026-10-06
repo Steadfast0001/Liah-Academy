@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
+import { adminStore, confirmStudentReferralOnPaymentApproval, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
 import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 import { sendDecisionSignal } from '@/lib/email';
 import { createSignedFileUrl, isPrivateFileReference } from '@/lib/private-files';
@@ -113,6 +113,7 @@ export async function PUT(request: Request) {
              admission_status = IF(admission_status = 'Rejected', admission_status, 'Approved') WHERE id = ?`,
             [record.student_record_id]
           );
+          await confirmStudentReferralOnPaymentApproval(Number(record.student_record_id));
         } else if (normalizedStatus === 'REJECTED' || normalizedStatus === 'FAILED') {
           await pool.execute("UPDATE students SET payment_status = 'Rejected' WHERE id = ?", [record.student_record_id]);
         }

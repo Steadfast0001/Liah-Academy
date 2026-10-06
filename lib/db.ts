@@ -455,8 +455,8 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
         await pool.query('DELETE FROM students WHERE id = ?', [data.id]);
       } else {
         await pool.query(
-          `INSERT INTO students (id, matricule, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, payment_proof_url, payment_transaction_id, payment_amount, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO students (id, matricule, full_name, email, password, phone, degree_type, program_type, study_format, cohort, qualification, statement, document_url, documents, payment_status, admission_status, payment_proof_url, payment_transaction_id, payment_amount, referred_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
              matricule=VALUES(matricule), full_name=VALUES(full_name), email=VALUES(email), phone=VALUES(phone),
              degree_type=VALUES(degree_type), program_type=VALUES(program_type),
@@ -465,7 +465,7 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
              document_url=VALUES(document_url), documents=VALUES(documents),
              payment_status=VALUES(payment_status), admission_status=VALUES(admission_status),
              payment_proof_url=VALUES(payment_proof_url), payment_transaction_id=VALUES(payment_transaction_id),
-             payment_amount=VALUES(payment_amount)`,
+             payment_amount=VALUES(payment_amount), referred_by=VALUES(referred_by)`,
           [
             data.id, data.matricule || '', data.full_name, data.email, data.password, data.phone || '',
             data.degree_type || 'HND', data.program_type || '', data.study_format || 'oncampus',
@@ -473,6 +473,7 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
             data.statement || '', data.document_url || '', JSON.stringify(data.documents || []),
             data.payment_status || 'Pending', data.admission_status || 'Under Review',
             data.payment_proof_url || '', data.payment_transaction_id || '', Number(data.payment_amount || 0),
+            data.referred_by || null,
             data.created_at ? new Date(data.created_at) : new Date()
           ]
         );
@@ -1436,7 +1437,7 @@ export const adminStore = {
       student.payment_status = payment_status as any;
       if (payment_status === 'Paid') {
         try {
-          adminStore.creditReferralCommission(student.id);
+          adminStore.confirmReferralOnPaymentApproval(student.id);
         } catch {}
       }
     }
@@ -1574,7 +1575,7 @@ export const adminStore = {
           student.admission_status = 'Approved';
         }
         try {
-          adminStore.creditReferralCommission(student.id);
+          adminStore.confirmReferralOnPaymentApproval(student.id);
         } catch {}
       } else if (status === 'REJECTED' || status === 'FAILED') {
         student.payment_status = 'Rejected';
@@ -2101,6 +2102,76 @@ export const adminStore = {
     return true;
   },
 
+  confirmReferralOnPaymentApproval: (studentId: number): boolean => {
+    const store = readDb();
+    if (!store.students || !store.referral_agents) return false;
+    if (!store.referrals) store.referrals = [];
+
+    const student = store.students.find(s => s.id === studentId);
+    if (!student || !student.referred_by) return false;
+
+    const cleanRef = student.referred_by.trim().toUpperCase();
+    const agent = store.referral_agents.find(a => a.code.toUpperCase() === cleanRef);
+    if (!agent) return false;
+
+    const comm = Number(agent.commission_per_student || 15000);
+    const existing = store.referrals.find(r => r.student_id === studentId && (r.agent_id === agent.id || r.agent_code.toUpperCase() === cleanRef));
+
+    if (existing) {
+      if (existing.commission_status !== 'approved' && existing.commission_status !== 'paid') {
+        existing.payment_status = 'Paid';
+        existing.admission_status = 'Approved';
+        existing.commission_status = 'approved';
+        existing.status = 'approved';
+        existing.updated_at = new Date().toISOString();
+
+        agent.paid_referrals = (agent.paid_referrals || 0) + 1;
+        agent.total_earned = (agent.total_earned || 0) + comm;
+        agent.balance = (agent.balance || 0) + comm;
+        agent.updated_at = new Date().toISOString();
+
+        writeDb(store, true);
+        syncToMySQL('referrals', 'update', existing);
+        syncToMySQL('referral_agents', 'update', agent);
+      }
+      return true;
+    }
+
+    const nextId = store.referrals.length > 0 ? Math.max(...store.referrals.map(r => r.id || 0)) + 1 : 1;
+    const newRef: ReferralItem = {
+      id: nextId,
+      agent_id: agent.id,
+      agent_code: agent.code,
+      student_id: student.id,
+      student_name: student.full_name,
+      student_matricule: student.matricule || '',
+      student_email: student.email,
+      student_phone: student.phone || '',
+      program_type: student.program_type || '',
+      degree_type: student.degree_type || 'HND',
+      payment_status: 'Paid',
+      admission_status: 'Approved',
+      commission_amount: comm,
+      commission_status: 'approved',
+      commission_earned: comm,
+      status: 'approved',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    store.referrals.push(newRef);
+    agent.total_referrals = (agent.total_referrals || 0) + 1;
+    agent.paid_referrals = (agent.paid_referrals || 0) + 1;
+    agent.total_earned = (agent.total_earned || 0) + comm;
+    agent.balance = (agent.balance || 0) + comm;
+    agent.updated_at = new Date().toISOString();
+
+    writeDb(store, true);
+    syncToMySQL('referrals', 'insert', newRef);
+    syncToMySQL('referral_agents', 'update', agent);
+    return true;
+  },
+
   getReferralsByAgent: (agentIdOrCode: number | string): ReferralItem[] => {
     const store = readDb();
     const clean = String(agentIdOrCode).trim().toUpperCase();
@@ -2548,5 +2619,86 @@ export const db = {
     };
   }
 };
+
+/**
+ * Confirms a referred applicant into the referral agent's active downline
+ * and credits the referral commission (15,000 XAF) only AFTER Admin payment verification.
+ */
+export async function confirmStudentReferralOnPaymentApproval(studentId: number): Promise<{ success: boolean; message: string }> {
+  if (getDatabaseSourceMode() === 'mysql') {
+    try {
+      await ensureMySQLTables();
+      const pool = getMySQLPool();
+
+      // 1. Get student record
+      const [stuRows] = await pool.execute(
+        'SELECT id, matricule, full_name, email, phone, program_type, degree_type, referred_by FROM students WHERE id = ?',
+        [studentId]
+      );
+      if (!Array.isArray(stuRows) || stuRows.length === 0) {
+        return { success: false, message: 'Student not found' };
+      }
+      const student = (stuRows as any[])[0];
+      const refCode = (student.referred_by || '').trim();
+      if (!refCode) {
+        return { success: false, message: 'Student was not referred by an agent' };
+      }
+
+      // 2. Find referral agent
+      const [agentRows] = await pool.execute(
+        'SELECT id, code, commission_per_student FROM referral_agents WHERE UPPER(code) = ?',
+        [refCode.toUpperCase()]
+      );
+      if (!Array.isArray(agentRows) || agentRows.length === 0) {
+        return { success: false, message: 'Referral agent not found' };
+      }
+      const agent = (agentRows as any[])[0];
+      const comm = Number(agent.commission_per_student || 15000);
+
+      // 3. Check if referral downline already exists
+      const [existingRefRows] = await pool.execute(
+        'SELECT id, commission_status FROM referrals WHERE student_id = ? AND agent_id = ?',
+        [studentId, agent.id]
+      );
+
+      if (Array.isArray(existingRefRows) && existingRefRows.length > 0) {
+        const existingRef = (existingRefRows as any[])[0];
+        if (existingRef.commission_status !== 'approved' && existingRef.commission_status !== 'paid') {
+          await pool.execute(
+            `UPDATE referrals SET payment_status = 'Paid', admission_status = 'Approved', commission_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = ?`,
+            [existingRef.id]
+          );
+          await pool.execute(
+            `UPDATE referral_agents SET paid_referrals = paid_referrals + 1, total_earned = total_earned + ?, balance = balance + ?, updated_at = NOW() WHERE id = ?`,
+            [comm, comm, agent.id]
+          );
+        }
+      } else {
+        // Register under downline upon Admin payment approval
+        await pool.execute(
+          `INSERT INTO referrals (agent_id, agent_code, student_id, student_name, student_matricule, student_email, student_phone, program_type, degree_type, payment_status, admission_status, commission_amount, commission_status, commission_earned, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Paid', 'Approved', ?, 'approved', ?, 'approved', NOW(), NOW())`,
+          [
+            agent.id, agent.code, studentId, student.full_name, student.matricule || '',
+            student.email, student.phone || '', student.program_type || '', student.degree_type || 'HND',
+            comm, comm
+          ]
+        );
+        await pool.execute(
+          `UPDATE referral_agents SET total_referrals = total_referrals + 1, paid_referrals = paid_referrals + 1, total_earned = total_earned + ?, balance = balance + ?, updated_at = NOW() WHERE id = ?`,
+          [comm, comm, agent.id]
+        );
+      }
+
+      adminStore.confirmReferralOnPaymentApproval(studentId);
+      return { success: true, message: 'Referral downline registered and commission credited successfully.' };
+    } catch (err: any) {
+      console.warn('MySQL confirmStudentReferralOnPaymentApproval notice:', err);
+    }
+  }
+
+  adminStore.confirmReferralOnPaymentApproval(studentId);
+  return { success: true, message: 'Referral confirmed in local database.' };
+}
 
 export default db;

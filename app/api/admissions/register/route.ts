@@ -129,54 +129,11 @@ export async function POST(request: Request) {
           ).catch(payErr => console.warn('Payment record insert notice:', payErr));
         }
 
-        // Record downline referral directly in MySQL and local store
+        // Note: Students are tagged with referred_by in the students table.
+        // As per institutional policy, the student will ONLY be registered under the referral agent's
+        // active downline and credited 15,000 XAF commission AFTER the Admin verifies and approves their offline payment proof.
         if (refCode) {
-          try {
-            const [agentRows] = await pool.execute(
-              'SELECT id, code, commission_per_student, total_referrals, paid_referrals, total_earned, balance FROM referral_agents WHERE UPPER(code) = ?',
-              [refCode.toUpperCase()]
-            );
-            if (Array.isArray(agentRows) && agentRows.length > 0) {
-              const dbAgent = (agentRows as any[])[0];
-              const comm = Number(dbAgent.commission_per_student || 15000);
-              const isPaid = (initialPaymentStatus || '').toLowerCase().includes('paid');
-
-              await pool.execute(
-                `INSERT INTO referrals (agent_id, agent_code, student_id, student_name, student_matricule, student_email, student_phone, program_type, payment_status, admission_status, commission_amount, commission_status, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, ?, NOW(), NOW())`,
-                [
-                  dbAgent.id, dbAgent.code, studentId, fullname, mysqlMatricule, email, phone, program_type,
-                  initialPaymentStatus, comm, isPaid ? 'approved' : 'pending'
-                ]
-              );
-
-              if (isPaid) {
-                await pool.execute(
-                  `UPDATE referral_agents SET total_referrals = total_referrals + 1, paid_referrals = paid_referrals + 1, total_earned = total_earned + ?, balance = balance + ?, updated_at = NOW() WHERE id = ?`,
-                  [comm, comm, dbAgent.id]
-                );
-              } else {
-                await pool.execute(
-                  `UPDATE referral_agents SET total_referrals = total_referrals + 1, updated_at = NOW() WHERE id = ?`,
-                  [dbAgent.id]
-                );
-              }
-            }
-
-            adminStore.recordReferral({
-              agent_code: refCode,
-              student_id: studentId,
-              student_name: fullname,
-              student_matricule: mysqlMatricule,
-              student_email: email,
-              student_phone: phone,
-              program_type,
-              payment_status: initialPaymentStatus,
-              admission_status: 'Under Review'
-            });
-          } catch (refErr) {
-            console.warn('Referral recording notice:', refErr);
-          }
+          console.log(`[Referral Tagged] Student #${studentId} registered with referral code "${refCode}". Downline registration will activate upon Admin payment approval.`);
         }
 
         insertedViaMySQL = true;
@@ -234,23 +191,7 @@ export async function POST(request: Request) {
       }
 
       if (refCode) {
-        try {
-          const year = String(new Date().getFullYear()).slice(-2);
-          const fallbackMatricule = `${getDegreePrefix(degree_type)}${year}${getProgramCode(program_type)}${String(studentId).padStart(3, '0')}`;
-          adminStore.recordReferral({
-            agent_code: refCode,
-            student_id: studentId,
-            student_name: fullname,
-            student_matricule: fallbackMatricule,
-            student_email: email,
-            student_phone: phone,
-            program_type,
-            payment_status: initialPaymentStatus,
-            admission_status: 'Under Review'
-          });
-        } catch (refErr) {
-          console.warn('Fallback referral recording notice:', refErr);
-        }
+        console.log(`[Referral Tagged (Local)] Student #${studentId} registered with referral code "${refCode}". Downline registration will activate upon Admin payment approval.`);
       }
     }
 
@@ -270,6 +211,7 @@ export async function POST(request: Request) {
       payment_proof_url: cleanProofUrl || undefined,
       payment_amount: cleanProofUrl ? effectiveFee : 0,
       payment_transaction_id: cleanTxId,
+      referred_by: refCode || undefined,
       created_at: new Date().toISOString()
     };
 

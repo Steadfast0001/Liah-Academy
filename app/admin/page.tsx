@@ -3187,6 +3187,20 @@ export default function AdminDashboardPage() {
                         {selectedApp.payment_status === 'Paid' ? `✓ ${(selectedApp.payment_amount || (selectedApp.degree_type?.includes('Cert') ? 25000 : 15000)).toLocaleString()} XAF Paid` : selectedApp.payment_status === 'Pending Verification' ? '⏳ Proof Verification Pending' : '⏳ Unpaid'}
                       </span>
                     </div>
+
+                    {selectedApp.referred_by && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
+                        <span style={{ color: '#64748B' }}>Referred By:</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                            {selectedApp.referred_by}
+                          </span>
+                          <span style={{ display: 'block', fontSize: '0.72rem', marginTop: '2px', fontWeight: 700, color: selectedApp.payment_status === 'Paid' ? '#059669' : '#D97706' }}>
+                            {selectedApp.payment_status === 'Paid' ? '✓ In Downline (15,000 XAF credited)' : '⏳ Pending Payment Approval (Not yet in downline)'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Dedicated Mobile Money Payment Proof Card */}
@@ -5180,6 +5194,29 @@ export default function AdminDashboardPage() {
                 >
                   <RefreshCw size={15} /> Refresh Referrals
                 </button>
+              </div>
+            </div>
+
+            {/* Offline MoMo & Referral Downline Policy Notice */}
+            <div style={{
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: '10px',
+              padding: '16px 20px',
+              marginBottom: '24px',
+              display: 'flex',
+              gap: '14px',
+              alignItems: 'flex-start'
+            }}>
+              <div style={{ fontSize: '1.4rem', lineHeight: 1 }}>ℹ️</div>
+              <div style={{ fontSize: '0.86rem', color: '#1E3A8A', lineHeight: 1.5 }}>
+                <strong>Manual Offline Payment &amp; Downline Activation Rules:</strong>
+                <p style={{ margin: '4px 0 0 0' }}>
+                  Students submit admission payments offline via MTN/Orange MoMo USSD shortcodes and upload payment screenshots.
+                  Referred students are <strong>not automatically registered in an agent’s downline</strong> at application time.
+                  The <strong>15,000 XAF commission</strong> and downline placement are activated <strong>only after an Administrator verifies and approves their payment proof</strong> in the Applications or Payments tab.
+                  Agent MoMo payouts are sent manually by the Administrator via mobile transfer, followed by uploading the deposit proof receipt.
+                </p>
               </div>
             </div>
 

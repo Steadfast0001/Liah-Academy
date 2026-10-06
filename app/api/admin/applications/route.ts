@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool } from '@/lib/db';
+import { adminStore, ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, confirmStudentReferralOnPaymentApproval } from '@/lib/db';
 import { sendDecisionSignal } from '@/lib/email';
 import { verifyAdminAuthAsync as verifyAdminAuth } from '@/lib/auth';
 import { createStudentView, stripStudentPassword } from '@/lib/student-view';
@@ -91,27 +91,9 @@ export async function PUT(request: Request) {
         }
         if (payment_status === 'Paid') {
           try {
-            const [refRows] = await pool.execute(
-              'SELECT id, agent_id, commission_amount, commission_status FROM referrals WHERE student_id = ?',
-              [id]
-            );
-            if (Array.isArray(refRows) && refRows.length > 0) {
-              const refItem = (refRows as any[])[0];
-              if (refItem.commission_status !== 'approved' && refItem.commission_status !== 'paid') {
-                const comm = Number(refItem.commission_amount || 15000);
-                await pool.execute(
-                  'UPDATE referrals SET payment_status = "Paid", commission_status = "approved", updated_at = NOW() WHERE id = ?',
-                  [refItem.id]
-                );
-                await pool.execute(
-                  'UPDATE referral_agents SET paid_referrals = paid_referrals + 1, total_earned = total_earned + ?, balance = balance + ?, updated_at = NOW() WHERE id = ?',
-                  [comm, comm, refItem.agent_id]
-                );
-              }
-            }
-            adminStore.creditReferralCommission(Number(id));
+            await confirmStudentReferralOnPaymentApproval(Number(id));
           } catch (commErr) {
-            console.warn('MySQL referral credit notice:', commErr);
+            console.warn('Referral confirmation on payment approval error:', commErr);
           }
         }
       }

@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS \`students\` (
   \`payment_proof_url\` LONGTEXT DEFAULT NULL,
   \`payment_transaction_id\` VARCHAR(100) DEFAULT '',
   \`payment_amount\` INT DEFAULT 15000,
+  \`referred_by\` VARCHAR(50) DEFAULT NULL,
   \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
   \`updated_at\` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX \`idx_students_email\` (\`email\`),
@@ -259,6 +260,7 @@ ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`documents\` JSON DEFAULT NUL
 ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`payment_proof_url\` LONGTEXT DEFAULT NULL;
 ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`payment_transaction_id\` VARCHAR(100) DEFAULT '';
 ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`payment_amount\` INT DEFAULT 15000;
+ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`referred_by\` VARCHAR(50) DEFAULT NULL;
 ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`cohort\` VARCHAR(50) DEFAULT '2026/2027 Academic Year';
 ALTER TABLE \`students\` ADD COLUMN IF NOT EXISTS \`qualification\` VARCHAR(100) DEFAULT 'GCE Advanced Level / Baccalauréat';
 ALTER TABLE \`students\` MODIFY \`document_url\` LONGTEXT DEFAULT NULL;
@@ -291,11 +293,12 @@ ALTER TABLE \`students\` MODIFY \`study_format\` VARCHAR(50) DEFAULT 'oncampus';
     const paymentProofUrl = escapeSqlString(s.payment_proof_url || null);
     const paymentTransactionId = escapeSqlString(s.payment_transaction_id || '');
     const paymentAmount = s.payment_amount ? Number(s.payment_amount) : 15000;
+    const referredBy = escapeSqlString(s.referred_by || null);
     const createdAt = escapeSqlString(s.created_at || new Date());
     const updatedAt = escapeSqlString(s.updated_at || s.created_at || new Date());
 
-    sql += `INSERT IGNORE INTO \`students\` (\`id\`, \`matricule\`, \`full_name\`, \`email\`, \`password\`, \`phone\`, \`degree_type\`, \`program_type\`, \`study_format\`, \`cohort\`, \`qualification\`, \`statement\`, \`document_url\`, \`documents\`, \`payment_status\`, \`admission_status\`, \`payment_proof_url\`, \`payment_transaction_id\`, \`payment_amount\`, \`created_at\`, \`updated_at\`)
-VALUES (${id}, ${matricule}, ${fullName}, ${email}, ${password}, ${phone}, ${degreeType}, ${programType}, ${studyFormat}, ${cohort}, ${qualification}, ${statement}, ${documentUrl}, ${documents}, ${paymentStatus}, ${admissionStatus}, ${paymentProofUrl}, ${paymentTransactionId}, ${paymentAmount}, ${createdAt}, ${updatedAt});\n`;
+    sql += `INSERT IGNORE INTO \`students\` (\`id\`, \`matricule\`, \`full_name\`, \`email\`, \`password\`, \`phone\`, \`degree_type\`, \`program_type\`, \`study_format\`, \`cohort\`, \`qualification\`, \`statement\`, \`document_url\`, \`documents\`, \`payment_status\`, \`admission_status\`, \`payment_proof_url\`, \`payment_transaction_id\`, \`payment_amount\`, \`referred_by\`, \`created_at\`, \`updated_at\`)
+VALUES (${id}, ${matricule}, ${fullName}, ${email}, ${password}, ${phone}, ${degreeType}, ${programType}, ${studyFormat}, ${cohort}, ${qualification}, ${statement}, ${documentUrl}, ${documents}, ${paymentStatus}, ${admissionStatus}, ${paymentProofUrl}, ${paymentTransactionId}, ${paymentAmount}, ${referredBy}, ${createdAt}, ${updatedAt});\n`;
   }
 
   // ----------------------------------------------------------------------------

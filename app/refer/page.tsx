@@ -487,7 +487,7 @@ function ReferPageContent() {
                 </h3>
               </div>
               <p style={{ margin: '0 0 14px 0', fontSize: '0.88rem', color: '#64748B' }}>
-                Share this link on WhatsApp, Facebook, Telegram, or SMS. Anyone who applies using your link will appear automatically in your Downline with their <strong>Full Name and Matricule</strong>!
+                Share this link on WhatsApp, Facebook, Telegram, or SMS. Anyone who applies using your link will be placed into your Downline with their <strong>Full Name and Matricule</strong> once their admission payment proof is verified and approved by the Administration!
               </p>
 
               <div style={{
