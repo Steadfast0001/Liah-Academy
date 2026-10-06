@@ -2770,7 +2770,9 @@ function StudentPortalContent() {
                     <img 
                       src="/assets/images/logo.png" 
                       alt="Liah Academy Crest" 
-                      style={{ height: '54px', width: 'auto', margin: '0 auto', display: 'block' }} 
+                      width={54}
+                      height={54}
+                      style={{ height: '54px', width: '54px', aspectRatio: '1 / 1', margin: '0 auto', display: 'block' }} 
                     />
                     <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '3px' }}>
                       INNOVATION &amp; EXCELLENCE

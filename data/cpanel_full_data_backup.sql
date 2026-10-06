@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-06T15:00:34.983Z
+-- Generated: 2026-10-06T16:08:18.472Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -868,7 +868,9 @@ CREATE TABLE IF NOT EXISTS `referral_agents` (
 
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
 
--- DATA: 0 Referral Agents
+-- DATA: 1 Referral Agents
+INSERT IGNORE INTO `referral_agents` (`id`, `full_name`, `code`, `momo_number`, `momo_name`, `email`, `student_id`, `student_matricule`, `status`, `commission_per_student`, `total_referrals`, `paid_referrals`, `total_earned`, `total_paid`, `balance`, `created_at`)
+VALUES (1, 'Nkenganyi Steadfast Bekwike', 'LIAH-NKE787V98', '674003001', 'nkenganyi steadfast', 'nkengsteadbeks@gmail.com', NULL, '', 'active', 15000, 0, 0, 0, 0, 0, '2026-10-06 15:26:01');
 
 -- ----------------------------------------------------------------------------
 -- 14. TABLE: referrals (Applicant Downlines & Commission Log)

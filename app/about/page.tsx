@@ -357,9 +357,9 @@ export default function AboutPage() {
                 <Image 
                   src="/assets/images/new_generation_technologies.png" 
                   alt="New Generation Technologies Logo" 
-                  width={150} 
-                  height={60} 
-                  style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '56px' }}
+                  width={56} 
+                  height={56} 
+                  style={{ objectFit: 'contain', width: '56px', height: '56px', aspectRatio: '1 / 1' }}
                 />
               </div>
 

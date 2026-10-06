@@ -94,7 +94,7 @@ export default function Header() {
                 alt="Liah Academy Logo"
                 width={64}
                 height={64}
-                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '64px', maxWidth: '64px' }}
+                style={{ objectFit: 'contain', width: '64px', height: '64px', aspectRatio: '1 / 1' }}
                 priority
               />
             </div>

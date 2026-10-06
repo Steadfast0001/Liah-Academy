@@ -153,6 +153,8 @@ export default function HomePage() {
               loop
               muted
               playsInline
+              preload="metadata"
+              poster="/assets/images/campus_students_liah_shirts.jpg"
               style={{
                 width: '100%',
                 height: '100%',
@@ -166,6 +168,7 @@ export default function HomePage() {
               src={heroSlides[currentSlide].src}
               alt="Liah Academy Students"
               fill
+              sizes="100vw"
               style={{
                 objectFit: 'cover',
                 objectPosition: heroSlides[currentSlide].position
@@ -304,9 +307,9 @@ export default function HomePage() {
               <Image 
                 src="/assets/images/new_generation_technologies.png" 
                 alt="New Generation Technologies Logo" 
-                width={120} 
-                height={38} 
-                style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxHeight: '34px' }}
+                width={34} 
+                height={34} 
+                style={{ objectFit: 'contain', width: '34px', height: '34px', aspectRatio: '1 / 1' }}
               />
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#081F3E', borderLeft: '1px solid #CBD5E1', paddingLeft: '10px' }}>
                 Technology Partner
@@ -515,6 +518,7 @@ export default function HomePage() {
                       src={alumnus.image}
                       alt={alumnus.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, 360px"
                       style={{ objectFit: 'cover' }}
                     />
                     <div className="alumni-play-btn" aria-label={`Play testimonial from ${alumnus.name}`}>
@@ -632,6 +636,7 @@ export default function HomePage() {
                     src={article.image}
                     alt={article.title}
                     fill
+                    sizes="(max-width: 768px) 100vw, 380px"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>
@@ -669,6 +674,7 @@ export default function HomePage() {
                     src={story.image}
                     alt={story.title}
                     fill
+                    sizes="(max-width: 768px) 100vw, 380px"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>
