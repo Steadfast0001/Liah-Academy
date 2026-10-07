@@ -1,11 +1,31 @@
 import { NextResponse } from 'next/server';
-import db, { ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, markMySQLOffline } from '@/lib/db';
+import db, { ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, markMySQLOffline, getCached, setCached } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
+    const cached = getCached<any[]>('news:all');
+    if (cached) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: cached,
+          total: cached.length,
+          cached: true
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Cache-Status': 'HIT'
+          }
+        }
+      );
+    }
+
     let rawNews: any[] = [];
     if (getDatabaseSourceMode() === 'mysql') {
       try {
@@ -32,6 +52,8 @@ export async function GET() {
       content: item.content || item.excerpt || item.desc || '',
       created_at: item.created_at || new Date().toISOString()
     }));
+
+    setCached('news:all', news, 15000);
 
     return NextResponse.json(
       {

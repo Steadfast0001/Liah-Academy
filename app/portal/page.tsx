@@ -2945,6 +2945,8 @@ function StudentPortalContent() {
                       alt="Liah Academy Crest" 
                       width={54}
                       height={54}
+                      loading="lazy"
+                      decoding="async"
                       style={{ height: '54px', width: '54px', aspectRatio: '1 / 1', margin: '0 auto', display: 'block' }} 
                     />
                     <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '3px' }}>
@@ -3218,6 +3220,8 @@ function StudentPortalContent() {
                 <img
                   src={studentRefProofModal}
                   alt="MoMo Deposit Proof"
+                  loading="lazy"
+                  decoding="async"
                   style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '8px' }}
                 />
               </div>
@@ -3335,6 +3339,8 @@ function StudentPortalContent() {
                     <img
                       src={selectedPortalAnnouncement.image}
                       alt={selectedPortalAnnouncement.title || 'Announcement Flyer'}
+                      loading="lazy"
+                      decoding="async"
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
                   </div>

@@ -557,6 +557,7 @@ export default function HomePage() {
                       src={alumnus.image}
                       alt={alumnus.name}
                       fill
+                      loading="lazy"
                       sizes="(max-width: 768px) 100vw, 360px"
                       style={{ objectFit: 'cover' }}
                     />
@@ -675,6 +676,7 @@ export default function HomePage() {
                     src={article.image || '/assets/images/flyer_engineering.png'}
                     alt={article.title || 'Announcement'}
                     fill
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 380px"
                     style={{ objectFit: 'cover' }}
                   />
@@ -738,6 +740,7 @@ export default function HomePage() {
                     src={story.image}
                     alt={story.title}
                     fill
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 380px"
                     style={{ objectFit: 'cover' }}
                   />
@@ -933,6 +936,7 @@ export default function HomePage() {
                     src={selectedAnnouncement.image}
                     alt={selectedAnnouncement.title || 'Announcement Flyer'}
                     fill
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 680px"
                     style={{ objectFit: 'contain' }}
                   />

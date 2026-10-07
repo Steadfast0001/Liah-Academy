@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-07T19:30:03.239Z
+-- Generated: 2026-10-07T20:58:52.978Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -323,6 +323,143 @@ INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `passwor
 VALUES (4820, 'PC26DO4820', 'john', 'nkengsteadfast@gmail.com', 'pbkdf2$100000$049a9746f824891db49a449ddec2572f$2f819f349371d70b320cc11ee8d9ce4d12ad533cec633e9b2354b616f31f789ab1c432c3f9c1773d96debafb057b321b663990ce1ad95e6e25f0cc52ad78858e', '+237674003001', 'Certification', 'DevOps Certification', 'oncampus', 'Fall 2024 / Spring 2025', 'GCE Advanced Level', NULL, '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/6364e97c-0e4e-4152-bf82-d82ad8394a9a.jpg\"},{\"id\":\"highest_diploma\",\"label\":\"Highest Academic Certificate or CV\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/9c9c878c-f2cf-486c-8786-3223ca0cda7b.jpg\"}]', '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/6364e97c-0e4e-4152-bf82-d82ad8394a9a.jpg\"},{\"id\":\"highest_diploma\",\"label\":\"Highest Academic Certificate or CV\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/9c9c878c-f2cf-486c-8786-3223ca0cda7b.jpg\"}]', 'Pending', 'Under Review', NULL, '', 15000, NULL, '2026-10-07 14:20:50', '2026-10-07 14:20:51');
 
 -- ----------------------------------------------------------------------------
+-- 1B. TABLE: student_documents (1NF Normalization: Atomic Credential Files)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `student_documents` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `slot_id` VARCHAR(100) NOT NULL,
+  `label` VARCHAR(191) NOT NULL,
+  `file_name` VARCHAR(255) NOT NULL,
+  `url` LONGTEXT NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_student_docs_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (6007, 'doc_primary', 'Uploaded Credential', '/uploads/gce_sample.pdf', '/uploads/gce_sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8125, 'doc_primary', 'National ID Card or Passport', 'Gemini_Generated_Image_1ppnm1ppnm1ppnm1.jpg', 'private-file://student-documents/8777d5c1-f9a9-4654-bb47-c6c9de07d7b8.jpg');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8126, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8127, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8128, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8129, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8130, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8131, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8132, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8133, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8134, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8135, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8136, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8137, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8138, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8139, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8140, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8141, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8142, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8143, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8144, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8145, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8146, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8147, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8148, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8149, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8150, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8151, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8152, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8153, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8154, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8155, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8156, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8157, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8158, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8159, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8160, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8161, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8162, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8163, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8164, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8165, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8166, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8167, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8168, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8169, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8170, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8171, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8172, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8173, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8174, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8175, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8176, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8177, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8178, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8179, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8180, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8181, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8182, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8183, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8184, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8185, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8186, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8187, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8188, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8189, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8190, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8191, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8192, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8193, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8194, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8195, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8196, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8197, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8198, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8199, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8200, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8201, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8202, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8203, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8204, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8205, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8206, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8207, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8208, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8209, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8210, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8211, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8212, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8213, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8214, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8215, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8216, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8217, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8218, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8219, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8220, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8221, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8222, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8223, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8224, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8225, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8226, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8227, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8228, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8229, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8230, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8231, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8232, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8233, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8234, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8235, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8236, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8237, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8238, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8239, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8240, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8241, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8242, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8243, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8244, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+INSERT IGNORE INTO `student_documents` (`student_id`, `slot_id`, `label`, `file_name`, `url`) VALUES (8245, 'doc_id', 'National ID', 'sample_id.pdf', 'https://liahacademy.org/sample.pdf');
+
+-- ----------------------------------------------------------------------------
 -- 2. TABLE: payments (Application Fees, Tuition & MoMo Verification Ledger)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `payments` (
@@ -617,6 +754,29 @@ INSERT IGNORE INTO `chat_sessions` (`id`, `user_name`, `user_email`, `user_phone
 VALUES ('chat_1789391745198_vrh6j', '<img src=x onerror=alert(1)> John Doe', '', '', 'active', 0, 0, '📋 **How to Apply to Liah Academy**:\n1. **Choose Program**: Select from our HND (2 Years), ND (1 Year), or Professional Certification tracks.\n2. **Personal & Academic Details**: Fill out Step 1 & Step 2 on our Admissions page.\n3. **Upload Documents**: Attach your GCE A-Level, O-Level, or Academic Transcripts.\n4. **Complete Payment**: Settle the Application Fee (15,000 XAF for HND/ND or 25,000 XAF for Certifications) via MTN Mobile Money short code: ***126*14*670265493*15000#** (or ***126*14*670265493*25000#**).\n5. **Instant Decision**: Once reviewed, your official admission letter is generated on the portal!', '[{\"id\":\"msg_1789391745207_colg\",\"sender\":\"user\",\"sender_name\":\"<img src=x onerror=alert(1)> John Doe\",\"text\":\"How do I register for HND?\",\"timestamp\":\"2026-09-14T13:15:45.207Z\"},{\"id\":\"msg_1789391745228_tkff\",\"sender\":\"bot\",\"sender_name\":\"Liah Assist AI\",\"text\":\"📋 **How to Apply to Liah Academy**:\\n1. **Choose Program**: Select from our HND (2 Years), ND (1 Year), or Professional Certification tracks.\\n2. **Personal & Academic Details**: Fill out Step 1 & Step 2 on our Admissions page.\\n3. **Upload Documents**: Attach your GCE A-Level, O-Level, or Academic Transcripts.\\n4. **Complete Payment**: Settle the Application Fee (15,000 XAF for HND/ND or 25,000 XAF for Certifications) via MTN Mobile Money short code: ***126*14*670265493*15000#** (or ***126*14*670265493*25000#**).\\n5. **Instant Decision**: Once reviewed, your official admission letter is generated on the portal!\",\"timestamp\":\"2026-09-14T13:15:45.228Z\"}]', '2026-09-14 13:15:45', '2026-09-14 13:15:45');
 INSERT IGNORE INTO `chat_sessions` (`id`, `user_name`, `user_email`, `user_phone`, `status`, `unread_admin`, `unread_user`, `last_message`, `messages`, `created_at`, `updated_at`)
 VALUES ('chat_1789335877363_xfycn', 'Website Visitor', '', '', 'active', 0, 0, 'HELLO I AM LIAH HUMAN ASSISTANT, HOW CAN I HELP YOU', '[{\"id\":\"msg_1789335885525_24g0\",\"sender\":\"user\",\"sender_name\":\"Website Visitor\",\"text\":\"HI\",\"timestamp\":\"2026-09-13T21:44:45.525Z\"},{\"id\":\"msg_1789335885540_bzzt\",\"sender\":\"bot\",\"sender_name\":\"Liah Assist AI\",\"text\":\"Hello! I am **Liah Assist AI** 🤖, your 24/7 Academic Advisor at Liah Academy.\\n\\nHere is how I can assist you:\\n1. 💳 **MTN MoMo Fees Payment**: Generate short codes and auto-confirm transactions\\n2. 🔍 **Track Application**: Check your admission and document verification status\\n3. 📚 **Programs & Syllabi**: Explore HND, ND, and Certification course tracks\\n4. 💰 **Tuition & Grants**: Review fee breakdown and installments\\n5. 📍 **Campus Location & Contact**: Directions and direct WhatsApp support\\n\\nHow can I help you today?\",\"timestamp\":\"2026-09-13T21:44:45.540Z\"},{\"id\":\"msg_adm_1789335963518_8q5e\",\"sender\":\"agent\",\"sender_name\":\"Admin (info)\",\"text\":\"HELLO I AM LIAH HUMAN ASSISTANT, HOW CAN I HELP YOU\",\"timestamp\":\"2026-09-13T21:46:03.518Z\"}]', '2026-09-13 21:44:45', '2026-09-13 21:46:03');
+
+-- ----------------------------------------------------------------------------
+-- 10B. TABLE: chat_messages (1NF Normalization: Atomic Message Log)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `session_id` VARCHAR(100) NOT NULL,
+  `sender` VARCHAR(50) NOT NULL,
+  `sender_name` VARCHAR(191) DEFAULT '',
+  `message` TEXT NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_chat_msg_session` (`session_id`),
+  INDEX `idx_chat_msg_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789674258804_mmwqb', 'user', 'Website Visitor', 'What are the tuition fees for HND?', '2026-09-17 19:44:18');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789674258804_mmwqb', 'bot', 'Liah Assist AI', 'Here is the official MTN Mobile Money instant payment short code: ***126*14*670265493*Amount#**.\n\nSelect your fee amount below, then tap **\"Pay Now — Open MTN MoMo\"** to dial the code and enter your secret PIN on your phone:', '2026-09-17 19:44:18');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789674258804_mmwqb', 'agent', 'Admin (info)', 'Our Higher National Diploma (HND) programs are 250,000 XAF per year with flexible installment plans. Application fee is 15,000 XAF via MTN MoMo (*126*14*670265493*15000#).', '2026-10-01 07:21:52');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789391745198_vrh6j', 'user', '<img src=x onerror=alert(1)> John Doe', 'How do I register for HND?', '2026-09-14 13:15:45');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789391745198_vrh6j', 'bot', 'Liah Assist AI', '📋 **How to Apply to Liah Academy**:\n1. **Choose Program**: Select from our HND (2 Years), ND (1 Year), or Professional Certification tracks.\n2. **Personal & Academic Details**: Fill out Step 1 & Step 2 on our Admissions page.\n3. **Upload Documents**: Attach your GCE A-Level, O-Level, or Academic Transcripts.\n4. **Complete Payment**: Settle the Application Fee (15,000 XAF for HND/ND or 25,000 XAF for Certifications) via MTN Mobile Money short code: ***126*14*670265493*15000#** (or ***126*14*670265493*25000#**).\n5. **Instant Decision**: Once reviewed, your official admission letter is generated on the portal!', '2026-09-14 13:15:45');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789335877363_xfycn', 'user', 'Website Visitor', 'HI', '2026-09-13 21:44:45');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789335877363_xfycn', 'bot', 'Liah Assist AI', 'Hello! I am **Liah Assist AI** 🤖, your 24/7 Academic Advisor at Liah Academy.\n\nHere is how I can assist you:\n1. 💳 **MTN MoMo Fees Payment**: Generate short codes and auto-confirm transactions\n2. 🔍 **Track Application**: Check your admission and document verification status\n3. 📚 **Programs & Syllabi**: Explore HND, ND, and Certification course tracks\n4. 💰 **Tuition & Grants**: Review fee breakdown and installments\n5. 📍 **Campus Location & Contact**: Directions and direct WhatsApp support\n\nHow can I help you today?', '2026-09-13 21:44:45');
+INSERT IGNORE INTO `chat_messages` (`session_id`, `sender`, `sender_name`, `message`, `created_at`) VALUES ('chat_1789335877363_xfycn', 'agent', 'Admin (info)', 'HELLO I AM LIAH HUMAN ASSISTANT, HOW CAN I HELP YOU', '2026-09-13 21:46:03');
 
 -- ----------------------------------------------------------------------------
 -- 11. TABLE: email_logs (Audit Trail for Admission & Decision Signals)
@@ -935,16 +1095,47 @@ CREATE TABLE IF NOT EXISTS `referral_payouts` (
 -- DATA: 0 Referral Payout Requests
 
 -- ----------------------------------------------------------------------------
--- 16. DATA SANITIZATION & SELF-HEALING REPAIRS
+-- 17. NORMALIZED 3NF RELATIONAL VIEWS (Zero Duplication + Instant High-Speed Joins)
 -- ----------------------------------------------------------------------------
-UPDATE `students` 
-SET 
-  `payment_proof_url` = CASE 
-    WHEN (`payment_proof_url` IS NULL OR `payment_proof_url` = '') THEN `admission_status` 
-    ELSE `payment_proof_url` 
-  END,
-  `admission_status` = 'Under Review'
-WHERE `admission_status` LIKE 'private-file:%' OR `admission_status` LIKE '%/%';
+CREATE OR REPLACE VIEW `view_referrals_normalized` AS
+SELECT 
+  r.id,
+  r.agent_id,
+  ra.code AS agent_code,
+  ra.full_name AS agent_name,
+  ra.momo_number AS agent_momo,
+  r.student_id,
+  s.full_name AS student_name,
+  s.matricule AS student_matricule,
+  s.email AS student_email,
+  s.phone AS student_phone,
+  s.program_type,
+  s.payment_status,
+  s.admission_status,
+  r.commission_amount,
+  r.commission_status,
+  r.created_at,
+  r.updated_at
+FROM `referrals` r
+LEFT JOIN `referral_agents` ra ON r.agent_id = ra.id
+LEFT JOIN `students` s ON r.student_id = s.id;
+
+CREATE OR REPLACE VIEW `view_referral_payouts_normalized` AS
+SELECT 
+  rp.id,
+  rp.agent_id,
+  ra.code AS agent_code,
+  ra.full_name AS agent_name,
+  rp.momo_number,
+  rp.amount,
+  rp.status,
+  rp.transaction_id,
+  rp.proof_screenshot,
+  rp.admin_notes,
+  rp.requested_at,
+  rp.processed_at
+FROM `referral_payouts` rp
+LEFT JOIN `referral_agents` ra ON rp.agent_id = ra.id;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

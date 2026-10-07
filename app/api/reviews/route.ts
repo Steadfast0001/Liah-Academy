@@ -1,10 +1,27 @@
 import { NextResponse } from 'next/server';
-import db, { ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, markMySQLOffline } from '@/lib/db';
+import db, { ensureMySQLTables, getDatabaseSourceMode, getMySQLPool, markMySQLOffline, getCached, setCached, invalidateCache } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const cached = getCached<any[]>('reviews:all');
+    if (cached) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: cached,
+          cached: true
+        },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+            'X-Cache-Status': 'HIT'
+          }
+        }
+      );
+    }
+
     let reviews: any[] = [];
     if (getDatabaseSourceMode() === 'mysql') {
       try {
@@ -19,10 +36,21 @@ export async function GET() {
     } else {
       reviews = db.reviews.all();
     }
-    return NextResponse.json({
-      success: true,
-      data: reviews
-    });
+
+    setCached('reviews:all', reviews, 30000);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: reviews
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache-Status': 'MISS'
+        }
+      }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: 'Could not load reviews.' },
@@ -72,6 +100,9 @@ export async function POST(request: Request) {
       const result = insert.run(name, role, rating || 5, comment);
       newReview = db.prepare('SELECT * FROM reviews WHERE id = ?').get(result.lastInsertRowid);
     }
+
+    // Invalidate cached reviews immediately on new submission
+    invalidateCache('reviews');
 
     return NextResponse.json({
       success: true,

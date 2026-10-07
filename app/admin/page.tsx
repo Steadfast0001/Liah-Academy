@@ -3413,6 +3413,8 @@ export default function AdminDashboardPage() {
                             <img 
                               src={selectedApp.payment_proof_url} 
                               alt="Payment Screenshot" 
+                              loading="lazy"
+                              decoding="async"
                               style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
                             />
                           ) : (
@@ -3576,6 +3578,8 @@ export default function AdminDashboardPage() {
                                   <img 
                                     src={doc.url} 
                                     alt={doc.label || 'Credential Document'} 
+                                    loading="lazy"
+                                    decoding="async"
                                     style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
                                   />
                                 ) : isPdfFile(doc.url, doc.fileName) ? (
@@ -3725,6 +3729,8 @@ export default function AdminDashboardPage() {
                             <img 
                               src={selectedApp.document_url} 
                               alt="Primary Document" 
+                              loading="lazy"
+                              decoding="async"
                               style={{ width: '100%', height: '160px', objectFit: 'contain', background: '#0F172A' }}
                             />
                           ) : isPdfFile(selectedApp.document_url) ? (
@@ -6351,7 +6357,7 @@ export default function AdminDashboardPage() {
                   />
                   {payoutProofPreview && (
                     <div style={{ marginTop: '10px', textAlign: 'center', background: '#F8FAFC', padding: '10px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                      <img src={payoutProofPreview} alt="Screenshot Preview" style={{ maxHeight: '120px', borderRadius: '6px' }} />
+                      <img src={payoutProofPreview} alt="Screenshot Preview" loading="lazy" decoding="async" style={{ maxHeight: '120px', borderRadius: '6px' }} />
                     </div>
                   )}
                   <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
@@ -6445,6 +6451,8 @@ export default function AdminDashboardPage() {
                 <img
                   src={viewingAdminProofUrl}
                   alt="Deposit Proof"
+                  loading="lazy"
+                  decoding="async"
                   style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '8px' }}
                 />
               </div>
@@ -6644,6 +6652,8 @@ export default function AdminDashboardPage() {
                     <img
                       src={previewProofItem.payment_proof_url}
                       alt="Uploaded Payment Receipt"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';
                         const parent = (e.target as HTMLElement).parentElement;
@@ -6888,6 +6898,8 @@ export default function AdminDashboardPage() {
                     <img
                       src={previewDocItem.url}
                       alt={previewDocItem.title}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';
                         const parent = (e.target as HTMLElement).parentElement;

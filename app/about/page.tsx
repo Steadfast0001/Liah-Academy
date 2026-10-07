@@ -379,6 +379,7 @@ export default function AboutPage() {
                   alt="New Generation Technologies Logo" 
                   width={72} 
                   height={72} 
+                  loading="lazy"
                   style={{ objectFit: 'contain', width: '72px', height: '72px', aspectRatio: '1 / 1' }}
                 />
               </div>
@@ -534,6 +535,7 @@ export default function AboutPage() {
                       src={article.image || '/assets/images/flyer_engineering.png'} 
                       alt={article.title || 'Announcement'} 
                       fill 
+                      loading="lazy"
                       style={{ objectFit: 'cover' }} 
                       sizes="(max-width: 768px) 100vw, 400px"
                     />
@@ -667,6 +669,7 @@ export default function AboutPage() {
                     src={selectedAnnouncement.image}
                     alt={selectedAnnouncement.title || 'Announcement Flyer'}
                     fill
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 680px"
                     style={{ objectFit: 'contain' }}
                   />

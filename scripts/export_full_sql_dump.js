@@ -302,6 +302,39 @@ VALUES (${id}, ${matricule}, ${fullName}, ${email}, ${password}, ${phone}, ${deg
   }
 
   // ----------------------------------------------------------------------------
+  // 1B. TABLE: student_documents (1NF Normalization: Atomic Document Records)
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 1B. TABLE: student_documents (1NF Normalization: Atomic Credential Files)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS \`student_documents\` (
+  \`id\` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  \`student_id\` INT NOT NULL,
+  \`slot_id\` VARCHAR(100) NOT NULL,
+  \`label\` VARCHAR(191) NOT NULL,
+  \`file_name\` VARCHAR(255) NOT NULL,
+  \`url\` LONGTEXT NOT NULL,
+  \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX \`idx_student_docs_student\` (\`student_id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+`;
+  for (const s of mergedStudents) {
+    if (s.id && Array.isArray(s.documents) && s.documents.length > 0) {
+      for (const d of s.documents) {
+        if (d && d.url) {
+          const sId = Number(s.id);
+          const slot = escapeSqlString(d.slotId || 'doc_primary');
+          const lbl = escapeSqlString(d.label || 'Uploaded Credential');
+          const fn = escapeSqlString(d.fileName || 'document.pdf');
+          const u = escapeSqlString(d.url);
+          sql += `INSERT IGNORE INTO \`student_documents\` (\`student_id\`, \`slot_id\`, \`label\`, \`file_name\`, \`url\`) VALUES (${sId}, ${slot}, ${lbl}, ${fn}, ${u});\n`;
+        }
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------
   // 2. TABLE: payments
   // ----------------------------------------------------------------------------
   sql += `\n-- ----------------------------------------------------------------------------
@@ -646,6 +679,39 @@ VALUES (${id}, ${userName}, ${userEmail}, ${userPhone}, ${status}, ${unreadAdmin
   }
 
   // ----------------------------------------------------------------------------
+  // 10B. TABLE: chat_messages (1NF Normalization: Atomic Message Transcript)
+  // ----------------------------------------------------------------------------
+  sql += `\n-- ----------------------------------------------------------------------------
+-- 10B. TABLE: chat_messages (1NF Normalization: Atomic Message Log)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS \`chat_messages\` (
+  \`id\` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  \`session_id\` VARCHAR(100) NOT NULL,
+  \`sender\` VARCHAR(50) NOT NULL,
+  \`sender_name\` VARCHAR(191) DEFAULT '',
+  \`message\` TEXT NOT NULL,
+  \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX \`idx_chat_msg_session\` (\`session_id\`),
+  INDEX \`idx_chat_msg_created\` (\`created_at\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+`;
+  for (const cs of chatSessions) {
+    if (cs.id && Array.isArray(cs.messages) && cs.messages.length > 0) {
+      for (const m of cs.messages) {
+        if (m && (m.text || m.message)) {
+          const sId = escapeSqlString(cs.id);
+          const snd = escapeSqlString(m.sender || 'user');
+          const sndName = escapeSqlString(m.sender_name || (m.sender === 'agent' ? 'Liah Support' : (cs.user_name || 'Visitor')));
+          const msg = escapeSqlString(m.text || m.message);
+          const cAt = escapeSqlString(m.timestamp || new Date());
+          sql += `INSERT IGNORE INTO \`chat_messages\` (\`session_id\`, \`sender\`, \`sender_name\`, \`message\`, \`created_at\`) VALUES (${sId}, ${snd}, ${sndName}, ${msg}, ${cAt});\n`;
+        }
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------
   // 11. TABLE: email_logs
   // ----------------------------------------------------------------------------
   sql += `\n-- ----------------------------------------------------------------------------
@@ -854,16 +920,47 @@ VALUES (${id}, ${agentId}, ${agentCode}, ${agentName}, ${momoNumber}, ${amount},
   // 16. DATA SANITIZATION & SELF-HEALING REPAIRS
   // ----------------------------------------------------------------------------
   sql += `\n-- ----------------------------------------------------------------------------
--- 16. DATA SANITIZATION & SELF-HEALING REPAIRS
+-- 17. NORMALIZED 3NF RELATIONAL VIEWS (Zero Duplication + Instant High-Speed Joins)
 -- ----------------------------------------------------------------------------
-UPDATE \`students\` 
-SET 
-  \`payment_proof_url\` = CASE 
-    WHEN (\`payment_proof_url\` IS NULL OR \`payment_proof_url\` = '') THEN \`admission_status\` 
-    ELSE \`payment_proof_url\` 
-  END,
-  \`admission_status\` = 'Under Review'
-WHERE \`admission_status\` LIKE 'private-file:%' OR \`admission_status\` LIKE '%/%';
+CREATE OR REPLACE VIEW \`view_referrals_normalized\` AS
+SELECT 
+  r.id,
+  r.agent_id,
+  ra.code AS agent_code,
+  ra.full_name AS agent_name,
+  ra.momo_number AS agent_momo,
+  r.student_id,
+  s.full_name AS student_name,
+  s.matricule AS student_matricule,
+  s.email AS student_email,
+  s.phone AS student_phone,
+  s.program_type,
+  s.payment_status,
+  s.admission_status,
+  r.commission_amount,
+  r.commission_status,
+  r.created_at,
+  r.updated_at
+FROM \`referrals\` r
+LEFT JOIN \`referral_agents\` ra ON r.agent_id = ra.id
+LEFT JOIN \`students\` s ON r.student_id = s.id;
+
+CREATE OR REPLACE VIEW \`view_referral_payouts_normalized\` AS
+SELECT 
+  rp.id,
+  rp.agent_id,
+  ra.code AS agent_code,
+  ra.full_name AS agent_name,
+  rp.momo_number,
+  rp.amount,
+  rp.status,
+  rp.transaction_id,
+  rp.proof_screenshot,
+  rp.admin_notes,
+  rp.requested_at,
+  rp.processed_at
+FROM \`referral_payouts\` rp
+LEFT JOIN \`referral_agents\` ra ON rp.agent_id = ra.id;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

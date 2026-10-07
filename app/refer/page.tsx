@@ -1484,6 +1484,8 @@ function ReferPageContent() {
               <img
                 src={viewingProof}
                 alt="MoMo Deposit Proof"
+                loading="lazy"
+                decoding="async"
                 style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '8px' }}
               />
             </div>

@@ -29,6 +29,7 @@ export default function Footer() {
                   alt="Liah Academy Logo"
                   width={56}
                   height={56}
+                  loading="lazy"
                   style={{ width: '56px', height: '56px', aspectRatio: '1 / 1' }}
                   className="york-footer-logo-img"
                 />
