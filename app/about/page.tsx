@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Building, Lightbulb, Award, Handshake, 
-  CheckCircle, ArrowRight, Calendar, Sparkles, Mail
+  CheckCircle, ArrowRight, Calendar, Sparkles, Mail, X
 } from 'lucide-react';
 import { PARTNERSHIP_MAILTO_LINK } from '../../lib/constants';
 
@@ -40,6 +40,26 @@ const newsArticles = [
 ];
 
 export default function AboutPage() {
+  const [newsList, setNewsList] = useState<any[]>(newsArticles);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/news', { cache: 'no-store' });
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setNewsList(json.data);
+        }
+      } catch (err) {
+        console.warn('Failed to load announcements on About page:', err);
+      }
+    };
+    fetchAnnouncements();
+    return () => { isMounted = false; };
+  }, []);
+
   return (
     <main style={{ marginTop: 'calc(var(--header-height) + 50px)', marginBottom: '0' }}>
       
@@ -493,7 +513,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid-3" style={{ alignItems: 'stretch', gap: '30px' }}>
-            {newsArticles.map((article) => (
+            {newsList.map((article: any) => (
               <div 
                 key={article.id} 
                 className="premium-card" 
@@ -509,10 +529,10 @@ export default function AboutPage() {
                 }}
               >
                 <div>
-                  <div style={{ position: 'relative', height: '240px', borderRadius: '10px', overflow: 'hidden', marginBottom: '18px' }}>
+                  <div style={{ position: 'relative', height: '240px', borderRadius: '10px', overflow: 'hidden', marginBottom: '18px', background: '#0B1528' }}>
                     <Image 
-                      src={article.image} 
-                      alt={article.title} 
+                      src={article.image || '/assets/images/flyer_engineering.png'} 
+                      alt={article.title || 'Announcement'} 
                       fill 
                       style={{ objectFit: 'cover' }} 
                       sizes="(max-width: 768px) 100vw, 400px"
@@ -529,10 +549,10 @@ export default function AboutPage() {
                       borderRadius: '4px',
                       fontWeight: 700 
                     }}>
-                      {article.category}
+                      {article.category || article.badge || 'Highlights'}
                     </span>
                     <span style={{ fontSize: '0.8rem', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Calendar size={13} /> {article.date}
+                      <Calendar size={13} /> {article.date || 'Recent'}
                     </span>
                   </div>
 
@@ -541,32 +561,175 @@ export default function AboutPage() {
                   </h3>
 
                   <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                    {article.desc}
+                    {article.desc || article.excerpt || (article.content ? article.content.slice(0, 150) + '...' : '')}
                   </p>
                 </div>
 
-                <Link 
-                  href={article.link} 
+                <button 
+                  type="button"
+                  onClick={() => setSelectedAnnouncement(article)}
                   style={{ 
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
                     color: '#081F3E', 
                     fontWeight: 800, 
                     fontSize: '0.9rem', 
                     display: 'inline-flex', 
                     alignItems: 'center', 
                     gap: '6px',
-                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
                     borderTop: '1px solid rgba(15,23,42,0.06)',
                     paddingTop: '14px',
-                    transition: 'color 0.2s ease'
+                    transition: 'color 0.2s ease',
+                    width: '100%'
                   }}
                 >
-                  Read Full Story <ArrowRight size={16} color="#F5A623" />
-                </Link>
+                  Read Full Announcement <ArrowRight size={16} color="#F5A623" />
+                </button>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Full Announcement Detail Modal */}
+      {selectedAnnouncement && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(8, 31, 62, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => setSelectedAnnouncement(null)}
+        >
+          <div 
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ 
+                  background: '#FEF3C7', 
+                  color: '#B45309', 
+                  fontSize: '0.75rem', 
+                  fontFamily: 'var(--font-mono)', 
+                  fontWeight: 800, 
+                  padding: '4px 10px', 
+                  borderRadius: '6px',
+                  textTransform: 'uppercase'
+                }}>
+                  {selectedAnnouncement.category || selectedAnnouncement.badge || 'Official Notice'}
+                </span>
+                {selectedAnnouncement.date && (
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={13} /> {selectedAnnouncement.date}
+                  </span>
+                )}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedAnnouncement(null)}
+                style={{ background: '#E2E8F0', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#334155' }}
+                aria-label="Close Announcement"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {selectedAnnouncement.image && (
+                <div style={{ position: 'relative', width: '100%', height: '260px', borderRadius: '10px', overflow: 'hidden', background: '#0B1528' }}>
+                  <Image
+                    src={selectedAnnouncement.image}
+                    alt={selectedAnnouncement.title || 'Announcement Flyer'}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 680px"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
+
+              <h2 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, margin: 0, lineHeight: 1.35 }}>
+                {selectedAnnouncement.title}
+              </h2>
+
+              {selectedAnnouncement.excerpt && (
+                <div style={{ background: '#F1F5F9', padding: '12px 16px', borderRadius: '8px', borderLeft: '4px solid #0284C7', color: '#1E293B', fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.6 }}>
+                  {selectedAnnouncement.excerpt}
+                </div>
+              )}
+
+              {selectedAnnouncement.content && (
+                <div style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                  {selectedAnnouncement.content}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '16px', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '12px' }}>
+                <Link 
+                  href="/programs"
+                  onClick={() => setSelectedAnnouncement(null)}
+                  style={{
+                    background: '#081F3E',
+                    color: '#FFFFFF',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  Explore Academic Tracks <ArrowRight size={14} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAnnouncement(null)}
+                  style={{
+                    background: '#F1F5F9',
+                    border: '1px solid #CBD5E1',
+                    color: '#334155',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   );

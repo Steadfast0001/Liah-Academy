@@ -7,7 +7,8 @@ import {
   Check, ArrowRight, Star, 
   Award, Shield, Users, Code, 
   Play, Pause, ChevronRight, ChevronLeft,
-  X, CheckCircle, Sparkles, BookOpen, Layers, Monitor, Phone
+  X, CheckCircle, Sparkles, BookOpen, Layers, Monitor, Phone,
+  Calendar, Megaphone
 } from 'lucide-react';
 
 const heroSlides = [
@@ -128,6 +129,26 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeStory, setActiveStory] = useState<any | null>(null);
   const [storyVideoPlaying, setStoryVideoPlaying] = useState(true);
+  const [newsList, setNewsList] = useState<any[]>(newsArticles);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
+
+  // Load live announcements from database
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/news', { cache: 'no-store' });
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setNewsList(json.data);
+        }
+      } catch (err) {
+        console.warn('Failed to load announcements from API:', err);
+      }
+    };
+    fetchAnnouncements();
+    return () => { isMounted = false; };
+  }, []);
 
   // Auto rotate hero slides
   useEffect(() => {
@@ -647,24 +668,49 @@ export default function HomePage() {
           </div>
 
           <div className="york-news-grid">
-            {newsArticles.map((article) => (
+            {newsList.map((article: any) => (
               <div key={article.id} className="york-news-card">
                 <div className="york-news-img-box">
                   <Image
-                    src={article.image}
-                    alt={article.title}
+                    src={article.image || '/assets/images/flyer_engineering.png'}
+                    alt={article.title || 'Announcement'}
                     fill
                     sizes="(max-width: 768px) 100vw, 380px"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>
                 <div className="york-news-body">
-                  <span className="york-news-category">{article.category}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span className="york-news-category">{article.category || article.badge || 'News & Updates'}</span>
+                    {article.date && (
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Calendar size={12} /> {article.date}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="york-news-card-title">{article.title}</h3>
-                  <p className="york-news-card-excerpt">{article.excerpt}</p>
-                  <Link href={article.link} style={{ color: '#0284C7', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <p className="york-news-card-excerpt">
+                    {article.excerpt || article.desc || (article.content ? article.content.slice(0, 150) + '...' : '')}
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={() => setSelectedAnnouncement(article)}
+                    style={{ 
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      color: '#0284C7', 
+                      fontWeight: 700, 
+                      fontSize: '0.88rem', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
                     Read Full Announcement →
-                  </Link>
+                  </button>
                 </div>
               </div>
             ))}
@@ -806,6 +852,145 @@ export default function HomePage() {
                 >
                   Start Your Journey
                 </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================
+          12. ANNOUNCEMENT DETAILS MODAL
+          =================================================== */}
+      {selectedAnnouncement && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(8, 31, 62, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => setSelectedAnnouncement(null)}
+        >
+          <div 
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ 
+                  background: '#FEF3C7', 
+                  color: '#B45309', 
+                  fontSize: '0.75rem', 
+                  fontFamily: 'var(--font-mono)', 
+                  fontWeight: 800, 
+                  padding: '4px 10px', 
+                  borderRadius: '6px',
+                  textTransform: 'uppercase'
+                }}>
+                  {selectedAnnouncement.category || selectedAnnouncement.badge || 'Official Notice'}
+                </span>
+                {selectedAnnouncement.date && (
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={13} /> {selectedAnnouncement.date}
+                  </span>
+                )}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedAnnouncement(null)}
+                style={{ background: '#E2E8F0', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#334155' }}
+                aria-label="Close Announcement"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {selectedAnnouncement.image && (
+                <div style={{ position: 'relative', width: '100%', height: '260px', borderRadius: '10px', overflow: 'hidden', background: '#0B1528' }}>
+                  <Image
+                    src={selectedAnnouncement.image}
+                    alt={selectedAnnouncement.title || 'Announcement Flyer'}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 680px"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+              )}
+
+              <h2 style={{ color: '#081F3E', fontSize: '1.45rem', fontWeight: 800, margin: 0, lineHeight: 1.35 }}>
+                {selectedAnnouncement.title}
+              </h2>
+
+              {selectedAnnouncement.excerpt && (
+                <div style={{ background: '#F1F5F9', padding: '12px 16px', borderRadius: '8px', borderLeft: '4px solid #0284C7', color: '#1E293B', fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.6 }}>
+                  {selectedAnnouncement.excerpt}
+                </div>
+              )}
+
+              {selectedAnnouncement.content && (
+                <div style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                  {selectedAnnouncement.content}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '16px', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '12px' }}>
+                <Link 
+                  href="/portal?tab=enrol"
+                  onClick={() => setSelectedAnnouncement(null)}
+                  style={{
+                    background: '#081F3E',
+                    color: '#FFFFFF',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  Apply &amp; Enrol Now <ArrowRight size={14} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAnnouncement(null)}
+                  style={{
+                    background: '#F1F5F9',
+                    border: '1px solid #CBD5E1',
+                    color: '#334155',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ import {
   UploadCloud, FileCheck, Smartphone, Loader2, Copy, Image as ImageIcon,
   Clock, Printer, Building, Mail, MapPin, ArrowRight, ArrowLeft, Lock, Zap,
   UserPlus, FileText, Trash2, Paperclip, Eye, EyeOff, ExternalLink,
-  Share2, DollarSign, Award, Users, CheckCircle2
+  Share2, DollarSign, Award, Users, CheckCircle2, Megaphone, Calendar, X
 } from 'lucide-react';
 import { compressImageFile } from '../../lib/imageOptimizer';
 
@@ -209,6 +209,10 @@ function StudentPortalContent() {
   const [studentRefPayoutMsg, setStudentRefPayoutMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [studentRefProofModal, setStudentRefProofModal] = useState<string | null>(null);
 
+  // Official Institutional Announcements State
+  const [portalAnnouncements, setPortalAnnouncements] = useState<any[]>([]);
+  const [selectedPortalAnnouncement, setSelectedPortalAnnouncement] = useState<any | null>(null);
+
   const loadStudentReferral = async (studId: number, studPhone?: string) => {
     setStudentRefLoading(true);
     try {
@@ -337,6 +341,24 @@ function StudentPortalContent() {
       loadStudentReferral(student.id, student.phone);
     }
   }, [student?.id]);
+
+  // Load institutional announcements from backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPortalAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/news', { cache: 'no-store' });
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.data)) {
+          setPortalAnnouncements(json.data);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch announcements for student portal:', err);
+      }
+    };
+    fetchPortalAnnouncements();
+    return () => { isMounted = false; };
+  }, []);
 
   // Keep Program synced when Degree Category changes
   const handleDegreeChange = (newDeg: 'HND' | 'ND' | 'Certification') => {
@@ -1045,6 +1067,86 @@ function StudentPortalContent() {
                 </span>
               </div>
             </div>
+
+            {/* Official Academy Announcements & Circulars */}
+            {portalAnnouncements.length > 0 && (
+              <div style={{ marginBottom: '36px', background: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
+                      <Megaphone size={18} />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#081F3E', margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                        Official Announcements &amp; Academic Notices
+                      </h4>
+                      <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                        Important circulars and updates from the administration
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ background: '#EFF6FF', color: '#1D4ED8', fontSize: '0.78rem', fontWeight: 700, padding: '4px 10px', borderRadius: '20px' }}>
+                    {portalAnnouncements.length} {portalAnnouncements.length === 1 ? 'Notice' : 'Notices'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {portalAnnouncements.slice(0, 3).map((item: any) => (
+                    <div 
+                      key={item.id}
+                      style={{
+                        padding: '16px',
+                        background: '#F8FAFC',
+                        borderRadius: '10px',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '16px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '240px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <span style={{ background: '#FEF3C7', color: '#B45309', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                            {item.category || item.badge || 'Notice'}
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Calendar size={11} /> {item.date || 'Recent'}
+                          </span>
+                        </div>
+                        <h5 style={{ color: '#081F3E', margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 800 }}>
+                          {item.title}
+                        </h5>
+                        <p style={{ color: '#64748B', margin: 0, fontSize: '0.86rem', lineHeight: '1.5' }}>
+                          {item.excerpt || item.desc || (item.content ? item.content.slice(0, 120) + '...' : '')}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPortalAnnouncement(item)}
+                        style={{
+                          background: '#081F3E',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        Read Notice <ArrowRight size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Academic Record Summary */}
             <div style={{ marginBottom: '36px', background: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
@@ -3067,6 +3169,121 @@ function StudentPortalContent() {
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Official Academy Announcement Reader Modal */}
+        {selectedPortalAnnouncement && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(8, 31, 62, 0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px'
+            }}
+            onClick={() => setSelectedPortalAnnouncement(null)}
+          >
+            <div 
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                maxWidth: '680px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ 
+                    background: '#FEF3C7', 
+                    color: '#B45309', 
+                    fontSize: '0.75rem', 
+                    fontFamily: 'var(--font-mono)', 
+                    fontWeight: 800, 
+                    padding: '4px 10px', 
+                    borderRadius: '6px',
+                    textTransform: 'uppercase'
+                  }}>
+                    {selectedPortalAnnouncement.category || selectedPortalAnnouncement.badge || 'Official Notice'}
+                  </span>
+                  {selectedPortalAnnouncement.date && (
+                    <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={13} /> {selectedPortalAnnouncement.date}
+                    </span>
+                  )}
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setSelectedPortalAnnouncement(null)}
+                  style={{ background: '#E2E8F0', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#334155' }}
+                  aria-label="Close Notice"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {selectedPortalAnnouncement.image && (
+                  <div style={{ position: 'relative', width: '100%', height: '260px', borderRadius: '10px', overflow: 'hidden', background: '#0B1528' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedPortalAnnouncement.image}
+                      alt={selectedPortalAnnouncement.title || 'Announcement Flyer'}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+
+                <h3 style={{ color: '#081F3E', fontSize: '1.4rem', fontWeight: 800, margin: 0, lineHeight: 1.35 }}>
+                  {selectedPortalAnnouncement.title}
+                </h3>
+
+                {selectedPortalAnnouncement.excerpt && (
+                  <div style={{ background: '#F1F5F9', padding: '12px 16px', borderRadius: '8px', borderLeft: '4px solid #0284C7', color: '#1E293B', fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.6 }}>
+                    {selectedPortalAnnouncement.excerpt}
+                  </div>
+                )}
+
+                {selectedPortalAnnouncement.content && (
+                  <div style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                    {selectedPortalAnnouncement.content}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '14px', paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPortalAnnouncement(null)}
+                    style={{
+                      background: '#081F3E',
+                      color: '#FFFFFF',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.88rem',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Close Notice
+                  </button>
+                </div>
               </div>
             </div>
           </div>
