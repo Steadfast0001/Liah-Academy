@@ -85,6 +85,14 @@ export async function GET(request: Request) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://liahacademy.com';
+    const siteSettings = adminStore.getSettings();
+    const regEndDateStr = siteSettings.registration_end_date || '2026-10-31';
+    const regPeriodTitle = siteSettings.registration_period_title || 'Fall 2026 Admissions Intake';
+    const isUnlocked = Boolean(siteSettings.payouts_unlocked);
+    const now = new Date();
+    const deadlineDate = new Date(regEndDateStr);
+    // Allow payout if deadline has passed OR admin manually unlocked payouts
+    const canRequestPayout = isUnlocked || now >= deadlineDate;
 
     return NextResponse.json({
       success: true,
@@ -96,12 +104,21 @@ export async function GET(request: Request) {
         },
         downline: referrals,
         payouts: agentPayouts,
+        registration_period: {
+          end_date: regEndDateStr,
+          title: regPeriodTitle,
+          is_unlocked: isUnlocked,
+          is_ended: now >= deadlineDate,
+          can_request_payout: canRequestPayout
+        },
         summary: {
           total_referrals: agent.total_referrals || referrals.length,
           paid_referrals: referrals.filter(r => (r.payment_status || '').toLowerCase().includes('paid')).length,
           total_earned: agent.total_earned,
           total_paid: agent.total_paid,
-          balance: agent.balance
+          balance: agent.balance,
+          can_request_payout: canRequestPayout,
+          payout_available_date: regEndDateStr
         }
       }
     });

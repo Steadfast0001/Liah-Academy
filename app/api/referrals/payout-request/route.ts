@@ -33,6 +33,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check registration period constraint set by the admin
+    const siteSettings = adminStore.getSettings();
+    const regEndDateStr = siteSettings.registration_end_date || '2026-10-31';
+    const isUnlocked = Boolean(siteSettings.payouts_unlocked);
+    const now = new Date();
+    const deadlineDate = new Date(regEndDateStr);
+
+    if (!isUnlocked && now < deadlineDate) {
+      const formattedDeadline = deadlineDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Referral commission payouts can only be requested at the end of the registration period set by Administration (${formattedDeadline}). Payout requests will automatically open once this intake period concludes.`
+        },
+        { status: 403 }
+      );
+    }
+
     await ensureMySQLTables();
 
     const agent = adminStore.getReferralAgentByCode(agentCode);

@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-07T11:10:02.676Z
+-- Generated: 2026-10-07T15:16:04.485Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -8,7 +8,7 @@
 -- 2. ZERO OVERWRITING OF EXISTING ROWS: All inserts use INSERT IGNORE INTO.
 -- 3. ZERO DROP / TRUNCATE STATEMENTS: Existing data will NEVER be deleted or wiped.
 -- 4. TOTAL RECONCILED DATA:
---    - Students: 124 records
+--    - Students: 125 records
 --    - Payments: 17 records
 --    - Courses: 6 records
 --    - Reviews: 4 records
@@ -70,7 +70,7 @@ ALTER TABLE `students` MODIFY `payment_status` VARCHAR(50) DEFAULT 'Pending';
 ALTER TABLE `students` MODIFY `admission_status` VARCHAR(50) DEFAULT 'Under Review';
 ALTER TABLE `students` MODIFY `study_format` VARCHAR(50) DEFAULT 'oncampus';
 
--- DATA: 124 Students
+-- DATA: 125 Students
 INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `password`, `phone`, `degree_type`, `program_type`, `study_format`, `cohort`, `qualification`, `statement`, `document_url`, `documents`, `payment_status`, `admission_status`, `payment_proof_url`, `payment_transaction_id`, `payment_amount`, `referred_by`, `created_at`, `updated_at`)
 VALUES (4819, 'PC26SW4819', 'Nkenganyi Steadfast Bekwike', 'nkengsteadbeks@gmail.com', 'pbkdf2$100000$99ce41e9cc9ee5f66479f9a3a8a3cdbf$2668f56cdb829464828309daced1a053ea44251c74f299e0003c56f0d3ebb3561445e8f129525034e86442b603cf4b1bd0938ff5d35fe8f466704b5383e04ec4', '+237674003001', 'Certification', 'Digital Marketing and SEO', 'oncampus', 'Fall 2024 / Spring 2025', 'GCE Advanced Level', NULL, '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"Gemini_Generated_Image_1ppnm1ppnm1ppnm1.jpg\",\"size\":\"206 KB\",\"url\":\"private-file://student-documents/41105c3d-4e2c-49e1-bdfe-130e156bd6b1.jpg\"}]', '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"Gemini_Generated_Image_1ppnm1ppnm1ppnm1.jpg\",\"size\":\"206 KB\",\"url\":\"private-file://student-documents/41105c3d-4e2c-49e1-bdfe-130e156bd6b1.jpg\"}]', 'Pending Verification', 'Under Review', 'private-file://payment-proofs/993fd78c-12cb-4b88-af44-414cefee45b7.jpg', '', 25000, NULL, '2026-10-02 02:38:37', '2026-10-02 02:38:37');
 INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `password`, `phone`, `degree_type`, `program_type`, `study_format`, `cohort`, `qualification`, `statement`, `document_url`, `documents`, `payment_status`, `admission_status`, `payment_proof_url`, `payment_transaction_id`, `payment_amount`, `referred_by`, `created_at`, `updated_at`)
@@ -319,6 +319,8 @@ INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `passwor
 VALUES (8245, 'HND26SW121', 'Stress Test User 1', 'perf_student_1_1790868590464@test.liahacademy.org', 'pbkdf2$210000$40519c4f18ccdf8c5aedc39f7846e0ee$d4627b0c2c8e223d3dee81960f7a188d87cacd401000154652e9ebfeaf815f7d31fdd0ccb2468f3ed151ed220b1d016b9cb566ecaaeba26cec1458f9c4359248', '677000001', 'HND', 'Software Engineering', 'oncampus', '2026/2027 Academic Year', 'GCE Advanced Level / Baccalauréat', NULL, '[{\"slotId\":\"doc_id\",\"label\":\"National ID\",\"fileName\":\"sample_id.pdf\",\"url\":\"https://liahacademy.org/sample.pdf\"}]', '[{\"slotId\":\"doc_id\",\"label\":\"National ID\",\"fileName\":\"sample_id.pdf\",\"url\":\"https://liahacademy.org/sample.pdf\"}]', 'Pending', 'Under Review', NULL, '', 15000, NULL, '2026-10-01 15:31:01', '2026-10-01 15:31:01');
 INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `password`, `phone`, `degree_type`, `program_type`, `study_format`, `cohort`, `qualification`, `statement`, `document_url`, `documents`, `payment_status`, `admission_status`, `payment_proof_url`, `payment_transaction_id`, `payment_amount`, `referred_by`, `created_at`, `updated_at`)
 VALUES (4743, NULL, 'Nkenganyi Steadfast Bekwike', 'nkengsteadbek@gmail.com', 'pbkdf2$100000$82310c1a781424c7b9a9ff6a9e5cc310$d71f1ae0095ba00c93f1cadb40a25a27b40882e82677d0114c4b1daf060477e52252f9973ab602fce0ca2b422cb29d5d89c6ab3a882d32dc45357e82ba8cdcca', '+237674003001', 'HND', 'Web and Graphics Design HND', 'oncampus', 'Fall 2024 / Spring 2025', 'GCE Advanced Level', NULL, '[{\"slotId\":\"gce_al\",\"label\":\"GCE Advanced Level Certificate / Results Slip\",\"fileName\":\"5.jpg\",\"size\":\"248 KB\",\"url\":\"/uploads/5.jpg\"},{\"slotId\":\"gce_ol\",\"label\":\"GCE Ordinary Level Certificate\",\"fileName\":\"4.jpg\",\"size\":\"83 KB\",\"url\":\"/uploads/4.jpg\"},{\"slotId\":\"birth_cert\",\"label\":\"Birth Certificate Copy\",\"fileName\":\"5.jpg\",\"size\":\"248 KB\",\"url\":\"/uploads/5.jpg\"}]', '[{\"slotId\":\"gce_al\",\"label\":\"GCE Advanced Level Certificate / Results Slip\",\"fileName\":\"5.jpg\",\"size\":\"248 KB\",\"url\":\"/uploads/5.jpg\"},{\"slotId\":\"gce_ol\",\"label\":\"GCE Ordinary Level Certificate\",\"fileName\":\"4.jpg\",\"size\":\"83 KB\",\"url\":\"/uploads/4.jpg\"},{\"slotId\":\"birth_cert\",\"label\":\"Birth Certificate Copy\",\"fileName\":\"5.jpg\",\"size\":\"248 KB\",\"url\":\"/uploads/5.jpg\"}]', 'Paid', 'Approved', '/assets/proofs/proof_4743_1787845203501.jpg', '', 10000, NULL, '2026-08-27 15:38:49', '2026-08-28 04:39:20');
+INSERT IGNORE INTO `students` (`id`, `matricule`, `full_name`, `email`, `password`, `phone`, `degree_type`, `program_type`, `study_format`, `cohort`, `qualification`, `statement`, `document_url`, `documents`, `payment_status`, `admission_status`, `payment_proof_url`, `payment_transaction_id`, `payment_amount`, `referred_by`, `created_at`, `updated_at`)
+VALUES (4820, 'PC26DO4820', 'john', 'nkengsteadfast@gmail.com', 'pbkdf2$100000$049a9746f824891db49a449ddec2572f$2f819f349371d70b320cc11ee8d9ce4d12ad533cec633e9b2354b616f31f789ab1c432c3f9c1773d96debafb057b321b663990ce1ad95e6e25f0cc52ad78858e', '+237674003001', 'Certification', 'DevOps Certification', 'oncampus', 'Fall 2024 / Spring 2025', 'GCE Advanced Level', NULL, '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/6364e97c-0e4e-4152-bf82-d82ad8394a9a.jpg\"},{\"id\":\"highest_diploma\",\"label\":\"Highest Academic Certificate or CV\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/9c9c878c-f2cf-486c-8786-3223ca0cda7b.jpg\"}]', '[{\"id\":\"id_card\",\"label\":\"National ID Card or Passport\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/6364e97c-0e4e-4152-bf82-d82ad8394a9a.jpg\"},{\"id\":\"highest_diploma\",\"label\":\"Highest Academic Certificate or CV\",\"fileName\":\"1.jpg\",\"size\":\"105 KB\",\"url\":\"private-file://student-documents/9c9c878c-f2cf-486c-8786-3223ca0cda7b.jpg\"}]', 'Pending', 'Under Review', NULL, '', 15000, NULL, '2026-10-07 14:20:50', '2026-10-07 14:20:51');
 
 -- ----------------------------------------------------------------------------
 -- 2. TABLE: payments (Application Fees, Tuition & MoMo Verification Ledger)
@@ -633,6 +635,10 @@ CREATE TABLE IF NOT EXISTS `email_logs` (
 
 -- DATA: 100 Email Logs
 INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
+VALUES (NULL, 'info@liahacademy.com', 'admin', '🚨 [New Application] #4820: john - DevOps Certification', 'admin_alert', 'logged', '🚨 New Application #4820 submitted by john for DevOps Certification (Certification). Email: nkengsteadfast@gmail.com. Open admin panel at https://liahacademy.co', '2026-10-07 14:20:52');
+INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
+VALUES (NULL, 'nkengsteadfast@gmail.com', 'applicant', 'Application Received – DevOps Certification, Liah Academy', 'application_submitted', 'logged', 'Dear john,\n\nThank you for applying to Liah Academy of Technology and Management!\n\nYour application for DevOps Certification (Certification) has been received su', '2026-10-07 14:20:52');
+INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
 VALUES (NULL, 'info@liahacademy.com', 'admin', '🚨 [New Application] #4819: Nkenganyi Steadfast Bekwike - Digital Marketing and SEO', 'admin_alert', 'logged', '🚨 New Application #4819 submitted by Nkenganyi Steadfast Bekwike for Digital Marketing and SEO (Certification). Email: nkengsteadbeks@gmail.com. Open admin pan', '2026-10-02 02:38:37');
 INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
 VALUES (NULL, 'nkengsteadbeks@gmail.com', 'applicant', 'Application Received – Digital Marketing and SEO, Liah Academy', 'application_submitted', 'logged', 'Dear Nkenganyi Steadfast Bekwike,\n\nThank you for applying to Liah Academy of Technology and Management!\n\nYour application for Digital Marketing and SEO (Certifi', '2026-10-02 02:38:37');
@@ -828,10 +834,6 @@ INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`,
 VALUES (NULL, 'perf_student_48_1790872163138@test.liahacademy.org', 'applicant', 'Application Received – Software Engineering, Liah Academy', 'application_submitted', 'logged', 'Dear Stress Test User 48,\n\nThank you for applying to Liah Academy of Technology and Management!\n\nYour application for Software Engineering (HND) has been receiv', '2026-10-01 16:29:33');
 INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
 VALUES (NULL, 'info@liahacademy.com', 'admin', '🚨 [New Application] #4771: Stress Test User 47 - Software Engineering', 'admin_alert', 'logged', '🚨 New Application #4771 submitted by Stress Test User 47 for Software Engineering (HND). Email: perf_student_47_1790872163138@test.liahacademy.org. Open admin ', '2026-10-01 16:29:33');
-INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
-VALUES (NULL, 'perf_student_47_1790872163138@test.liahacademy.org', 'applicant', 'Application Received – Software Engineering, Liah Academy', 'application_submitted', 'logged', 'Dear Stress Test User 47,\n\nThank you for applying to Liah Academy of Technology and Management!\n\nYour application for Software Engineering (HND) has been receiv', '2026-10-01 16:29:33');
-INSERT IGNORE INTO `email_logs` (`id`, `recipient`, `recipient_type`, `subject`, `type`, `status`, `preview`, `created_at`)
-VALUES (NULL, 'info@liahacademy.com', 'admin', '🚨 [New Application] #4770: Stress Test User 45 - Software Engineering', 'admin_alert', 'logged', '🚨 New Application #4770 submitted by Stress Test User 45 for Software Engineering (HND). Email: perf_student_45_1790872163137@test.liahacademy.org. Open admin ', '2026-10-01 16:29:33');
 
 -- ----------------------------------------------------------------------------
 -- 12. TABLE: rate_limits (Persistent Multi-Process Brute-Force Rate Limiting)

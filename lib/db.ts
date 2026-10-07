@@ -299,9 +299,22 @@ export async function ensureMySQLTables() {
         maps_url TEXT,
         facebook_url TEXT,
         instagram_url TEXT,
+        registration_end_date VARCHAR(50) DEFAULT '2026-10-31',
+        registration_period_title VARCHAR(150) DEFAULT 'Fall 2026 Admissions Intake',
+        payouts_unlocked TINYINT(1) DEFAULT 0,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    try {
+      await pool.query('ALTER TABLE settings ADD COLUMN registration_end_date VARCHAR(50) DEFAULT "2026-10-31"');
+    } catch {}
+    try {
+      await pool.query('ALTER TABLE settings ADD COLUMN registration_period_title VARCHAR(150) DEFAULT "Fall 2026 Admissions Intake"');
+    } catch {}
+    try {
+      await pool.query('ALTER TABLE settings ADD COLUMN payouts_unlocked TINYINT(1) DEFAULT 0');
+    } catch {}
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS email_logs (
@@ -585,17 +598,24 @@ async function syncToMySQL(table: string, action: 'insert' | 'update' | 'delete'
       );
     } else if (table === 'settings') {
       await pool.query(
-        `INSERT INTO settings (id, admin_email, site_title, contact_phone, address, admissions_open, tiktok_url, maps_url, facebook_url, instagram_url)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO settings (id, admin_email, site_title, contact_phone, address, admissions_open, registration_end_date, registration_period_title, payouts_unlocked, tiktok_url, maps_url, facebook_url, instagram_url)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
            admin_email=VALUES(admin_email), site_title=VALUES(site_title),
            contact_phone=VALUES(contact_phone), address=VALUES(address),
-           admissions_open=VALUES(admissions_open), tiktok_url=VALUES(tiktok_url),
+           admissions_open=VALUES(admissions_open),
+           registration_end_date=VALUES(registration_end_date),
+           registration_period_title=VALUES(registration_period_title),
+           payouts_unlocked=VALUES(payouts_unlocked),
+           tiktok_url=VALUES(tiktok_url),
            maps_url=VALUES(maps_url), facebook_url=VALUES(facebook_url),
            instagram_url=VALUES(instagram_url)`,
         [
           data.admin_email || 'info@liahacademy.com', data.site_title, data.contact_phone, data.address,
-          data.admissions_open ? 1 : 0, data.tiktok_url || '', data.maps_url || '',
+          data.admissions_open ? 1 : 0, data.registration_end_date || '2026-10-31',
+          data.registration_period_title || 'Fall 2026 Admissions Intake',
+          data.payouts_unlocked ? 1 : 0,
+          data.tiktok_url || '', data.maps_url || '',
           data.facebook_url || '', data.instagram_url || ''
         ]
       );
@@ -904,6 +924,9 @@ export interface SiteSettings {
   contact_phone: string;
   address: string;
   admissions_open: boolean;
+  registration_end_date?: string;
+  registration_period_title?: string;
+  payouts_unlocked?: boolean;
   tiktok_url?: string;
   maps_url?: string;
   facebook_url?: string;
@@ -1194,6 +1217,9 @@ const initialData: Schema = {
     contact_phone: '+237 652 154 095 / +237 699 526 607',
     address: 'Backweri Town, Buea, Southwest Region, Cameroon',
     admissions_open: true,
+    registration_end_date: '2026-10-31',
+    registration_period_title: 'Fall 2026 Admissions Intake',
+    payouts_unlocked: false,
     tiktok_url: 'https://www.tiktok.com/@liahacademy0',
     maps_url: 'https://maps.app.goo.gl/eHgx8Triv6TKKcRf6',
     facebook_url: 'https://www.facebook.com/photo/?fbid=747845957358700&set=a.467739685369330',
@@ -1333,6 +1359,19 @@ export function readDb(): Schema {
 
     if (!parsed.settings.admin_email || parsed.settings.admin_email.includes('@liahacademy.org')) {
       parsed.settings.admin_email = 'info@liahacademy.com';
+      modified = true;
+    }
+
+    if (!parsed.settings.registration_end_date) {
+      parsed.settings.registration_end_date = '2026-10-31';
+      modified = true;
+    }
+    if (!parsed.settings.registration_period_title) {
+      parsed.settings.registration_period_title = 'Fall 2026 Admissions Intake';
+      modified = true;
+    }
+    if (parsed.settings.payouts_unlocked === undefined) {
+      parsed.settings.payouts_unlocked = false;
       modified = true;
     }
 

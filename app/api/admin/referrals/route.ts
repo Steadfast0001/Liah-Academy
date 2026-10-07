@@ -61,13 +61,20 @@ export async function GET(request: Request) {
       pending_payouts_amount: payouts.filter(p => p.status === 'pending').reduce((acc, p) => acc + p.amount, 0)
     };
 
+    const settings = adminStore.getSettings();
+
     return NextResponse.json({
       success: true,
       data: {
         stats,
         agents,
         referrals,
-        payouts
+        payouts,
+        settings: {
+          registration_end_date: settings.registration_end_date || '2026-10-31',
+          registration_period_title: settings.registration_period_title || 'Fall 2026 Admissions Intake',
+          payouts_unlocked: Boolean(settings.payouts_unlocked)
+        }
       }
     });
 
@@ -154,6 +161,25 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
+
+    if (body.action === 'update_payout_settings') {
+      const { registration_end_date, registration_period_title, payouts_unlocked } = body;
+      const updated = adminStore.updateSettings({
+        registration_end_date: registration_end_date || '2026-10-31',
+        registration_period_title: registration_period_title || 'Fall 2026 Admissions Intake',
+        payouts_unlocked: Boolean(payouts_unlocked)
+      });
+      return NextResponse.json({
+        success: true,
+        message: 'Registration period and payout release configuration updated successfully.',
+        data: {
+          registration_end_date: updated.registration_end_date,
+          registration_period_title: updated.registration_period_title,
+          payouts_unlocked: updated.payouts_unlocked
+        }
+      });
+    }
+
     const agentId = Number(body.agent_id);
     const status = body.status as 'active' | 'suspended';
     const commissionPerStudent = body.commission_per_student ? Number(body.commission_per_student) : undefined;

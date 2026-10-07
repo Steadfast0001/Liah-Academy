@@ -1588,6 +1588,45 @@ function StudentPortalContent() {
                 </div>
               ) : (
                 <div>
+                  {/* Registration Period & Payout Schedule Info */}
+                  {studentRefData.registration_period && (
+                    <div style={{
+                      background: studentRefData.registration_period.can_request_payout ? '#ECFDF5' : '#FFFBEB',
+                      border: `1px solid ${studentRefData.registration_period.can_request_payout ? '#BBF7D0' : '#FDE68A'}`,
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      marginBottom: '14px',
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      flexWrap: 'wrap'
+                    }}>
+                      <div>
+                        <strong style={{ color: studentRefData.registration_period.can_request_payout ? '#166534' : '#92400E' }}>
+                          📅 {studentRefData.registration_period.title}
+                        </strong>
+                        <div style={{ color: studentRefData.registration_period.can_request_payout ? '#15803D' : '#B45309', fontSize: '0.78rem', marginTop: '2px' }}>
+                          {studentRefData.registration_period.can_request_payout
+                            ? 'Admissions registration intake has ended — MoMo commission withdrawals are open!'
+                            : `Commission payouts unlock at the end of the registration period (${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing to earn 15,000 XAF per enrolled student!`}
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        background: studentRefData.registration_period.can_request_payout ? '#10B981' : '#F59E0B',
+                        color: '#FFFFFF',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {studentRefData.registration_period.can_request_payout ? 'Withdrawals Open' : `Locked Until ${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Referral Link & Share Box */}
                   <div style={{
                     background: '#F8FAFC',
@@ -1687,20 +1726,28 @@ function StudentPortalContent() {
                         </strong>
                         <button
                           type="button"
-                          onClick={() => setStudentRefPayoutOpen(true)}
-                          disabled={(studentRefData.agent?.balance || 0) < 2000}
+                          onClick={() => {
+                            if (studentRefData.registration_period && !studentRefData.registration_period.can_request_payout) {
+                              const d = new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                              alert(`Ambassador commission payouts can only be requested at the end of the registration period (${d}). Payouts will automatically open once this intake concludes.`);
+                              return;
+                            }
+                            setStudentRefPayoutOpen(true);
+                          }}
+                          disabled={(studentRefData.agent?.balance || 0) < 2000 || (Boolean(studentRefData.registration_period) && !studentRefData.registration_period?.can_request_payout)}
+                          title={studentRefData.registration_period && !studentRefData.registration_period.can_request_payout ? `Withdrawals open at the end of the registration period (${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}
                           style={{
-                            background: (studentRefData.agent?.balance || 0) >= 2000 ? '#10B981' : '#94A3B8',
+                            background: ((studentRefData.agent?.balance || 0) >= 2000 && (!studentRefData.registration_period || studentRefData.registration_period.can_request_payout)) ? '#10B981' : '#94A3B8',
                             color: '#FFFFFF',
                             border: 'none',
                             borderRadius: '4px',
                             padding: '4px 10px',
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            cursor: (studentRefData.agent?.balance || 0) >= 2000 ? 'pointer' : 'not-allowed'
+                            cursor: ((studentRefData.agent?.balance || 0) >= 2000 && (!studentRefData.registration_period || studentRefData.registration_period.can_request_payout)) ? 'pointer' : 'not-allowed'
                           }}
                         >
-                          Withdraw
+                          {(!studentRefData.registration_period || studentRefData.registration_period.can_request_payout) ? 'Withdraw' : '🔒 Locked'}
                         </button>
                       </div>
                     </div>
@@ -2984,6 +3031,21 @@ function StudentPortalContent() {
                 Available Balance: <strong style={{ color: '#10B981', fontSize: '1.1rem' }}>{studentRefData.agent.balance.toLocaleString()} XAF</strong>
               </p>
 
+              {studentRefData.registration_period && !studentRefData.registration_period.can_request_payout && (
+                <div style={{
+                  background: '#FFFBEB',
+                  color: '#92400E',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  fontSize: '0.84rem',
+                  lineHeight: 1.5,
+                  marginBottom: '16px'
+                }}>
+                  🔒 <strong>Payouts Locked:</strong> Commission withdrawals for <strong>{studentRefData.registration_period.title}</strong> will only be released at the end of the registration period on <strong>{new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+                </div>
+              )}
+
               {studentRefPayoutMsg && (
                 <div style={{
                   background: studentRefPayoutMsg.type === 'error' ? '#FEF2F2' : '#ECFDF5',
@@ -3064,19 +3126,23 @@ function StudentPortalContent() {
                   </button>
                   <button
                     type="submit"
-                    disabled={studentRefPayoutLoading}
+                    disabled={studentRefPayoutLoading || (Boolean(studentRefData.registration_period) && !studentRefData.registration_period?.can_request_payout)}
                     style={{
                       flex: 2,
-                      background: '#10B981',
+                      background: (studentRefData.registration_period && !studentRefData.registration_period.can_request_payout) ? '#94A3B8' : '#10B981',
                       color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '12px',
                       fontWeight: 800,
-                      cursor: studentRefPayoutLoading ? 'wait' : 'pointer'
+                      cursor: (studentRefPayoutLoading || (studentRefData.registration_period && !studentRefData.registration_period.can_request_payout)) ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    {studentRefPayoutLoading ? 'Submitting...' : 'Confirm Withdrawal'}
+                    {studentRefPayoutLoading
+                      ? 'Submitting...'
+                      : (studentRefData.registration_period && !studentRefData.registration_period.can_request_payout)
+                        ? '🔒 Locked Until End of Intake'
+                        : 'Confirm Withdrawal'}
                   </button>
                 </div>
               </form>

@@ -50,6 +50,14 @@ interface PayoutItem {
   admin_notes?: string;
 }
 
+interface RegistrationPeriodInfo {
+  end_date: string;
+  title: string;
+  is_unlocked: boolean;
+  is_ended: boolean;
+  can_request_payout: boolean;
+}
+
 function ReferPageContent() {
   const searchParams = useSearchParams();
 
@@ -71,6 +79,7 @@ function ReferPageContent() {
   const [downline, setDownline] = useState<DownlineItem[]>([]);
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [regPeriod, setRegPeriod] = useState<RegistrationPeriodInfo | null>(null);
 
   // UI States
   const [loading, setLoading] = useState(false);
@@ -117,6 +126,7 @@ function ReferPageContent() {
         setDownline(data.data.downline || []);
         setPayouts(data.data.payouts || []);
         setSummary(data.data.summary || null);
+        setRegPeriod(data.data.registration_period || null);
         setPayoutMomoConfirm(data.data.agent.momo_number);
         localStorage.setItem('liah_agent_code', data.data.agent.code);
         localStorage.setItem('liah_agent_momo', data.data.agent.momo_number);
@@ -393,6 +403,56 @@ function ReferPageContent() {
             ======================================================== */}
         {agent ? (
           <div>
+            {/* Registration Period & Commission Payout Window Banner */}
+            {regPeriod && (
+              <div style={{
+                background: regPeriod.can_request_payout ? '#ECFDF5' : '#FFFBEB',
+                border: `1px solid ${regPeriod.can_request_payout ? '#A7F3D0' : '#FDE68A'}`,
+                borderRadius: '12px',
+                padding: '16px 20px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', maxWidth: '780px' }}>
+                  <div style={{ fontSize: '1.8rem', lineHeight: 1 }}>
+                    {regPeriod.can_request_payout ? '🎉' : '⏳'}
+                  </div>
+                  <div>
+                    <strong style={{
+                      display: 'block',
+                      color: regPeriod.can_request_payout ? '#065F46' : '#92400E',
+                      fontSize: '0.96rem'
+                    }}>
+                      {regPeriod.title} — {regPeriod.can_request_payout ? 'Commission Payout Window is OPEN' : 'Registration Period Active'}
+                    </strong>
+                    <span style={{ fontSize: '0.84rem', color: regPeriod.can_request_payout ? '#047857' : '#B45309', display: 'block', marginTop: '2px' }}>
+                      {regPeriod.can_request_payout
+                        ? 'Admissions registration intake has ended. You can now request your commission payouts directly to your Mobile Money account!'
+                        : `Commission payouts will unlock at the end of the registration period (${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing your link to enroll students and grow your accumulated earnings!`}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    background: regPeriod.can_request_payout ? '#10B981' : '#F59E0B',
+                    color: '#FFFFFF',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {regPeriod.can_request_payout ? '✓ Payouts Open' : `Locked Until ${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Top Bar with Agent Header & Logout */}
             <div style={{
               background: '#FFFFFF',
@@ -430,27 +490,38 @@ function ReferPageContent() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() => setPayoutModalOpen(true)}
-                  disabled={agent.balance < 2000}
+                  onClick={() => {
+                    if (regPeriod && !regPeriod.can_request_payout) {
+                      const d = new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                      alert(`Referral commission payouts can only be requested at the end of the registration period (${d}). Payouts will automatically open once this intake concludes.`);
+                      return;
+                    }
+                    setPayoutModalOpen(true);
+                  }}
+                  disabled={agent.balance < 2000 || (Boolean(regPeriod) && !regPeriod?.can_request_payout)}
+                  title={regPeriod && !regPeriod.can_request_payout ? `Payouts open at the end of the registration period (${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}
                   style={{
-                    background: agent.balance >= 2000 ? '#10B981' : '#94A3B8',
+                    background: (agent.balance >= 2000 && (!regPeriod || regPeriod.can_request_payout)) ? '#10B981' : '#94A3B8',
                     color: '#FFFFFF',
                     border: 'none',
                     padding: '10px 20px',
                     borderRadius: '8px',
                     fontWeight: 700,
                     fontSize: '0.88rem',
-                    cursor: agent.balance >= 2000 ? 'pointer' : 'not-allowed',
+                    cursor: (agent.balance >= 2000 && (!regPeriod || regPeriod.can_request_payout)) ? 'pointer' : 'not-allowed',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: agent.balance >= 2000 ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none'
+                    boxShadow: (agent.balance >= 2000 && (!regPeriod || regPeriod.can_request_payout)) ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none'
                   }}
                 >
-                  <DollarSign size={16} /> Request MoMo Payout
+                  <DollarSign size={16} />
+                  {(!regPeriod || regPeriod.can_request_payout)
+                    ? 'Request MoMo Payout'
+                    : `🔒 Payouts Open ${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
                 </button>
                 <button
                   type="button"
@@ -1233,6 +1304,21 @@ function ReferPageContent() {
               Available Balance: <strong style={{ color: '#10B981', fontSize: '1.1rem' }}>{agent.balance.toLocaleString()} XAF</strong>
             </p>
 
+            {regPeriod && !regPeriod.can_request_payout && (
+              <div style={{
+                background: '#FFFBEB',
+                color: '#92400E',
+                border: '1px solid #FDE68A',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: '0.84rem',
+                lineHeight: 1.5,
+                marginBottom: '16px'
+              }}>
+                🔒 <strong>Payouts Locked:</strong> Commission withdrawals for <strong>{regPeriod.title}</strong> will only be released at the end of the registration period on <strong>{new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+              </div>
+            )}
+
             {payoutError && (
               <div style={{ background: '#FEF2F2', color: '#DC2626', padding: '10px', borderRadius: '6px', fontSize: '0.84rem', marginBottom: '14px' }}>
                 {payoutError}
@@ -1306,19 +1392,23 @@ function ReferPageContent() {
                 </button>
                 <button
                   type="submit"
-                  disabled={payoutSubmitting}
+                  disabled={payoutSubmitting || (Boolean(regPeriod) && !regPeriod?.can_request_payout)}
                   style={{
                     flex: 2,
-                    background: '#10B981',
+                    background: (regPeriod && !regPeriod.can_request_payout) ? '#94A3B8' : '#10B981',
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '12px',
                     fontWeight: 800,
-                    cursor: payoutSubmitting ? 'wait' : 'pointer'
+                    cursor: (payoutSubmitting || (regPeriod && !regPeriod.can_request_payout)) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {payoutSubmitting ? 'Submitting...' : 'Confirm Withdrawal'}
+                  {payoutSubmitting
+                    ? 'Submitting...'
+                    : (regPeriod && !regPeriod.can_request_payout)
+                      ? '🔒 Locked Until End of Intake'
+                      : 'Confirm Withdrawal'}
                 </button>
               </div>
             </form>

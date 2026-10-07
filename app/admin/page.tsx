@@ -10,7 +10,7 @@ import {
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronLeft, ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
   Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2,
-  DollarSign, Award, Share2, UploadCloud
+  DollarSign, Award, Share2, UploadCloud, Calendar
 } from 'lucide-react';
 
 import { exportApplicantsToCSVString } from '../../lib/csv';
@@ -195,8 +195,21 @@ export default function AdminDashboardPage() {
   const [payoutModalNotes, setPayoutModalNotes] = useState('');
   const [payoutProofFile, setPayoutProofFile] = useState<File | null>(null);
   const [payoutProofPreview, setPayoutProofPreview] = useState<string | null>(null);
+  const [payoutProofUploading, setPayoutProofUploading] = useState(false);
   const [payoutProcessSubmitting, setPayoutProcessSubmitting] = useState(false);
   const [referralSearch, setReferralSearch] = useState('');
+  const [downlineSearchQuery, setDownlineSearchQuery] = useState('');
+  const [referralSubTab, setReferralSubTab] = useState<'agents' | 'all_downlines'>('agents');
+  const [payoutSettings, setPayoutSettings] = useState<{
+    registration_end_date: string;
+    registration_period_title: string;
+    payouts_unlocked: boolean;
+  }>({
+    registration_end_date: '2026-10-31',
+    registration_period_title: 'Fall 2026 Admissions Intake',
+    payouts_unlocked: false
+  });
+  const [savingPayoutSettings, setSavingPayoutSettings] = useState(false);
   const [payoutFilter, setPayoutFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [viewingAdminProofUrl, setViewingAdminProofUrl] = useState<string | null>(null);
 
@@ -579,6 +592,13 @@ export default function AdminDashboardPage() {
           setReferralAgents(res.data.agents || []);
           setReferralList(res.data.referrals || []);
           setPayoutRequests(res.data.payouts || []);
+          if (res.data.settings) {
+            setPayoutSettings(prev => ({
+              registration_end_date: res.data.settings.registration_end_date || prev.registration_end_date,
+              registration_period_title: res.data.settings.registration_period_title || prev.registration_period_title,
+              payouts_unlocked: Boolean(res.data.settings.payouts_unlocked)
+            }));
+          }
           setSelectedAgentForDownline(prev => {
             if (!prev) return null;
             const fresh = (res.data.agents || []).find((a: any) => a.id === prev.id || a.code.toUpperCase() === prev.code.toUpperCase());
@@ -587,6 +607,35 @@ export default function AdminDashboardPage() {
         }
       })
       .catch(() => {});
+  };
+
+  const handleSavePayoutSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPayoutSettings(true);
+    try {
+      const res = await fetch('/api/admin/referrals', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'update_payout_settings',
+          registration_end_date: payoutSettings.registration_end_date,
+          registration_period_title: payoutSettings.registration_period_title,
+          payouts_unlocked: payoutSettings.payouts_unlocked
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Registration deadline & payout release schedule updated successfully!');
+        fetchReferralsData();
+      } else {
+        showNotification(data.message || 'Failed to update payout schedule', 'error');
+      }
+    } catch {
+      showNotification('Network error updating payout schedule', 'error');
+    } finally {
+      setSavingPayoutSettings(false);
+    }
   };
 
   useEffect(() => {
@@ -5234,6 +5283,138 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
+            {/* Registration Period & Commission Release Schedule Card */}
+            <div className="premium-card" style={{
+              background: '#FFFFFF',
+              padding: '24px 28px',
+              borderRadius: '12px',
+              border: '1px solid #E2E8F0',
+              marginBottom: '24px',
+              boxShadow: '0 4px 16px rgba(8, 31, 62, 0.04)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '18px' }}>
+                <div>
+                  <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Calendar size={18} color="#D97706" /> Registration Intake &amp; Commission Payout Schedule
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.84rem', color: '#64748B' }}>
+                    Referral agents can only request commission withdrawals at the end of the registration period. Configure the deadline or unlock payouts immediately below.
+                  </p>
+                </div>
+
+                {/* Status Pill */}
+                {(() => {
+                  const isUnlocked = payoutSettings.payouts_unlocked;
+                  const deadlinePassed = new Date() >= new Date(payoutSettings.registration_end_date);
+                  const canRequest = isUnlocked || deadlinePassed;
+                  return (
+                    <div style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      background: canRequest ? '#ECFDF5' : '#FFFBEB',
+                      color: canRequest ? '#059669' : '#D97706',
+                      border: `1px solid ${canRequest ? '#A7F3D0' : '#FDE68A'}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span style={{ fontSize: '0.9rem' }}>{canRequest ? '🟢' : '🔒'}</span>
+                      {isUnlocked
+                        ? 'Payouts Unlocked (Admin Override Active)'
+                        : deadlinePassed
+                          ? 'Registration Period Concluded (Payouts Open)'
+                          : `Payouts Locked until ${new Date(payoutSettings.registration_end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <form onSubmit={handleSavePayoutSettings} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', alignItems: 'flex-end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#081F3E', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    Admissions Intake Period Title
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={payoutSettings.registration_period_title}
+                    onChange={(e) => setPayoutSettings(prev => ({ ...prev, registration_period_title: e.target.value }))}
+                    placeholder="e.g. Fall 2026 Admissions Intake"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#081F3E', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    Registration End Date (Deadline)
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={payoutSettings.registration_end_date}
+                    onChange={(e) => setPayoutSettings(prev => ({ ...prev, registration_end_date: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ paddingBottom: '4px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: '#081F3E' }}>
+                    <input
+                      type="checkbox"
+                      checked={payoutSettings.payouts_unlocked}
+                      onChange={(e) => setPayoutSettings(prev => ({ ...prev, payouts_unlocked: e.target.checked }))}
+                      style={{ width: '16px', height: '16px', accentColor: '#10B981', cursor: 'pointer' }}
+                    />
+                    <span>Unlock Payouts Immediately (Override)</span>
+                  </label>
+                  <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginTop: '2px', marginLeft: '24px' }}>
+                    Enables withdrawal button regardless of registration end date.
+                  </span>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={savingPayoutSettings}
+                    style={{
+                      width: '100%',
+                      background: '#081F3E',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '11px 18px',
+                      fontWeight: 700,
+                      fontSize: '0.86rem',
+                      cursor: savingPayoutSettings ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {savingPayoutSettings ? <RefreshCw size={15} className="spin" /> : <CheckCircle2 size={15} />}
+                    {savingPayoutSettings ? 'Saving Schedule...' : 'Save Payout Schedule'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
             {/* Top Stat Cards */}
             <div style={{
               display: 'grid',
@@ -5460,176 +5641,386 @@ export default function AdminDashboardPage() {
               )}
             </div>
 
-            {/* SECTION 2: ALL REFERRAL AGENTS & DOWNLINES */}
+            {/* SECTION 2: ALL REFERRAL AGENTS & GLOBAL DOWNLINES */}
             <div className="premium-card" style={{ background: '#FFFFFF', padding: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                  <h3 style={{ margin: 0, color: '#081F3E', fontSize: '1.25rem', fontWeight: 800 }}>
-                    Referral Agents &amp; Student Downlines ({referralAgents.length})
-                  </h3>
-                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
-                    Click &quot;View Downline&quot; on any agent to inspect referred applicants, their Names, and Matricules.
-                  </span>
+              {/* Subtab Switcher */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid #E2E8F0', paddingBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setReferralSubTab('agents')}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: referralSubTab === 'agents' ? '#081F3E' : '#F1F5F9',
+                      color: referralSubTab === 'agents' ? '#FFFFFF' : '#64748B',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <Users size={16} /> Referral Agents Directory ({referralAgents.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReferralSubTab('all_downlines')}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: referralSubTab === 'all_downlines' ? '#081F3E' : '#F1F5F9',
+                      color: referralSubTab === 'all_downlines' ? '#FFFFFF' : '#64748B',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <FileText size={16} /> All Referred Students (Global Downlines) ({referralList.length})
+                  </button>
                 </div>
 
-                {/* Search Bar */}
-                <div style={{ position: 'relative', width: '260px' }}>
-                  <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-                  <input
-                    type="text"
-                    placeholder="Search by name, MoMo, code..."
-                    value={referralSearch}
-                    onChange={(e) => setReferralSearch(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px 8px 34px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.84rem',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
+                {referralSubTab === 'agents' ? (
+                  /* Search Bar for Agents */
+                  <div style={{ position: 'relative', width: '280px' }}>
+                    <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      placeholder="Search agent name, MoMo, code..."
+                      value={referralSearch}
+                      onChange={(e) => setReferralSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px 8px 34px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.84rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  /* Search Bar for Global Downlines */
+                  <div style={{ position: 'relative', width: '320px' }}>
+                    <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      placeholder="Search student, matricule, agent code..."
+                      value={downlineSearchQuery}
+                      onChange={(e) => setDownlineSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px 8px 34px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.84rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
-              {referralAgents.length === 0 ? (
-                <p style={{ color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No referral agents registered yet.</p>
-              ) : (
-                <div className="admin-table-container" style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                    <thead>
-                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                        <th style={{ padding: '12px 14px' }}>Agent Name</th>
-                        <th style={{ padding: '12px 14px' }}>Referral Code</th>
-                        <th style={{ padding: '12px 14px' }}>MoMo Payout Number</th>
-                        <th style={{ padding: '12px 14px' }}>Student Link</th>
-                        <th style={{ padding: '12px 14px', textAlign: 'center' }}>Total Referred</th>
-                        <th style={{ padding: '12px 14px', textAlign: 'center' }}>Enrolled/Paid</th>
-                        <th style={{ padding: '12px 14px' }}>Total Earned</th>
-                        <th style={{ padding: '12px 14px' }}>Balance</th>
-                        <th style={{ padding: '12px 14px' }}>Status</th>
-                        <th style={{ padding: '12px 14px', textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {referralAgents
-                        .filter(a => {
-                          if (!referralSearch.trim()) return true;
-                          const q = referralSearch.toLowerCase();
-                          return a.full_name.toLowerCase().includes(q) ||
-                            a.code.toLowerCase().includes(q) ||
-                            a.momo_number.includes(q) ||
-                            (a.student_matricule && a.student_matricule.toLowerCase().includes(q));
-                        })
-                        .map((a, idx) => {
-                          const agentDownline = referralList.filter(r => r.agent_id === a.id || r.agent_code.toUpperCase() === a.code.toUpperCase());
-                          return (
-                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                              <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
-                                {a.full_name}
-                              </td>
-                              <td style={{ padding: '14px' }}>
-                                <span style={{
-                                  background: 'rgba(245, 166, 35, 0.12)',
-                                  color: '#D97706',
-                                  padding: '3px 8px',
-                                  borderRadius: '4px',
-                                  fontFamily: 'monospace',
-                                  fontWeight: 800,
-                                  fontSize: '0.82rem'
-                                }}>
-                                  {a.code}
-                                </span>
-                              </td>
-                              <td style={{ padding: '14px', fontFamily: 'monospace', color: '#334155' }}>
-                                {a.momo_number}
-                                {a.momo_name && <span style={{ display: 'block', fontSize: '0.72rem', color: '#94A3B8' }}>({a.momo_name})</span>}
-                              </td>
-                              <td style={{ padding: '14px' }}>
-                                {a.student_matricule ? (
-                                  <span style={{
-                                    background: '#EFF6FF',
-                                    color: '#0284C7',
-                                    padding: '3px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.76rem',
-                                    fontWeight: 700,
-                                    fontFamily: 'monospace'
-                                  }}>
-                                    🎓 {a.student_matricule}
-                                  </span>
-                                ) : (
-                                  <span style={{ color: '#94A3B8', fontSize: '0.78rem' }}>External Partner</span>
-                                )}
-                              </td>
-                              <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#081F3E' }}>
-                                {agentDownline.length || a.total_referrals}
-                              </td>
-                              <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: '#10B981' }}>
-                                {agentDownline.filter(r => (r.payment_status || '').toLowerCase().includes('paid')).length || a.paid_referrals}
-                              </td>
-                              <td style={{ padding: '14px', fontWeight: 700, color: '#081F3E' }}>
-                                {(a.total_earned || 0).toLocaleString()} XAF
-                              </td>
-                              <td style={{ padding: '14px', fontWeight: 800, color: a.balance > 0 ? '#059669' : '#64748B' }}>
-                                {(a.balance || 0).toLocaleString()} XAF
-                              </td>
-                              <td style={{ padding: '14px' }}>
-                                <span style={{
-                                  fontSize: '0.75rem',
-                                  padding: '2px 8px',
-                                  borderRadius: '4px',
-                                  fontWeight: 700,
-                                  background: a.status === 'active' ? '#ECFDF5' : '#FEF2F2',
-                                  color: a.status === 'active' ? '#059669' : '#DC2626'
-                                }}>
-                                  {a.status === 'active' ? '● Active' : '✕ Suspended'}
-                                </span>
-                              </td>
-                              <td style={{ padding: '14px', textAlign: 'right' }}>
-                                <div style={{ display: 'inline-flex', gap: '6px' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedAgentForDownline(a)}
-                                    style={{
-                                      background: '#081F3E',
-                                      color: '#FFFFFF',
-                                      border: 'none',
-                                      borderRadius: '6px',
-                                      padding: '6px 12px',
-                                      fontSize: '0.78rem',
+              {/* SUBTAB VIEW A: REFERRAL AGENTS DIRECTORY */}
+              {referralSubTab === 'agents' && (
+                <div>
+                  <div style={{ marginBottom: '14px' }}>
+                    <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                      Click &quot;View Downline&quot; on any agent to inspect referred applicants, their Names, and Matricules.
+                    </span>
+                  </div>
+
+                  {referralAgents.length === 0 ? (
+                    <p style={{ color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No referral agents registered yet.</p>
+                  ) : (
+                    <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                        <thead>
+                          <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '12px 14px' }}>Agent Name</th>
+                            <th style={{ padding: '12px 14px' }}>Referral Code</th>
+                            <th style={{ padding: '12px 14px' }}>MoMo Payout Number</th>
+                            <th style={{ padding: '12px 14px' }}>Student Link</th>
+                            <th style={{ padding: '12px 14px', textAlign: 'center' }}>Total Referred</th>
+                            <th style={{ padding: '12px 14px', textAlign: 'center' }}>Enrolled/Paid</th>
+                            <th style={{ padding: '12px 14px' }}>Total Earned</th>
+                            <th style={{ padding: '12px 14px' }}>Balance</th>
+                            <th style={{ padding: '12px 14px' }}>Status</th>
+                            <th style={{ padding: '12px 14px', textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referralAgents
+                            .filter(a => {
+                              if (!referralSearch.trim()) return true;
+                              const q = referralSearch.toLowerCase();
+                              return a.full_name.toLowerCase().includes(q) ||
+                                a.code.toLowerCase().includes(q) ||
+                                a.momo_number.includes(q) ||
+                                (a.student_matricule && a.student_matricule.toLowerCase().includes(q));
+                            })
+                            .map((a, idx) => {
+                              const agentDownline = referralList.filter(r => r.agent_id === a.id || r.agent_code.toUpperCase() === a.code.toUpperCase());
+                              return (
+                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                  <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
+                                    {a.full_name}
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    <span style={{
+                                      background: 'rgba(245, 166, 35, 0.12)',
+                                      color: '#D97706',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      fontWeight: 800,
+                                      fontSize: '0.82rem'
+                                    }}>
+                                      {a.code}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px', fontFamily: 'monospace', color: '#334155' }}>
+                                    {a.momo_number}
+                                    {a.momo_name && <span style={{ display: 'block', fontSize: '0.72rem', color: '#94A3B8' }}>({a.momo_name})</span>}
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    {a.student_matricule ? (
+                                      <span style={{
+                                        background: '#EFF6FF',
+                                        color: '#0284C7',
+                                        padding: '3px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '0.76rem',
+                                        fontWeight: 700,
+                                        fontFamily: 'monospace'
+                                      }}>
+                                        🎓 {a.student_matricule}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: '#94A3B8', fontSize: '0.78rem' }}>External Partner</span>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#081F3E' }}>
+                                    {agentDownline.length || a.total_referrals}
+                                  </td>
+                                  <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: '#10B981' }}>
+                                    {agentDownline.filter(r => (r.payment_status || '').toLowerCase().includes('paid')).length || a.paid_referrals}
+                                  </td>
+                                  <td style={{ padding: '14px', fontWeight: 700, color: '#081F3E' }}>
+                                    {(a.total_earned || 0).toLocaleString()} XAF
+                                  </td>
+                                  <td style={{ padding: '14px', fontWeight: 800, color: a.balance > 0 ? '#059669' : '#64748B' }}>
+                                    {(a.balance || 0).toLocaleString()} XAF
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    <span style={{
+                                      fontSize: '0.75rem',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
                                       fontWeight: 700,
-                                      cursor: 'pointer',
+                                      background: a.status === 'active' ? '#ECFDF5' : '#FEF2F2',
+                                      color: a.status === 'active' ? '#059669' : '#DC2626'
+                                    }}>
+                                      {a.status === 'active' ? '● Active' : '✕ Suspended'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px', textAlign: 'right' }}>
+                                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedAgentForDownline(a)}
+                                        style={{
+                                          background: '#081F3E',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          padding: '6px 12px',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px'
+                                        }}
+                                      >
+                                        <Users size={13} /> View Downline ({agentDownline.length})
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleAgentStatus(a.id, a.status)}
+                                        style={{
+                                          background: a.status === 'active' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                          color: a.status === 'active' ? '#EF4444' : '#10B981',
+                                          border: '1px solid ' + (a.status === 'active' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'),
+                                          borderRadius: '6px',
+                                          padding: '6px 10px',
+                                          fontSize: '0.75rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        {a.status === 'active' ? 'Suspend' : 'Activate'}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB VIEW B: ALL REFERRED STUDENTS (GLOBAL DOWNLINES DIRECTORY) */}
+              {referralSubTab === 'all_downlines' && (
+                <div>
+                  <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                      Consolidated global list of every applicant who applied through any ambassador&apos;s link, with their matricules, academic programs, and verified admission payment status.
+                    </span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#081F3E' }}>
+                      Showing {
+                        referralList.filter(r => {
+                          if (!downlineSearchQuery.trim()) return true;
+                          const q = downlineSearchQuery.toLowerCase();
+                          return (r.student_name || '').toLowerCase().includes(q) ||
+                            (r.student_matricule || '').toLowerCase().includes(q) ||
+                            (r.agent_code || '').toLowerCase().includes(q) ||
+                            (r.program_type || '').toLowerCase().includes(q);
+                        }).length
+                      } of {referralList.length} referred students
+                    </span>
+                  </div>
+
+                  {referralList.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: '10px' }}>
+                      <p style={{ margin: 0, color: '#94A3B8', fontSize: '0.9rem' }}>No student downlines registered through referral links yet.</p>
+                    </div>
+                  ) : (
+                    <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                        <thead>
+                          <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '12px 14px' }}>Referred Student</th>
+                            <th style={{ padding: '12px 14px' }}>Matricule</th>
+                            <th style={{ padding: '12px 14px' }}>Academic Program</th>
+                            <th style={{ padding: '12px 14px' }}>Referring Agent</th>
+                            <th style={{ padding: '12px 14px' }}>Agent MoMo</th>
+                            <th style={{ padding: '12px 14px' }}>Application Date</th>
+                            <th style={{ padding: '12px 14px' }}>Enrolment &amp; Payment</th>
+                            <th style={{ padding: '12px 14px', textAlign: 'right' }}>Commission</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referralList
+                            .filter(r => {
+                              if (!downlineSearchQuery.trim()) return true;
+                              const q = downlineSearchQuery.toLowerCase();
+                              return (r.student_name || '').toLowerCase().includes(q) ||
+                                (r.student_matricule || '').toLowerCase().includes(q) ||
+                                (r.agent_code || '').toLowerCase().includes(q) ||
+                                (r.program_type || '').toLowerCase().includes(q);
+                            })
+                            .map((r, idx) => {
+                              const isPaid = (r.payment_status || '').toLowerCase().includes('paid');
+                              const matchingAgent = referralAgents.find(a => a.id === r.agent_id || a.code.toUpperCase() === r.agent_code.toUpperCase());
+                              return (
+                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                  <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        background: '#EFF6FF',
+                                        color: '#0284C7',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 800
+                                      }}>
+                                        {(r.student_name || 'S').charAt(0).toUpperCase()}
+                                      </span>
+                                      <span>{r.student_name}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    <span style={{
+                                      background: '#EFF6FF',
+                                      color: '#0284C7',
+                                      padding: '3px 8px',
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      fontWeight: 800,
+                                      fontSize: '0.82rem'
+                                    }}>
+                                      {r.student_matricule || 'In Review'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px', color: '#475569', fontSize: '0.85rem' }}>
+                                    {r.program_type}
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    <div>
+                                      <strong style={{ color: '#081F3E', display: 'block', fontSize: '0.86rem' }}>
+                                        {matchingAgent ? matchingAgent.full_name : `Agent #${r.agent_id}`}
+                                      </strong>
+                                      <span style={{
+                                        background: 'rgba(245, 166, 35, 0.12)',
+                                        color: '#D97706',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        fontFamily: 'monospace',
+                                        fontWeight: 800,
+                                        fontSize: '0.74rem'
+                                      }}>
+                                        {r.agent_code}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: '14px', fontFamily: 'monospace', color: '#334155', fontSize: '0.82rem' }}>
+                                    {matchingAgent ? matchingAgent.momo_number : '—'}
+                                  </td>
+                                  <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
+                                    {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                  </td>
+                                  <td style={{ padding: '14px' }}>
+                                    <span style={{
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '4px'
-                                    }}
-                                  >
-                                    <Users size={13} /> View Downline ({agentDownline.length})
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleAgentStatus(a.id, a.status)}
-                                    style={{
-                                      background: a.status === 'active' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                                      color: a.status === 'active' ? '#EF4444' : '#10B981',
-                                      border: '1px solid ' + (a.status === 'active' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'),
-                                      borderRadius: '6px',
-                                      padding: '6px 10px',
-                                      fontSize: '0.75rem',
+                                      gap: '4px',
+                                      padding: '4px 10px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.76rem',
                                       fontWeight: 700,
-                                      cursor: 'pointer'
-                                    }}
-                                  >
-                                    {a.status === 'active' ? 'Suspend' : 'Activate'}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
+                                      background: isPaid ? '#ECFDF5' : '#FEF3C7',
+                                      color: isPaid ? '#059669' : '#B45309'
+                                    }}>
+                                      {isPaid ? '✓ Enrolled & Paid' : '⏳ Pending Payment'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '14px', textAlign: 'right', fontWeight: 800, color: isPaid ? '#10B981' : '#94A3B8' }}>
+                                    {isPaid ? `${(r.commission_amount || r.commission_earned || 15000).toLocaleString()} XAF` : '15,000 XAF'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
