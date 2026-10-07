@@ -100,6 +100,30 @@ const docRequirementsByDegree: Record<string, DocRequirement[]> = {
   ]
 };
 
+function safeStr(val: any): string {
+  if (val === null || val === undefined) return '';
+  return String(val).trim();
+}
+
+function safeUpper(val: any): string {
+  return safeStr(val).toUpperCase();
+}
+
+function safeLower(val: any): string {
+  return safeStr(val).toLowerCase();
+}
+
+function formatSafeDate(val: any, options?: Intl.DateTimeFormatOptions): string {
+  if (!val) return '—';
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', options || { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
 const getApplicationFee = (deg?: string): number => {
   if (!deg) return 15000;
   const upper = String(deg).toUpperCase();
@@ -1610,7 +1634,7 @@ function StudentPortalContent() {
                         <div style={{ color: studentRefData.registration_period.can_request_payout ? '#15803D' : '#B45309', fontSize: '0.78rem', marginTop: '2px' }}>
                           {studentRefData.registration_period.can_request_payout
                             ? 'Admissions registration intake has ended — MoMo commission withdrawals are open!'
-                            : `Commission payouts unlock at the end of the registration period (${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing to earn 15,000 XAF per enrolled student!`}
+                            : `Commission payouts unlock at the end of the registration period (${formatSafeDate(studentRefData.registration_period.end_date, { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing to earn 15,000 XAF per enrolled student!`}
                         </div>
                       </div>
                       <span style={{
@@ -1622,7 +1646,7 @@ function StudentPortalContent() {
                         color: '#FFFFFF',
                         whiteSpace: 'nowrap'
                       }}>
-                        {studentRefData.registration_period.can_request_payout ? 'Withdrawals Open' : `Locked Until ${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                        {studentRefData.registration_period.can_request_payout ? 'Withdrawals Open' : `Locked Until ${formatSafeDate(studentRefData.registration_period.end_date, { day: 'numeric', month: 'short' })}`}
                       </span>
                     </div>
                   )}
@@ -1728,14 +1752,14 @@ function StudentPortalContent() {
                           type="button"
                           onClick={() => {
                             if (studentRefData.registration_period && !studentRefData.registration_period.can_request_payout) {
-                              const d = new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                              const d = formatSafeDate(studentRefData.registration_period.end_date, { day: 'numeric', month: 'long', year: 'numeric' });
                               alert(`Ambassador commission payouts can only be requested at the end of the registration period (${d}). Payouts will automatically open once this intake concludes.`);
                               return;
                             }
                             setStudentRefPayoutOpen(true);
                           }}
                           disabled={(studentRefData.agent?.balance || 0) < 2000 || (Boolean(studentRefData.registration_period) && !studentRefData.registration_period?.can_request_payout)}
-                          title={studentRefData.registration_period && !studentRefData.registration_period.can_request_payout ? `Withdrawals open at the end of the registration period (${new Date(studentRefData.registration_period.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}
+                          title={studentRefData.registration_period && !studentRefData.registration_period.can_request_payout ? `Withdrawals open at the end of the registration period (${formatSafeDate(studentRefData.registration_period.end_date, { day: 'numeric', month: 'short' })})` : ''}
                           style={{
                             background: ((studentRefData.agent?.balance || 0) >= 2000 && (!studentRefData.registration_period || studentRefData.registration_period.can_request_payout)) ? '#10B981' : '#94A3B8',
                             color: '#FFFFFF',
@@ -1776,7 +1800,7 @@ function StudentPortalContent() {
                           </thead>
                           <tbody>
                             {studentRefData.downline.map((d: any, idx: number) => {
-                              const isPaid = (d.payment_status || '').toLowerCase().includes('paid');
+                              const isPaid = safeLower(d.payment_status).includes('paid');
                               return (
                                 <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                   <td style={{ padding: '8px 10px', fontWeight: 700, color: '#081F3E' }}>{d.student_name}</td>
@@ -1827,7 +1851,7 @@ function StudentPortalContent() {
                           }}>
                             <div>
                               <strong>{p.amount.toLocaleString()} XAF</strong> to {p.momo_number}
-                              <span style={{ color: '#94A3B8', marginLeft: '6px' }}>({new Date(p.created_at).toLocaleDateString()})</span>
+                              <span style={{ color: '#94A3B8', marginLeft: '6px' }}>({formatSafeDate(p.created_at)})</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{

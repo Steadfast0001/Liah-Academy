@@ -95,15 +95,18 @@ export default function ChatWidget() {
     void initializeChat();
   }, []);
 
-  // Real-time polling for live responses from admin
+  // Real-time polling for live responses from admin (adaptive interval to prevent redundant network spam)
   useEffect(() => {
     if (!sessionId) return;
 
+    // Only poll frequently (4s) when chat drawer is actively open; when closed, poll gently (25s)
+    const intervalTime = isOpen ? 4000 : 25000;
+
     const pollInterval = setInterval(async () => {
-      if (typeof document !== 'undefined' && document.hidden && !isOpen) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
 
       try {
-        const res = await fetch(`/api/chat?sessionId=${sessionId}`);
+        const res = await fetch(`/api/chat?sessionId=${encodeURIComponent(sessionId)}`);
         const data = await res.json();
         if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
           setMessages(prev => {
@@ -117,7 +120,7 @@ export default function ChatWidget() {
           });
         }
       } catch {}
-    }, 3000);
+    }, intervalTime);
 
     return () => clearInterval(pollInterval);
   }, [sessionId, isOpen]);

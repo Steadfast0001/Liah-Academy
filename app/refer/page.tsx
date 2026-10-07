@@ -58,6 +58,30 @@ interface RegistrationPeriodInfo {
   can_request_payout: boolean;
 }
 
+function safeStr(val: any): string {
+  if (val === null || val === undefined) return '';
+  return String(val).trim();
+}
+
+function safeUpper(val: any): string {
+  return safeStr(val).toUpperCase();
+}
+
+function safeLower(val: any): string {
+  return safeStr(val).toLowerCase();
+}
+
+function formatSafeDate(val: any, options?: Intl.DateTimeFormatOptions): string {
+  if (!val) return '—';
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', options || { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
 function ReferPageContent() {
   const searchParams = useSearchParams();
 
@@ -432,7 +456,7 @@ function ReferPageContent() {
                     <span style={{ fontSize: '0.84rem', color: regPeriod.can_request_payout ? '#047857' : '#B45309', display: 'block', marginTop: '2px' }}>
                       {regPeriod.can_request_payout
                         ? 'Admissions registration intake has ended. You can now request your commission payouts directly to your Mobile Money account!'
-                        : `Commission payouts will unlock at the end of the registration period (${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing your link to enroll students and grow your accumulated earnings!`}
+                        : `Commission payouts will unlock at the end of the registration period (${formatSafeDate(regPeriod.end_date, { day: 'numeric', month: 'long', year: 'numeric' })}). Keep sharing your link to enroll students and grow your accumulated earnings!`}
                     </span>
                   </div>
                 </div>
@@ -447,7 +471,7 @@ function ReferPageContent() {
                     color: '#FFFFFF',
                     whiteSpace: 'nowrap'
                   }}>
-                    {regPeriod.can_request_payout ? '✓ Payouts Open' : `Locked Until ${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                    {regPeriod.can_request_payout ? '✓ Payouts Open' : `Locked Until ${formatSafeDate(regPeriod.end_date, { day: 'numeric', month: 'short' })}`}
                   </span>
                 </div>
               </div>
@@ -495,14 +519,14 @@ function ReferPageContent() {
                   type="button"
                   onClick={() => {
                     if (regPeriod && !regPeriod.can_request_payout) {
-                      const d = new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                      const d = formatSafeDate(regPeriod.end_date, { day: 'numeric', month: 'long', year: 'numeric' });
                       alert(`Referral commission payouts can only be requested at the end of the registration period (${d}). Payouts will automatically open once this intake concludes.`);
                       return;
                     }
                     setPayoutModalOpen(true);
                   }}
                   disabled={agent.balance < 2000 || (Boolean(regPeriod) && !regPeriod?.can_request_payout)}
-                  title={regPeriod && !regPeriod.can_request_payout ? `Payouts open at the end of the registration period (${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}
+                  title={regPeriod && !regPeriod.can_request_payout ? `Payouts open at the end of the registration period (${formatSafeDate(regPeriod.end_date, { day: 'numeric', month: 'short' })})` : ''}
                   style={{
                     background: (agent.balance >= 2000 && (!regPeriod || regPeriod.can_request_payout)) ? '#10B981' : '#94A3B8',
                     color: '#FFFFFF',
@@ -521,7 +545,7 @@ function ReferPageContent() {
                   <DollarSign size={16} />
                   {(!regPeriod || regPeriod.can_request_payout)
                     ? 'Request MoMo Payout'
-                    : `🔒 Payouts Open ${new Date(regPeriod.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                    : `🔒 Payouts Open ${formatSafeDate(regPeriod.end_date, { day: 'numeric', month: 'short' })}`}
                 </button>
                 <button
                   type="button"
@@ -759,7 +783,7 @@ function ReferPageContent() {
                     </thead>
                     <tbody>
                       {downline.map((item, idx) => {
-                        const isPaid = (item.payment_status || '').toLowerCase().includes('paid');
+                        const isPaid = safeLower(item.payment_status).includes('paid');
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                             <td style={{ padding: '14px', fontWeight: 700, color: '#081F3E' }}>
@@ -772,7 +796,7 @@ function ReferPageContent() {
                               {item.program_type}
                             </td>
                             <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
-                              {new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {formatSafeDate(item.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                             </td>
                             <td style={{ padding: '14px' }}>
                               <span style={{
@@ -849,7 +873,7 @@ function ReferPageContent() {
                       {payouts.map((p, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                           <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
-                            {new Date(p.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {formatSafeDate(p.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
                           <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
                             {p.amount.toLocaleString()} XAF

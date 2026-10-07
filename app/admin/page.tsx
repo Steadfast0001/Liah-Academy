@@ -158,6 +158,99 @@ interface LiveChatSession {
   messages: LiveChatMessage[];
 }
 
+// ==========================================
+// SAFE RUNTIME UTILITY HELPERS (DEFENSIVE GUARDS)
+// ==========================================
+function safeStr(val: any): string {
+  if (val === null || val === undefined) return '';
+  return String(val);
+}
+
+function safeUpper(val: any): string {
+  return safeStr(val).toUpperCase();
+}
+
+function safeLower(val: any): string {
+  return safeStr(val).toLowerCase();
+}
+
+function formatSafeDate(dateVal: any, options?: Intl.DateTimeFormatOptions): string {
+  if (!dateVal) return '—';
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', options || { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
+// ==========================================
+// COMPONENT-LEVEL ERROR BOUNDARY (TAB ISOLATION)
+// ==========================================
+interface TabErrorBoundaryProps {
+  tabName: string;
+  children: React.ReactNode;
+}
+interface TabErrorBoundaryState {
+  hasError: boolean;
+  errorMessage: string;
+}
+class AdminTabErrorBoundary extends React.Component<TabErrorBoundaryProps, TabErrorBoundaryState> {
+  constructor(props: TabErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+  static getDerivedStateFromError(error: Error): TabErrorBoundaryState {
+    return { hasError: true, errorMessage: error?.message || 'Runtime exception' };
+  }
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error(`[AdminTabErrorBoundary] Error in tab "${this.props.tabName}":`, error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: '16px',
+          padding: '40px 24px',
+          border: '1px solid #E2E8F0',
+          textAlign: 'center',
+          margin: '20px 0',
+          boxShadow: '0 4px 16px rgba(8, 31, 62, 0.04)'
+        }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚠️</div>
+          <h3 style={{ color: '#081F3E', margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 800 }}>
+            {this.props.tabName} Module Restored
+          </h3>
+          <p style={{ color: '#64748B', fontSize: '0.88rem', margin: '0 0 20px 0', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+            This specific module encountered a state calculation error. Other sections of your dashboard remain completely functional.
+          </p>
+          <div style={{ display: 'inline-flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, errorMessage: '' })}
+              style={{
+                background: '#081F3E',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 22px',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                cursor: 'pointer'
+              }}
+            >
+              ↻ Reload {this.props.tabName} Module
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'inquiries' | 'chat' | 'media' | 'courses' | 'news' | 'settings' | 'admins' | 'referrals'>('overview');
   const [loading, setLoading] = useState(true);
@@ -601,7 +694,7 @@ export default function AdminDashboardPage() {
           }
           setSelectedAgentForDownline(prev => {
             if (!prev) return null;
-            const fresh = (res.data.agents || []).find((a: any) => a.id === prev.id || a.code.toUpperCase() === prev.code.toUpperCase());
+            const fresh = (res.data.agents || []).find((a: any) => a.id === prev.id || (safeUpper(a?.code) && safeUpper(a?.code) === safeUpper(prev?.code)));
             return fresh || prev;
           });
         }
@@ -673,7 +766,7 @@ export default function AdminDashboardPage() {
       }).catch(() => {});
     }, 4000);
 
-    // Applications, Stats, and Referrals polling every 8s to keep admin store synced with minimal overhead (pauses when hidden)
+    // Applications and Stats polling every 8s to keep admin store synced with minimal overhead (pauses when hidden)
     const dataInterval = setInterval(() => {
       if (document.hidden) return;
       const headers = getAuthHeaders();
@@ -686,7 +779,6 @@ export default function AdminDashboardPage() {
       fetch('/api/admin/applications', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) setApplications(res.data || []);
       }).catch(() => {});
-      fetchReferralsData();
     }, 8000);
 
     // Immediate sync when tab becomes visible or focused
@@ -702,7 +794,9 @@ export default function AdminDashboardPage() {
             if (res.db_health) setDbHealth(res.db_health);
           }
         }).catch(() => {});
-        fetchReferralsData();
+        if (activeTab === 'referrals') {
+          fetchReferralsData();
+        }
       }
     };
 
@@ -1553,11 +1647,12 @@ export default function AdminDashboardPage() {
 
   // Filter applications
   const filteredApps = applications.filter(app => {
+    const q = safeLower(searchQuery);
     const matchesSearch = 
-      app.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.program_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(app.id).includes(searchQuery);
+      safeLower(app.full_name).includes(q) ||
+      safeLower(app.email).includes(q) ||
+      safeLower(app.program_type).includes(q) ||
+      safeStr(app.id).includes(searchQuery);
 
     const matchesStatus = statusFilter === 'ALL' 
       ? true 
@@ -1568,7 +1663,7 @@ export default function AdminDashboardPage() {
     const matchesPayment = paymentFilter === 'ALL' 
       ? true 
       : paymentFilter === 'Pending Verification' 
-      ? (app.payment_status === 'Pending Verification' || Boolean(app.payment_proof_url))
+      ? (app.payment_status === 'Pending Verification' || Boolean(app.payment_proof_url)) 
       : app.payment_status === paymentFilter;
 
     return matchesSearch && matchesStatus && matchesPayment;
@@ -2396,7 +2491,7 @@ export default function AdminDashboardPage() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
                           <span style={{ fontWeight: 800, color: '#081F3E', fontSize: '0.92rem' }}>{inq.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{new Date(inq.created_at).toLocaleDateString()}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{formatSafeDate(inq.created_at)}</span>
                         </div>
                         <div style={{ fontSize: '0.85rem', color: '#B45309', fontWeight: 600 }}>{inq.subject}</div>
                         <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '4px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -2418,7 +2513,8 @@ export default function AdminDashboardPage() {
         {/* TAB 1: APPLICATIONS & ADMISSIONS ROSTER */}
         {/* ======================================================== */}
         {activeTab === 'applications' && (
-          <div>
+          <AdminTabErrorBoundary tabName="Applications & Admissions">
+            <div>
             {/* Filter & Actions Bar */}
             <div 
               className="premium-card admin-toolbar" 
@@ -3781,7 +3877,8 @@ export default function AdminDashboardPage() {
               </div>
             )}
           </div>
-        )}
+        </AdminTabErrorBoundary>
+      )}
 
         {/* ======================================================== */}
         {/* TAB 3: DIRECT INQUIRIES */}
@@ -3992,7 +4089,7 @@ export default function AdminDashboardPage() {
                               background: session.status === 'active' ? '#D1FAE5' : '#F1F5F9',
                               color: session.status === 'active' ? '#059669' : '#64748B'
                             }}>
-                              {session.status.toUpperCase()}
+                              {safeUpper(session.status)}
                             </span>
                           </div>
                         </div>
@@ -4990,7 +5087,7 @@ export default function AdminDashboardPage() {
                           </td>
                           <td style={{ padding: '12px 16px' }}>
                             <span style={{ fontSize: '0.75rem', color: log.status === 'sent' ? '#059669' : '#0284C7', fontWeight: 700 }}>
-                              ● {log.status.toUpperCase()}
+                              ● {safeUpper(log.status)}
                             </span>
                           </td>
                         </tr>
@@ -5052,7 +5149,7 @@ export default function AdminDashboardPage() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: '#FFFFFF', fontWeight: 800, fontSize: '0.8rem'
                             }}>
-                              {(admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2).toUpperCase()}
+                              {safeUpper((admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2))}
                             </div>
                             <div>
                               <strong style={{ color: '#081F3E' }}>{admin.full_name}</strong>
@@ -5075,17 +5172,17 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
-                          {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
+                          {admin.is_master ? 'System Default' : formatSafeDate(admin.created_at)}
                         </td>
                         <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '0.82rem' }}>
-                          {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
+                          {admin.last_login ? formatSafeDate(admin.last_login) : 'Never'}
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                           {admin.is_master ? (
                             <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
                               <Lock size={14} /> Protected Master
                             </span>
-                          ) : admin.email.toLowerCase() === (currentAdmin?.email || '').toLowerCase() ? (
+                          ) : safeLower(admin.email) === safeLower(currentAdmin?.email) ? (
                             <span style={{ fontSize: '0.75rem', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
                               <Lock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Active (You)
                             </span>
@@ -5168,7 +5265,7 @@ export default function AdminDashboardPage() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: '#FFFFFF', fontWeight: 800, fontSize: '0.85rem'
                             }}>
-                              {(admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2).toUpperCase()}
+                              {safeUpper((admin.full_name || 'Admin').split(' ').filter(Boolean).map(n => n[0] || '').join('').substring(0, 2))}
                             </div>
                             <div>
                               <strong style={{ color: '#081F3E', display: 'block', fontSize: '0.95rem' }}>{admin.full_name}</strong>
@@ -5195,17 +5292,17 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '0.84rem' }}>
-                          {admin.is_master ? 'System Default' : new Date(admin.created_at).toLocaleDateString()}
+                          {admin.is_master ? 'System Default' : formatSafeDate(admin.created_at)}
                         </td>
                         <td style={{ padding: '14px 16px', color: '#64748B', fontSize: '0.84rem' }}>
-                          {admin.last_login ? new Date(admin.last_login).toLocaleString() : 'Never'}
+                          {admin.last_login ? formatSafeDate(admin.last_login) : 'Never'}
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                           {admin.is_master ? (
                             <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>
                               <Lock size={14} /> Protected Master
                             </span>
-                          ) : admin.email.toLowerCase() === (currentAdmin?.email || '').toLowerCase() ? (
+                          ) : safeLower(admin.email) === safeLower(currentAdmin?.email) ? (
                             <span style={{ fontSize: '0.75rem', color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
                               <Lock size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Active (You)
                             </span>
@@ -5236,7 +5333,8 @@ export default function AdminDashboardPage() {
         {/* TAB 9: REFERRAL AGENTS, DOWNLINES & MOMO PAYOUTS */}
         {/* ======================================================== */}
         {activeTab === 'referrals' && (
-          <div>
+          <AdminTabErrorBoundary tabName="Referrals Network & Downlines">
+            <div>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
               <div>
@@ -5304,9 +5402,11 @@ export default function AdminDashboardPage() {
 
                 {/* Status Pill */}
                 {(() => {
-                  const isUnlocked = payoutSettings.payouts_unlocked;
-                  const deadlinePassed = new Date() >= new Date(payoutSettings.registration_end_date);
+                  const isUnlocked = Boolean(payoutSettings.payouts_unlocked);
+                  const targetDate = payoutSettings.registration_end_date ? new Date(payoutSettings.registration_end_date) : null;
+                  const deadlinePassed = targetDate && !isNaN(targetDate.getTime()) ? new Date() >= targetDate : false;
                   const canRequest = isUnlocked || deadlinePassed;
+                  const formattedDeadline = formatSafeDate(payoutSettings.registration_end_date, { day: 'numeric', month: 'short', year: 'numeric' });
                   return (
                     <div style={{
                       padding: '6px 14px',
@@ -5325,7 +5425,7 @@ export default function AdminDashboardPage() {
                         ? 'Payouts Unlocked (Admin Override Active)'
                         : deadlinePassed
                           ? 'Registration Period Concluded (Payouts Open)'
-                          : `Payouts Locked until ${new Date(payoutSettings.registration_end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                          : `Payouts Locked until ${formattedDeadline || 'Scheduled Date'}`}
                     </div>
                   );
                 })()}
@@ -5548,7 +5648,7 @@ export default function AdminDashboardPage() {
                           return (
                             <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                               <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
-                                {new Date(p.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                {formatSafeDate(p.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                               </td>
                               <td style={{ padding: '14px' }}>
                                 <strong style={{ color: '#081F3E', display: 'block' }}>{p.agent_name}</strong>
@@ -5762,14 +5862,14 @@ export default function AdminDashboardPage() {
                           {referralAgents
                             .filter(a => {
                               if (!referralSearch.trim()) return true;
-                              const q = referralSearch.toLowerCase();
-                              return a.full_name.toLowerCase().includes(q) ||
-                                a.code.toLowerCase().includes(q) ||
-                                a.momo_number.includes(q) ||
-                                (a.student_matricule && a.student_matricule.toLowerCase().includes(q));
+                              const q = safeLower(referralSearch);
+                              return safeLower(a.full_name).includes(q) ||
+                                safeLower(a.code).includes(q) ||
+                                safeStr(a.momo_number).includes(q) ||
+                                safeLower(a.student_matricule).includes(q);
                             })
                             .map((a, idx) => {
-                              const agentDownline = referralList.filter(r => r.agent_id === a.id || r.agent_code.toUpperCase() === a.code.toUpperCase());
+                              const agentDownline = referralList.filter(r => r.agent_id === a.id || (safeUpper(r.agent_code) && safeUpper(r.agent_code) === safeUpper(a.code)));
                               return (
                                 <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                   <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
@@ -5813,7 +5913,7 @@ export default function AdminDashboardPage() {
                                     {agentDownline.length || a.total_referrals}
                                   </td>
                                   <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: '#10B981' }}>
-                                    {agentDownline.filter(r => (r.payment_status || '').toLowerCase().includes('paid')).length || a.paid_referrals}
+                                    {agentDownline.filter(r => safeLower(r.payment_status).includes('paid')).length || a.paid_referrals}
                                   </td>
                                   <td style={{ padding: '14px', fontWeight: 700, color: '#081F3E' }}>
                                     {(a.total_earned || 0).toLocaleString()} XAF
@@ -5893,11 +5993,11 @@ export default function AdminDashboardPage() {
                       Showing {
                         referralList.filter(r => {
                           if (!downlineSearchQuery.trim()) return true;
-                          const q = downlineSearchQuery.toLowerCase();
-                          return (r.student_name || '').toLowerCase().includes(q) ||
-                            (r.student_matricule || '').toLowerCase().includes(q) ||
-                            (r.agent_code || '').toLowerCase().includes(q) ||
-                            (r.program_type || '').toLowerCase().includes(q);
+                          const q = safeLower(downlineSearchQuery);
+                          return safeLower(r.student_name).includes(q) ||
+                            safeLower(r.student_matricule).includes(q) ||
+                            safeLower(r.agent_code).includes(q) ||
+                            safeLower(r.program_type).includes(q);
                         }).length
                       } of {referralList.length} referred students
                     </span>
@@ -5926,15 +6026,15 @@ export default function AdminDashboardPage() {
                           {referralList
                             .filter(r => {
                               if (!downlineSearchQuery.trim()) return true;
-                              const q = downlineSearchQuery.toLowerCase();
-                              return (r.student_name || '').toLowerCase().includes(q) ||
-                                (r.student_matricule || '').toLowerCase().includes(q) ||
-                                (r.agent_code || '').toLowerCase().includes(q) ||
-                                (r.program_type || '').toLowerCase().includes(q);
+                              const q = safeLower(downlineSearchQuery);
+                              return safeLower(r.student_name).includes(q) ||
+                                safeLower(r.student_matricule).includes(q) ||
+                                safeLower(r.agent_code).includes(q) ||
+                                safeLower(r.program_type).includes(q);
                             })
                             .map((r, idx) => {
-                              const isPaid = (r.payment_status || '').toLowerCase().includes('paid');
-                              const matchingAgent = referralAgents.find(a => a.id === r.agent_id || a.code.toUpperCase() === r.agent_code.toUpperCase());
+                              const isPaid = safeLower(r.payment_status).includes('paid');
+                              const matchingAgent = referralAgents.find(a => a.id === r.agent_id || (safeUpper(a.code) && safeUpper(a.code) === safeUpper(r.agent_code)));
                               return (
                                 <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                   <td style={{ padding: '14px', fontWeight: 800, color: '#081F3E' }}>
@@ -5951,7 +6051,7 @@ export default function AdminDashboardPage() {
                                         fontSize: '0.78rem',
                                         fontWeight: 800
                                       }}>
-                                        {(r.student_name || 'S').charAt(0).toUpperCase()}
+                                        {safeUpper(safeStr(r.student_name || 'S').charAt(0))}
                                       </span>
                                       <span>{r.student_name}</span>
                                     </div>
@@ -5994,7 +6094,7 @@ export default function AdminDashboardPage() {
                                     {matchingAgent ? matchingAgent.momo_number : '—'}
                                   </td>
                                   <td style={{ padding: '14px', color: '#64748B', fontSize: '0.82rem' }}>
-                                    {r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                    {formatSafeDate(r.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                                   </td>
                                   <td style={{ padding: '14px' }}>
                                     <span style={{
@@ -6025,7 +6125,8 @@ export default function AdminDashboardPage() {
               )}
             </div>
           </div>
-        )}
+        </AdminTabErrorBoundary>
+      )}
 
         {/* MODAL: VIEW AGENT DOWNLINE (STUDENT NAMES & MATRICULES) */}
         {selectedAgentForDownline && (
@@ -6064,7 +6165,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {(() => {
-                const list = referralList.filter(r => r.agent_id === selectedAgentForDownline.id || r.agent_code.toUpperCase() === selectedAgentForDownline.code.toUpperCase());
+                const list = referralList.filter(r => r.agent_id === selectedAgentForDownline.id || (safeUpper(r.agent_code) && safeUpper(r.agent_code) === safeUpper(selectedAgentForDownline.code)));
                 if (list.length === 0) {
                   return (
                     <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: '10px' }}>
@@ -6088,7 +6189,7 @@ export default function AdminDashboardPage() {
                       </thead>
                       <tbody>
                         {list.map((r, i) => {
-                          const isPaid = (r.payment_status || '').toLowerCase().includes('paid');
+                          const isPaid = safeLower(r.payment_status).includes('paid');
                           return (
                             <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
                               <td style={{ padding: '12px 14px', fontWeight: 800, color: '#081F3E' }}>
@@ -6111,7 +6212,7 @@ export default function AdminDashboardPage() {
                                 {r.program_type}
                               </td>
                               <td style={{ padding: '12px 14px', color: '#64748B', fontSize: '0.82rem' }}>
-                                {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                {formatSafeDate(r.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                               </td>
                               <td style={{ padding: '12px 14px' }}>
                                 <span style={{
