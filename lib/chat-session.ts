@@ -5,9 +5,12 @@ const COOKIE_NAME = 'liah_chat_session';
 const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 function getSecret(): string {
-  const secret = process.env.CHAT_SESSION_SECRET;
+  const secret = process.env.CHAT_SESSION_SECRET
+    || process.env.STUDENT_SESSION_SECRET
+    || process.env.ADMIN_SESSION_SECRET
+    || process.env.FILE_URL_SIGNING_SECRET;
   if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
-    throw new Error('CHAT_SESSION_SECRET must be configured with at least 32 bytes.');
+    throw new Error('CHAT_SESSION_SECRET (or ADMIN_SESSION_SECRET) must be configured with at least 32 bytes.');
   }
   return secret;
 }

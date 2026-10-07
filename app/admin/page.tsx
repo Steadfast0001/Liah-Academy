@@ -607,8 +607,9 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Chat polling every 4s for responsive real-time conversations
+    // Chat polling every 4s for responsive real-time conversations (pauses when hidden)
     const chatInterval = setInterval(() => {
+      if (document.hidden) return;
       const headers = getAuthHeaders();
       fetch('/api/admin/chat', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success && Array.isArray(res.sessions)) {
@@ -623,8 +624,9 @@ export default function AdminDashboardPage() {
       }).catch(() => {});
     }, 4000);
 
-    // Applications, Stats, and Referrals polling every 8s to keep admin store synced with minimal overhead
+    // Applications, Stats, and Referrals polling every 8s to keep admin store synced with minimal overhead (pauses when hidden)
     const dataInterval = setInterval(() => {
+      if (document.hidden) return;
       const headers = getAuthHeaders();
       fetch('/api/admin/stats', { headers, credentials: 'include' }).then(r => r.json()).then(res => {
         if (res.success) {
@@ -1238,6 +1240,7 @@ export default function AdminDashboardPage() {
         badge: 'Popular'
       });
     }
+    setActiveTab('courses');
     setShowCourseModal(true);
   };
 
@@ -1257,6 +1260,8 @@ export default function AdminDashboardPage() {
           showNotification('Course track updated successfully!');
           setCourses(prev => prev.map(c => c.id === editingCourse.id ? data.data : c));
           setShowCourseModal(false);
+        } else {
+          showNotification(data.message || 'Could not update course track.', 'error');
         }
       } else {
         const res = await fetch('/api/admin/content', {
@@ -1270,6 +1275,8 @@ export default function AdminDashboardPage() {
           showNotification('New course track added to catalog!');
           setCourses(prev => [...prev, data.data]);
           setShowCourseModal(false);
+        } else {
+          showNotification(data.message || 'Could not add course track.', 'error');
         }
       }
     } catch {
@@ -1320,6 +1327,7 @@ export default function AdminDashboardPage() {
         content: ''
       });
     }
+    setActiveTab('news');
     setShowNewsModal(true);
   };
 
@@ -1339,6 +1347,8 @@ export default function AdminDashboardPage() {
           showNotification('Announcement updated successfully!');
           setNews(prev => prev.map(n => n.id === editingNews.id ? data.data : n));
           setShowNewsModal(false);
+        } else {
+          showNotification(data.message || 'Could not update announcement.', 'error');
         }
       } else {
         const res = await fetch('/api/admin/content', {
@@ -1352,6 +1362,8 @@ export default function AdminDashboardPage() {
           showNotification('New announcement published!');
           setNews(prev => [data.data, ...prev]);
           setShowNewsModal(false);
+        } else {
+          showNotification(data.message || 'Could not publish announcement.', 'error');
         }
       }
     } catch {
@@ -1641,6 +1653,7 @@ export default function AdminDashboardPage() {
                       id="admin_auth_identifier"
                       name="admin_identifier"
                       type="text"
+                      autoComplete="username"
                       required
                       placeholder="Enter administrator ID or email"
                       value={authIdentifier}
@@ -1670,6 +1683,7 @@ export default function AdminDashboardPage() {
                       id="admin_auth_password"
                       name="admin_password"
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
                       required
                       placeholder="Enter security password"
                       value={authPassword}
