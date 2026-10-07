@@ -345,21 +345,21 @@ export default function AboutPage() {
                 style={{ 
                   background: '#FFFFFF', 
                   borderRadius: '14px', 
-                  padding: '12px 18px', 
+                  padding: '12px 20px', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
                   boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
-                  minWidth: '160px',
-                  height: '80px'
+                  minWidth: '180px',
+                  height: '96px'
                 }}
               >
                 <Image 
                   src="/assets/images/new_generation_technologies.png" 
                   alt="New Generation Technologies Logo" 
-                  width={56} 
-                  height={56} 
-                  style={{ objectFit: 'contain', width: '56px', height: '56px', aspectRatio: '1 / 1' }}
+                  width={72} 
+                  height={72} 
+                  style={{ objectFit: 'contain', width: '72px', height: '72px', aspectRatio: '1 / 1' }}
                 />
               </div>
 
@@ -367,14 +367,14 @@ export default function AboutPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <Sparkles size={16} color="#F5A623" />
                   <span style={{ fontSize: '0.76rem', color: '#F5A623', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Featured Industry Placement Partner
+                    Exclusive Strategic Technology Partner
                   </span>
                 </div>
-                <h3 style={{ color: '#FFFFFF', fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+                <h3 style={{ color: '#FFFFFF', fontSize: '1.4rem', fontWeight: 800, margin: '0 0 6px 0' }}>
                   New Generation Technologies
                 </h3>
                 <p style={{ color: '#CBD5E1', fontSize: '0.9rem', lineHeight: '1.6', margin: 0, maxWidth: '640px' }}>
-                  Strategic corporate partnership bridging classroom theory and live enterprise systems. Providing Liah Academy students with industry internships, cloud infrastructure labs, and priority recruitment opportunities.
+                  Exclusive corporate partnership bridging academic rigor and live enterprise systems. Providing Liah Academy students with industry internships, cloud infrastructure labs, and priority recruitment pipelines.
                 </p>
               </div>
             </div>
@@ -384,21 +384,21 @@ export default function AboutPage() {
                 background: 'rgba(245, 166, 35, 0.12)', 
                 color: '#FEF3C7', 
                 border: '1px solid rgba(245, 166, 35, 0.35)',
-                padding: '6px 14px', 
+                padding: '8px 16px', 
                 borderRadius: '8px', 
-                fontSize: '0.8rem', 
+                fontSize: '0.84rem', 
                 fontWeight: 700 
               }}>
-                ✓ Direct Student Hiring
+                ✓ Direct Student Hiring &amp; Labs
               </span>
             </div>
           </div>
 
-          {/* 5 Partner White Rounded Pills */}
+          {/* Institutional Ecosystem Credentials */}
           <div 
             style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
               gap: '16px', 
               textAlign: 'center' 
             }}
@@ -412,10 +412,11 @@ export default function AboutPage() {
                 fontWeight: 800, 
                 fontSize: '0.84rem', 
                 letterSpacing: '0.04em',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
+                boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                border: '1.5px solid #F5A623'
               }}
             >
-              NEW GENERATION TECHNOLOGIES
+              ★ NEW GENERATION TECHNOLOGIES (EXCLUSIVE PARTNER)
             </div>
             <div 
               style={{ 
@@ -429,7 +430,7 @@ export default function AboutPage() {
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}
             >
-              SILICON MOUNTAIN
+              SILICON MOUNTAIN ECOSYSTEM
             </div>
             <div 
               style={{ 
@@ -457,21 +458,7 @@ export default function AboutPage() {
                 boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
               }}
             >
-              LINUX LABS
-            </div>
-            <div 
-              style={{ 
-                background: '#FFFFFF', 
-                padding: '20px 14px', 
-                borderRadius: '12px', 
-                color: '#081F3E', 
-                fontWeight: 800, 
-                fontSize: '0.84rem', 
-                letterSpacing: '0.04em',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.1)' 
-              }}
-            >
-              AWS ACADEMY
+              LINUX LABS ACCREDITED
             </div>
           </div>
 

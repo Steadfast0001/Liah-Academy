@@ -267,18 +267,18 @@ export default function HomePage() {
           =================================================== */}
       <section style={{ background: '#FFFFFF', padding: '28px 0', borderBottom: '1px solid #E2E8F0' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '18px' }}>
             <span style={{ 
-              fontSize: '0.72rem', 
+              fontSize: '0.76rem', 
               fontWeight: 800, 
               color: '#64748B', 
               textTransform: 'uppercase', 
-              letterSpacing: '0.1em',
+              letterSpacing: '0.12em',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px'
             }}>
-              <Sparkles size={13} color="#F5A623" /> Official Industry, Placement &amp; Innovation Partners
+              <Sparkles size={14} color="#F5A623" /> Official Strategic Industry &amp; Placement Partner
             </span>
           </div>
 
@@ -289,31 +289,49 @@ export default function HomePage() {
             flexWrap: 'wrap', 
             gap: '24px 36px' 
           }}>
-            {/* New Generation Technologies */}
+            {/* Sizable New Generation Technologies Partner Card */}
             <Link 
               href="/about#partnerships" 
               style={{ 
-                display: 'flex', 
+                display: 'inline-flex', 
                 alignItems: 'center', 
-                gap: '12px', 
+                gap: '16px', 
                 textDecoration: 'none',
-                background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-                padding: '8px 16px',
-                borderRadius: '10px',
-                transition: 'all 0.2s ease'
+                background: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                padding: '10px 20px',
+                borderRadius: '14px',
+                boxShadow: '0 4px 18px rgba(8, 31, 62, 0.06)',
+                transition: 'all 0.25s ease'
               }}
             >
-              <Image 
-                src="/assets/images/new_generation_technologies.png" 
-                alt="New Generation Technologies Logo" 
-                width={34} 
-                height={34} 
-                style={{ objectFit: 'contain', width: '34px', height: '34px', aspectRatio: '1 / 1' }}
-              />
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#081F3E', borderLeft: '1px solid #CBD5E1', paddingLeft: '10px' }}>
-                Technology Partner
-              </span>
+              <div style={{
+                background: '#0B1528',
+                borderRadius: '10px',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              }}>
+                <Image 
+                  src="/assets/images/new_generation_technologies.png" 
+                  alt="New Generation Technologies Logo" 
+                  width={64} 
+                  height={64} 
+                  style={{ objectFit: 'contain', width: '64px', height: '64px', aspectRatio: '1 / 1', borderRadius: '6px' }}
+                  priority
+                />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: '1rem', fontWeight: 900, color: '#081F3E', letterSpacing: '-0.01em', lineHeight: 1.25 }}>
+                  New Generation Technologies
+                </span>
+                <span style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: '3px' }}>
+                  ★ Official Strategic Industry Partner
+                </span>
+              </div>
             </Link>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontWeight: 800, fontSize: '0.84rem', letterSpacing: '0.04em' }}>
