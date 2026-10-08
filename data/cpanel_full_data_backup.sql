@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-08T15:26:16.257Z
+-- Generated: 2026-10-08T16:24:02.114Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:

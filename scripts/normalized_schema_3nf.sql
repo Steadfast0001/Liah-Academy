@@ -410,8 +410,8 @@ ON DUPLICATE KEY UPDATE
 
 -- Standard SuperAdmin account
 INSERT INTO `admins` (`id`, `full_name`, `email`, `password`, `role`)
-VALUES (1, 'Academic Registrar', 'info@liahacademy.com', 'AdminPass2026!', 'SuperAdmin')
-ON DUPLICATE KEY UPDATE full_name=VALUES(full_name);
+VALUES (1, 'Academic Registrar', 'info@liahacademy.com', 'AdminSecure2026!', 'SuperAdmin')
+ON DUPLICATE KEY UPDATE password=VALUES(password), full_name=VALUES(full_name);
 
 -- Academic Courses
 INSERT IGNORE INTO `courses` (`id`, `title`, `degree_type`, `program_type`, `study_format`, `duration`, `tuition_fee`, `description`, `modules`, `badge`, `school`)
