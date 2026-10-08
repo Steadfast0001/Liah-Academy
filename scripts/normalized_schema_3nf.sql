@@ -340,6 +340,21 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 17B. MIGRATION & SCHEMA UPGRADE (Idempotent column verification for existing DBs)
+-- ----------------------------------------------------------------------------
+ALTER TABLE `settings` ADD COLUMN IF NOT EXISTS `registration_end_date` VARCHAR(50) DEFAULT '2026-10-31';
+ALTER TABLE `settings` ADD COLUMN IF NOT EXISTS `registration_period_title` VARCHAR(150) DEFAULT 'Fall 2026 Admissions Intake';
+ALTER TABLE `settings` ADD COLUMN IF NOT EXISTS `payouts_unlocked` TINYINT(1) DEFAULT 0;
+
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_proof_url` LONGTEXT DEFAULT NULL;
+ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `payment_transaction_id` VARCHAR(100) DEFAULT '';
+
+ALTER TABLE `referral_payouts` ADD COLUMN IF NOT EXISTS `proof_screenshot` LONGTEXT DEFAULT NULL;
+ALTER TABLE `referral_payouts` ADD COLUMN IF NOT EXISTS `transaction_id` VARCHAR(100) DEFAULT '';
+ALTER TABLE `referral_payouts` ADD COLUMN IF NOT EXISTS `admin_notes` TEXT DEFAULT NULL;
+
+-- ----------------------------------------------------------------------------
 -- 18. NORMALIZED 3NF VIEWS (Zero Duplication + Instant High-Speed Joins)
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE VIEW `view_referrals_normalized` AS

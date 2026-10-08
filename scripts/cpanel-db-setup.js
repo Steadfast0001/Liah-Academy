@@ -57,12 +57,18 @@ async function runCpanelDbSetup() {
   }
 
   try {
-    const sqlFilePath = path.join(process.cwd(), 'data', 'cpanel_master_setup.sql');
+    let sqlFilePath = path.join(process.cwd(), 'scripts', 'normalized_schema_3nf.sql');
     if (!fs.existsSync(sqlFilePath)) {
-      throw new Error(`Master SQL setup file not found at ${sqlFilePath}`);
+      sqlFilePath = path.join(process.cwd(), 'data', 'cpanel_full_data_backup.sql');
+    }
+    if (!fs.existsSync(sqlFilePath)) {
+      sqlFilePath = path.join(process.cwd(), 'data', 'cpanel_master_setup.sql');
+    }
+    if (!fs.existsSync(sqlFilePath)) {
+      throw new Error(`Master SQL setup file not found. Please verify scripts/normalized_schema_3nf.sql exists.`);
     }
 
-    console.log('Executing master database setup script (data/cpanel_master_setup.sql)...');
+    console.log(`Executing normalized database setup script (${path.relative(process.cwd(), sqlFilePath)})...`);
     const sql = fs.readFileSync(sqlFilePath, 'utf8');
 
     // Split SQL into executable statements
