@@ -66,7 +66,7 @@ export function invalidateCache(prefix?: string): void {
     queryMicroCache.clear();
     return;
   }
-  for (const key of queryMicroCache.keys()) {
+  for (const key of Array.from(queryMicroCache.keys())) {
     if (key.startsWith(prefix)) {
       queryMicroCache.delete(key);
     }
@@ -1000,10 +1000,13 @@ export interface ReferralItem {
   student_email: string;
   student_phone?: string;
   program_type?: string;
+  degree_type?: string;
   payment_status: string;
   admission_status: string;
   commission_amount: number;
+  commission_earned?: number;
   commission_status: 'pending' | 'approved' | 'paid';
+  status?: string;
   created_at: string;
   updated_at?: string;
 }

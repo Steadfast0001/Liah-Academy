@@ -10,7 +10,7 @@ import {
   Send, AlertCircle, FileText, Check, X, ExternalLink,
   ChevronLeft, ChevronRight, Sparkles, Download, Bell, Edit, Save, Globe, Phone, MapPin,
   Database, HardDrive, Cpu, Activity, Lock, Key, LogOut, ShieldAlert, EyeOff, FileCheck, MessageSquare, Loader2,
-  DollarSign, Award, Share2, UploadCloud, Calendar
+  DollarSign, Award, Share2, UploadCloud, Calendar, CheckCircle2
 } from 'lucide-react';
 
 import { exportApplicantsToCSVString } from '../../lib/csv';
@@ -43,10 +43,13 @@ interface AdminReferralItem {
   student_name: string;
   student_matricule: string;
   program_type: string;
-  degree_type: string;
-  commission_earned: number;
-  status: 'pending' | 'approved' | 'rejected';
+  degree_type?: string;
+  commission_earned?: number;
+  commission_amount?: number;
+  commission_status?: string;
+  status?: 'pending' | 'approved' | 'rejected' | string;
   payment_status: string;
+  admission_status?: string;
   created_at: string;
 }
 
@@ -81,6 +84,7 @@ interface Application {
   payment_amount?: number;
   document_url?: string;
   documents?: { slotId?: string; label?: string; fileName?: string; size?: string; url?: string }[];
+  referred_by?: string;
   created_at: string;
 }
 
