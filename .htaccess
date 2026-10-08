@@ -1,3 +1,11 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/rhibwcnc/liahacademy.com"
+PassengerBaseURI "/"
+PassengerNodejs "/home/rhibwcnc/nodevenv/liahacademy.com/20/bin/node"
+PassengerAppType node
+PassengerStartupFile server.js
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
 # ============================================================================
 # LIAH ACADEMY - NAMECHEAP CPANEL OPTIMIZED APACHE CONFIGURATION
 # ============================================================================

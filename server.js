@@ -53,33 +53,41 @@ function loadEnvFile(filePath) {
 loadEnvFile(path.join(appDir, '.env'));
 loadEnvFile(path.join(appDir, '.env.local'));
 
-// 2. AUTO-FIX LINUX PERMISSIONS (Ensures .next, app, lib, components are readable on Namecheap)
-function fixPermissionsRecursive(dirPath) {
-  try {
-    fs.chmodSync(dirPath, 0o755);
-    const items = fs.readdirSync(dirPath, { withFileTypes: true });
-    for (const item of items) {
-      const fullPath = path.join(dirPath, item.name);
-      try {
-        if (item.isDirectory()) {
-          fs.chmodSync(fullPath, 0o755);
-          fixPermissionsRecursive(fullPath);
-        } else {
-          fs.chmodSync(fullPath, 0o644);
-        }
-      } catch (e) {}
-    }
-  } catch (e) {}
-}
-
+// 2. AUTO-FIX LINUX PERMISSIONS (Non-blocking startup for cPanel Phusion Passenger)
 const keyDirs = ['.next', 'app', 'components', 'lib', 'public', 'data', 'scripts'];
 for (const dir of keyDirs) {
   const target = path.join(appDir, dir);
-  if (fs.existsSync(target)) {
-    fixPermissionsRecursive(target);
-  }
+  try {
+    if (fs.existsSync(target)) {
+      fs.chmodSync(target, 0o755);
+    }
+  } catch {}
 }
-log('Permissions self-healing completed for core directories');
+
+// Background async deep permission fixer (never blocks server startup)
+setImmediate(() => {
+  function fixDirAsync(dirPath) {
+    try {
+      fs.readdir(dirPath, { withFileTypes: true }, (err, items) => {
+        if (err || !items) return;
+        for (const item of items) {
+          const fullPath = path.join(dirPath, item.name);
+          if (item.isDirectory()) {
+            try { fs.chmodSync(fullPath, 0o755); } catch {}
+            fixDirAsync(fullPath);
+          } else {
+            try { fs.chmodSync(fullPath, 0o644); } catch {}
+          }
+        }
+      });
+    } catch {}
+  }
+  for (const dir of keyDirs) {
+    const target = path.join(appDir, dir);
+    if (fs.existsSync(target)) fixDirAsync(target);
+  }
+});
+log('Permissions self-healing initialized');
 
 // 3. PRODUCTION CRYPTOGRAPHIC SECRETS (Self-Healing & Persistent across restarts)
 const requiredSecrets = [

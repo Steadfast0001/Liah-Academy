@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   reactStrictMode: true,
-  output: 'standalone',
   compress: true,
   poweredByHeader: false,
   webpack: (config) => {

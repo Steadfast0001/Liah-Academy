@@ -39,7 +39,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://liahacademy.org'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://liahacademy.com'),
   title: 'Liah Academy | Forge Your Future in Technology',
   description: "Liah Academy in Buea, Cameroon is a premier practical tech academy and software engineering company offering HND, National Diploma (ND), and professional certifications in Software Engineering, DevOps, Data Science, and Cybersecurity.",
   keywords: ['Liah Academy', 'Buea tech academy', 'software engineering Cameroon', 'HND software engineering Buea', 'DevOps training Buea', 'cybersecurity training Cameroon', 'IT certifications Buea', 'Bakweri Town Buea'],
