@@ -164,44 +164,80 @@ const blockedPatterns = [
   /^\/scripts\//i,
 ];
 
-app.prepare()
-  .then(() => {
-    log('Next.js app.prepare() ready. Starting HTTP listener on port ' + port);
-    http.createServer((req, res) => {
-      try {
-        const parsedUrl = parse(req.url, true);
-        const pathname = parsedUrl.pathname || '';
+let isPrepared = false;
+let prepareError = null;
 
-        // Security check: block direct requests to sensitive internal files
-        if (blockedPatterns.some((pattern) => pattern.test(pathname))) {
-          res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-          res.end('Access Denied');
-          return;
-        }
+const server = http.createServer((req, res) => {
+  try {
+    const parsedUrl = parse(req.url, true);
+    const pathname = parsedUrl.pathname || '';
 
-        handle(req, res, parsedUrl);
-      } catch (err) {
-        log('Request execution error on ' + req.url, err);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
-      }
-    }).listen(port, (err) => {
-      if (err) {
-        log('Server listen error', err);
-        throw err;
-      }
-      log('Liah Academy successfully online on port ' + port);
-    });
-  })
-  .catch((err) => {
-    log('Fatal error during app.prepare()', err);
-    http.createServer((req, res) => {
+    // 1. Instant Health Check
+    if (pathname === '/__health' || pathname === '/healthz') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', ready: isPrepared, timestamp: new Date().toISOString() }));
+      return;
+    }
+
+    // 2. Block sensitive internal file requests directly
+    if (blockedPatterns.some((pattern) => pattern.test(pathname))) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Access Denied');
+      return;
+    }
+
+    // 3. If prepare encountered a fatal error, display diagnostic details
+    if (prepareError) {
       res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(`
         <div style="font-family:sans-serif;padding:30px;max-width:700px;margin:50px auto;border:1px solid #ef4444;border-radius:10px;background:#fff5f5;">
           <h2 style="color:#b91c1c;">Liah Academy — Startup Diagnostic</h2>
-          <pre style="background:#fff;padding:12px;border:1px solid #fecaca;border-radius:6px;overflow:auto;font-size:13px;color:#991b1b;">${err.stack || err.message}</pre>
+          <pre style="background:#fff;padding:12px;border:1px solid #fecaca;border-radius:6px;overflow:auto;font-size:13px;color:#991b1b;">${prepareError.stack || prepareError.message}</pre>
         </div>
       `);
-    }).listen(port);
+      return;
+    }
+
+    // 4. If Next.js is still preparing, wait for it before serving request
+    if (!isPrepared) {
+      preparePromise
+        .then(() => {
+          handle(req, res, parsedUrl);
+        })
+        .catch((err) => {
+          log('Error handling request during warmup', err);
+          res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('Server Initialization: ' + err.message);
+        });
+      return;
+    }
+
+    // 5. Standard request execution
+    handle(req, res, parsedUrl);
+  } catch (err) {
+    log('Request execution error on ' + req.url, err);
+    res.statusCode = 500;
+    res.end('Internal Server Error');
+  }
+});
+
+// START HTTP LISTENER IMMEDIATELY (Instant handshake with Phusion Passenger, eliminates 503 timeouts)
+server.listen(port, (err) => {
+  if (err) {
+    log('Server listen error', err);
+    throw err;
+  }
+  log('HTTP server listening immediately on port ' + port + ' (Passenger handshake successful)');
+});
+
+// Asynchronously prepare Next.js in background
+const preparePromise = app.prepare()
+  .then(() => {
+    isPrepared = true;
+    log('Next.js app.prepare() ready. Serving all routes normally.');
+  })
+  .catch((err) => {
+    prepareError = err;
+    log('Fatal error during app.prepare()', err);
   });
+
