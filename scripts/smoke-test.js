@@ -1,7 +1,7 @@
 const http = require('http');
 
 const PORT = process.env.SMOKE_PORT || 3000;
-const BASE = `http://127.0.0.1:${PORT}`;
+const BASE = `http://localhost:${PORT}`;
 
 const routes = [
   '/',

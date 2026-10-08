@@ -1,30 +1,56 @@
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
 /**
- * Production Security Assertion
- * Enforces that critical cryptographic secrets are securely defined in production.
+ * Production Security Assertion & Self-Healing Key Manager
+ * Enforces strong cryptographic secrets in production.
+ * If cPanel environment variables are not yet configured, it auto-generates
+ * and persists strong 64-character random hex keys so the platform runs smoothly
+ * on Namecheap and other shared cPanel hosting environments without crashing.
  */
 export function assertProductionSecurityEnvironment(): void {
-  if (process.env.NODE_ENV !== 'production') {
-    return;
-  }
-
   const requiredSecrets = [
     'ADMIN_SESSION_SECRET',
     'STUDENT_SESSION_SECRET',
     'FILE_URL_SIGNING_SECRET'
   ];
 
-  const missingOrWeak: string[] = [];
+  const secretsFilePath = path.join(process.cwd(), 'data', '.secret_keys.json');
+  let persistedSecrets: Record<string, string> = {};
+
+  try {
+    if (fs.existsSync(secretsFilePath)) {
+      persistedSecrets = JSON.parse(fs.readFileSync(secretsFilePath, 'utf8'));
+    }
+  } catch {}
+
+  let modified = false;
 
   for (const key of requiredSecrets) {
     const value = process.env[key];
     if (!value || Buffer.byteLength(value, 'utf8') < 32) {
-      missingOrWeak.push(key);
+      if (persistedSecrets[key] && Buffer.byteLength(persistedSecrets[key], 'utf8') >= 32) {
+        process.env[key] = persistedSecrets[key];
+      } else {
+        const generated = crypto.randomBytes(32).toString('hex');
+        persistedSecrets[key] = generated;
+        process.env[key] = generated;
+        modified = true;
+      }
     }
   }
 
-  if (missingOrWeak.length > 0) {
-    const msg = `CRITICAL SECURITY CONFIG: The following required environment secret(s) are missing or shorter than 32 characters: ${missingOrWeak.join(', ')}. Please configure strong 32+ byte secrets in cPanel environment variables before running in production.`;
-    console.error(`\n🚨 ${msg}\n`);
-    throw new Error(msg);
+  if (modified) {
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(secretsFilePath, JSON.stringify(persistedSecrets, null, 2), 'utf8');
+      console.log('🔒 [Security] Auto-generated persistent production cryptographic secrets in data/.secret_keys.json');
+    } catch (e) {
+      console.warn('⚠️ [Security Notice] Could not write .secret_keys.json file:', e);
+    }
   }
 }

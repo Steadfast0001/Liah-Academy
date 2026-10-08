@@ -841,8 +841,33 @@ function StudentPortalContent() {
     setGatewayTab('login');
   };
 
+  const safeCopyToClipboard = (text: string): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {}
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch {
+      return false;
+    }
+  };
+
   const handleCopyShortCode = (code: string) => {
-    navigator.clipboard.writeText(code);
+    safeCopyToClipboard(code);
     setCopiedShortCode(true);
     setTimeout(() => setCopiedShortCode(false), 2500);
   };
@@ -1683,7 +1708,7 @@ function StudentPortalContent() {
                         type="button"
                         onClick={() => {
                           const url = `${window.location.origin}/portal?tab=enrol&ref=${studentRefData.agent.code}`;
-                          navigator.clipboard.writeText(url);
+                          safeCopyToClipboard(url);
                           setStudentRefCopiedLink(true);
                           setTimeout(() => setStudentRefCopiedLink(false), 2500);
                         }}

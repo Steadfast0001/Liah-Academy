@@ -84,6 +84,13 @@ export async function GET(request: Request) {
       }
     }
 
+    if (!agent) {
+      return NextResponse.json(
+        { success: false, message: 'No ambassador account found with the provided referral code or MoMo number.' },
+        { status: 404 }
+      );
+    }
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://liahacademy.com';
     const siteSettings = adminStore.getSettings();
     const regEndDateStr = siteSettings.registration_end_date || '2026-10-31';

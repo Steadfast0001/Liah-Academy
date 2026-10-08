@@ -103,6 +103,8 @@ const rootFiles = [
   'package.json',
   'package-lock.json',
   'server.js',
+  'app.js',
+  '.htaccess',
   'ecosystem.config.js',
   'next.config.mjs',
   'tsconfig.json',

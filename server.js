@@ -1,5 +1,5 @@
 // ============================================================================
-// LIAH ACADEMY - PRODUCTION CPANEL SERVER (Phusion Passenger / Linux)
+// LIAH ACADEMY - PRODUCTION CPANEL SERVER (Phusion Passenger / Linux / Namecheap)
 // ============================================================================
 // 0. HIGH-CONCURRENCY LIBUV THREADPOOL CONFIGURATION (Handles 100+ concurrent users)
 if (!process.env.UV_THREADPOOL_SIZE) {
@@ -10,6 +10,7 @@ const http = require('http');
 const { parse } = require('url');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const port = process.env.PORT || 3000;
 const appDir = __dirname;
@@ -23,7 +24,36 @@ function log(msg, err) {
   console.log(line);
 }
 
-// 1. AUTO-FIX LINUX PERMISSIONS (Ensures .next, app, lib, components are readable)
+// 1. AUTO-LOAD .env AND .env.local (Ensures cPanel File Manager edits are detected)
+function loadEnvFile(filePath) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          let val = trimmed.slice(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    log('Notice: Failed reading env file ' + filePath, err);
+  }
+}
+
+loadEnvFile(path.join(appDir, '.env'));
+loadEnvFile(path.join(appDir, '.env.local'));
+
+// 2. AUTO-FIX LINUX PERMISSIONS (Ensures .next, app, lib, components are readable on Namecheap)
 function fixPermissionsRecursive(dirPath) {
   try {
     fs.chmodSync(dirPath, 0o755);
@@ -51,44 +81,55 @@ for (const dir of keyDirs) {
 }
 log('Permissions self-healing completed for core directories');
 
-// 2. ASSERT PRODUCTION SECURITY ENVIRONMENT
-if (process.env.NODE_ENV === 'production') {
-  const requiredSecrets = [
-    'ADMIN_SESSION_SECRET',
-    'STUDENT_SESSION_SECRET',
-    'FILE_URL_SIGNING_SECRET'
-  ];
-  const missingOrShort = [];
-  for (const key of requiredSecrets) {
-    const val = process.env[key];
-    if (!val || val.length < 32) {
-      missingOrShort.push(key);
-    }
+// 3. PRODUCTION CRYPTOGRAPHIC SECRETS (Self-Healing & Persistent across restarts)
+const requiredSecrets = [
+  'ADMIN_SESSION_SECRET',
+  'STUDENT_SESSION_SECRET',
+  'FILE_URL_SIGNING_SECRET'
+];
+
+const secretsFilePath = path.join(appDir, 'data', '.secret_keys.json');
+let persistedSecrets = {};
+try {
+  if (fs.existsSync(secretsFilePath)) {
+    persistedSecrets = JSON.parse(fs.readFileSync(secretsFilePath, 'utf8'));
   }
-  if (missingOrShort.length > 0) {
-    const errText = `CRITICAL SECURITY CONFIGURATION: The following environment secret(s) must be defined with at least 32 characters in production: ${missingOrShort.join(', ')}. Please configure them in your cPanel Setup Node.js App Environment Variables.`;
-    log('FATAL: Security assertion failed', new Error(errText));
-    http.createServer((req, res) => {
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(`
-        <div style="font-family:sans-serif;padding:30px;max-width:700px;margin:50px auto;border:1px solid #ef4444;border-radius:10px;background:#fff5f5;">
-          <h2 style="color:#b91c1c;">Liah Academy — Production Security Configuration Required</h2>
-          <p style="color:#7f1d1d;line-height:1.6;">Before launching in production, the following cryptographic secrets must be configured with at least 32 characters in cPanel Environment Variables:</p>
-          <ul>${missingOrShort.map(k => `<li style="font-family:monospace;font-weight:bold;color:#991b1b;">${k}</li>`).join('')}</ul>
-          <p style="font-size:13px;color:#6b7280;">Log in to cPanel &rarr; Setup Node.js App &rarr; Edit Application &rarr; Add Environment Variables &rarr; Restart App.</p>
-        </div>
-      `);
-    }).listen(port);
-    return;
+} catch {}
+
+let secretsUpdated = false;
+for (const key of requiredSecrets) {
+  const currentVal = process.env[key];
+  if (!currentVal || Buffer.byteLength(currentVal, 'utf8') < 32) {
+    if (persistedSecrets[key] && Buffer.byteLength(persistedSecrets[key], 'utf8') >= 32) {
+      process.env[key] = persistedSecrets[key];
+    } else {
+      const generated = crypto.randomBytes(32).toString('hex');
+      persistedSecrets[key] = generated;
+      process.env[key] = generated;
+      secretsUpdated = true;
+    }
   }
 }
 
-// 3. CHECK NEXT.JS RUNTIME
+if (secretsUpdated) {
+  try {
+    const dataDir = path.join(appDir, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(secretsFilePath, JSON.stringify(persistedSecrets, null, 2), 'utf8');
+    log('Generated and persisted strong production cryptographic secrets in data/.secret_keys.json');
+  } catch (err) {
+    log('Warning: could not write .secret_keys.json', err);
+  }
+}
+
+// 4. CHECK NEXT.JS RUNTIME
 let next;
 try {
   next = require('next');
 } catch (err) {
-  log('FATAL: Cannot find next module', err);
+  log('FATAL: Cannot find next module. Please run npm install in cPanel.', err);
   http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<h1>Please click "Run NPM Install" in cPanel Setup Node.js App</h1>');
@@ -96,14 +137,14 @@ try {
   return;
 }
 
-// 3. INITIALIZE NEXT.JS APP
+// 5. INITIALIZE NEXT.JS APP
 const app = next({ 
   dev: false, 
   dir: appDir
 });
 const handle = app.getRequestHandler();
 
-// Block sensitive file requests directly
+// Block sensitive internal file requests directly
 const blockedPatterns = [
   /^\/\.env/i,
   /^\/\.git/i,
@@ -111,12 +152,13 @@ const blockedPatterns = [
   /^\/stderr\.log/i,
   /^\/ecosystem\.config\.js/i,
   /^\/data\/.*\.sql$/i,
+  /^\/data\/\.secret_keys\.json$/i,
   /^\/scripts\//i,
 ];
 
 app.prepare()
   .then(() => {
-    log('Next.js app.prepare() ready. Starting HTTP listener.');
+    log('Next.js app.prepare() ready. Starting HTTP listener on port ' + port);
     http.createServer((req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
@@ -155,4 +197,3 @@ app.prepare()
       `);
     }).listen(port);
   });
-

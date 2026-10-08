@@ -1,6 +1,6 @@
 -- ============================================================================
 -- LIAH ACADEMY - FULL PLATFORM DATABASE BACKUP & RESTORATION DUMP
--- Generated: 2026-10-07T20:58:52.978Z
+-- Generated: 2026-10-08T15:26:16.257Z
 -- Target Engine: MySQL 8.0+ / MariaDB 10.4+ (InnoDB Engine)
 -- 
 -- DATA INTEGRITY GUARANTEE:
@@ -1032,9 +1032,11 @@ CREATE TABLE IF NOT EXISTS `referral_agents` (
 
 ALTER TABLE `students` ADD COLUMN IF NOT EXISTS `referred_by` VARCHAR(50) DEFAULT NULL;
 
--- DATA: 1 Referral Agents
+-- DATA: 2 Referral Agents
 INSERT IGNORE INTO `referral_agents` (`id`, `full_name`, `code`, `momo_number`, `momo_name`, `email`, `student_id`, `student_matricule`, `status`, `commission_per_student`, `total_referrals`, `paid_referrals`, `total_earned`, `total_paid`, `balance`, `created_at`)
 VALUES (1, 'Nkenganyi Steadfast Bekwike', 'LIAH-NKE787V98', '674003001', 'nkenganyi steadfast', 'nkengsteadbeks@gmail.com', NULL, '', 'active', 15000, 0, 0, 0, 0, 0, '2026-10-06 15:26:01');
+INSERT IGNORE INTO `referral_agents` (`id`, `full_name`, `code`, `momo_number`, `momo_name`, `email`, `student_id`, `student_matricule`, `status`, `commission_per_student`, `total_referrals`, `paid_referrals`, `total_earned`, `total_paid`, `balance`, `created_at`)
+VALUES (2, 'Test Ambassador', 'LIAH-TESM4FW50', '671234567', 'Test Ambassador MoMo', '', NULL, '', 'active', 15000, 0, 0, 0, 0, 0, '2026-10-08 15:13:29');
 
 -- ----------------------------------------------------------------------------
 -- 14. TABLE: referrals (Applicant Downlines & Commission Log)

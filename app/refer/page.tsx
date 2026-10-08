@@ -82,6 +82,31 @@ function formatSafeDate(val: any, options?: Intl.DateTimeFormatOptions): string 
   }
 }
 
+function safeCopyToClipboard(text: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch {
+    return false;
+  }
+}
+
 function ReferPageContent() {
   const searchParams = useSearchParams();
 
@@ -239,8 +264,8 @@ function ReferPageContent() {
 
   const copyLinkToClipboard = () => {
     const url = getFullReferralUrl();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url);
+    const success = safeCopyToClipboard(url);
+    if (success) {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     }
@@ -248,8 +273,8 @@ function ReferPageContent() {
 
   const copyCodeToClipboard = () => {
     if (!agent) return;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(agent.code);
+    const success = safeCopyToClipboard(agent.code);
+    if (success) {
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2500);
     }

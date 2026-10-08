@@ -1,0 +1,33 @@
+# ============================================================================
+# LIAH ACADEMY - NAMECHEAP CPANEL OPTIMIZED APACHE CONFIGURATION
+# ============================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1. Force HTTPS in production (Namecheap SSL / Let's Encrypt / AutoSSL)
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # 2. Block direct public access to sensitive system files and directories
+  RewriteRule ^(\.env|\.env\..*|\.git.*|error_log\.txt|stderr\.log) - [F,L,NC]
+  RewriteRule ^(data/\.secret_keys\.json|data/.*\.sql|data/liah_academy_store\.json) - [F,L,NC]
+  RewriteRule ^(scripts/|ecosystem\.config\.js) - [F,L,NC]
+</IfModule>
+
+# 3. Security Headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 4. Gzip & Deflate Compression for High Performance
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json image/svg+xml
+</IfModule>
+
+# 5. Disable Directory Browsing
+Options -Indexes
