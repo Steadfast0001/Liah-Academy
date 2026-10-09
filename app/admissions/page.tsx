@@ -1,12 +1,23 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   FileText, CreditCard, Lock, UserPlus 
 } from 'lucide-react';
 
 function AdmissionsOverview() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const refCode = searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code');
+    if (refCode) {
+      router.replace(`/portal?tab=enrol&ref=${encodeURIComponent(refCode.trim().toUpperCase())}`);
+    }
+  }, [searchParams, router]);
+
   return (
     <main style={{ marginTop: 'calc(var(--header-height) + 40px)', marginBottom: '90px' }}>
       <div className="container">

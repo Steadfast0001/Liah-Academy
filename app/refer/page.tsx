@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Users, DollarSign, Share2, Copy, Check, ArrowRight, Smartphone,
   Award, TrendingUp, AlertCircle, Clock, CheckCircle2, ShieldCheck,
@@ -108,7 +108,16 @@ function safeCopyToClipboard(text: string): boolean {
 }
 
 function ReferPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+
+  // If a visitor opened this page with a referral code, redirect immediately to the Registration Portal
+  useEffect(() => {
+    const refCode = searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code');
+    if (refCode) {
+      router.replace(`/portal?tab=enrol&ref=${encodeURIComponent(refCode.trim().toUpperCase())}`);
+    }
+  }, [searchParams, router]);
 
   // Tab: 'register' | 'lookup'
   const [formMode, setFormMode] = useState<'register' | 'lookup'>('register');
@@ -257,9 +266,9 @@ function ReferPageContent() {
   const getFullReferralUrl = () => {
     if (!agent) return '';
     if (typeof window !== 'undefined') {
-      return `${window.location.origin}/admissions?ref=${agent.code}`;
+      return `${window.location.origin}/portal?tab=enrol&ref=${agent.code}`;
     }
-    return `https://liahacademy.org/admissions?ref=${agent.code}`;
+    return `https://liahacademy.com/portal?tab=enrol&ref=${agent.code}`;
   };
 
   const copyLinkToClipboard = () => {

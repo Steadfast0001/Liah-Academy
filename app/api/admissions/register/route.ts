@@ -127,13 +127,64 @@ export async function POST(request: Request) {
              VALUES (?, ?, ?, 'XAF', 'MTN Mobile Money', ?, 'PENDING_VERIFICATION', ?, ?, ?, NOW())`,
             [payRef, studentId, effectiveFee, phone, `Enrolment Application Fee for #${studentId}`, cleanProofUrl, cleanTxId]
           ).catch(payErr => console.warn('Payment record insert notice:', payErr));
-        }
-
-        // Note: Students are tagged with referred_by in the students table.
-        // As per institutional policy, the student will ONLY be registered under the referral agent's
-        // active downline and credited 15,000 XAF commission AFTER the Admin verifies and approves their offline payment proof.
+        // Link to referral agent's downline immediately upon registration
         if (refCode) {
-          console.log(`[Referral Tagged] Student #${studentId} registered with referral code "${refCode}". Downline registration will activate upon Admin payment approval.`);
+          try {
+            const [agentRows] = await pool.execute(
+              'SELECT id, code, commission_per_student FROM referral_agents WHERE UPPER(code) = ? LIMIT 1',
+              [refCode.toUpperCase()]
+            );
+            const agentList = agentRows as any[];
+            if (agentList.length > 0) {
+              const matchedAgent = agentList[0];
+              const commAmount = Number(matchedAgent.commission_per_student || 15000);
+
+              // 1. Insert into referrals table immediately (downline item with pending commission)
+              await pool.execute(
+                `INSERT INTO referrals (agent_id, agent_code, student_id, student_name, student_matricule, student_email, student_phone, program_type, payment_status, admission_status, commission_amount, commission_status, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, 'pending', NOW())`,
+                [
+                  matchedAgent.id,
+                  matchedAgent.code,
+                  studentId,
+                  fullname,
+                  mysqlMatricule,
+                  email,
+                  phone,
+                  program_type,
+                  initialPaymentStatus,
+                  commAmount
+                ]
+              );
+
+              // 2. Increment total referrals count on the agent
+              await pool.execute(
+                'UPDATE referral_agents SET total_referrals = total_referrals + 1 WHERE id = ?',
+                [matchedAgent.id]
+              );
+
+              // 3. Mirror into local store
+              try {
+                adminStore.recordReferral({
+                  agent_code: matchedAgent.code,
+                  student_id: studentId,
+                  student_name: fullname,
+                  student_matricule: mysqlMatricule,
+                  student_email: email,
+                  student_phone: phone,
+                  program_type: program_type,
+                  payment_status: initialPaymentStatus,
+                  admission_status: 'Under Review'
+                });
+              } catch {}
+
+              console.log(`[Referral Downline Linked] Student #${studentId} (${fullname}) placed in downline of agent ${matchedAgent.code}.`);
+            } else {
+              console.warn(`[Referral Notice] Referral code "${refCode}" not found in referral_agents.`);
+            }
+          } catch (refErr) {
+            console.error('Failed to link student to referral agent downline in MySQL:', refErr);
+          }
         }
 
         insertedViaMySQL = true;
@@ -191,7 +242,24 @@ export async function POST(request: Request) {
       }
 
       if (refCode) {
-        console.log(`[Referral Tagged (Local)] Student #${studentId} registered with referral code "${refCode}". Downline registration will activate upon Admin payment approval.`);
+        try {
+          const studentRecord = db.students.findById(studentId);
+          const localMatricule = studentRecord?.matricule || `LA26-${String(studentId).padStart(4, '0')}`;
+          adminStore.recordReferral({
+            agent_code: refCode,
+            student_id: studentId,
+            student_name: fullname,
+            student_matricule: localMatricule,
+            student_email: email,
+            student_phone: phone,
+            program_type: program_type,
+            payment_status: initialPaymentStatus,
+            admission_status: 'Under Review'
+          });
+          console.log(`[Referral Downline Linked (Local)] Student #${studentId} placed in downline of agent ${refCode}.`);
+        } catch (refErr) {
+          console.error('Failed to link student to referral agent downline in local store:', refErr);
+        }
       }
     }
 

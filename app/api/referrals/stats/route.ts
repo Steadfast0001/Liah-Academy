@@ -106,8 +106,8 @@ export async function GET(request: Request) {
       data: {
         agent: {
           ...agent,
-          referral_link: `${appUrl}/admissions?ref=${agent.code}`,
-          portal_link: `${appUrl}/portal?ref=${agent.code}`
+          referral_link: `${appUrl}/portal?tab=enrol&ref=${agent.code}`,
+          portal_link: `${appUrl}/portal?tab=enrol&ref=${agent.code}`
         },
         downline: referrals,
         payouts: agentPayouts,

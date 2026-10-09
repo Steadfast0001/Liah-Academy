@@ -166,6 +166,7 @@ function StudentPortalContent() {
 
   // Active Gateway View: 'enrol' (New Applicant) or 'login' (Registered Student)
   const [gatewayTab, setGatewayTab] = useState<'enrol' | 'login'>('enrol');
+  const [activeRefCode, setActiveRefCode] = useState<string>('');
 
   // Logged-in Student Session State
   const [student, setStudent] = useState<any>(null);
@@ -327,9 +328,34 @@ function StudentPortalContent() {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
 
-    if (tabParam === 'login') {
+    const refQuery = searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code');
+    let candidateRef = refQuery;
+    if (!candidateRef && typeof window !== 'undefined') {
+      try {
+        candidateRef = localStorage.getItem('liah_ref') || '';
+        if (!candidateRef) {
+          const m = document.cookie.match(/(?:^|; )liah_ref=([^;]*)/);
+          if (m) candidateRef = decodeURIComponent(m[1]);
+        }
+      } catch {}
+    }
+
+    if (candidateRef) {
+      const cleanRef = candidateRef.trim().toUpperCase();
+      setActiveRefCode(cleanRef);
+      // Automatically open registration portal for anyone using a referral link
+      setGatewayTab('enrol');
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('liah_ref', cleanRef);
+          document.cookie = `liah_ref=${encodeURIComponent(cleanRef)}; path=/; max-age=2592000`;
+        }
+      } catch {}
+    }
+
+    if (tabParam === 'login' && !refQuery) {
       setGatewayTab('login');
-    } else if (tabParam === 'enrol' || tabParam === 'register') {
+    } else if (tabParam === 'enrol' || tabParam === 'register' || refQuery) {
       setGatewayTab('enrol');
     }
 
@@ -358,7 +384,7 @@ function StudentPortalContent() {
       })
       .catch(() => {})
       .finally(() => setIsClientReady(true));
-  }, [tabParam, degreeParam, programParam]);
+  }, [tabParam, degreeParam, programParam, searchParams]);
 
   useEffect(() => {
     if (student?.id) {
@@ -738,7 +764,7 @@ function StudentPortalContent() {
 
       const regFee = getApplicationFee(degreeType);
       
-      let detectedRef = searchParams.get('ref') || searchParams.get('referral') || '';
+      let detectedRef = activeRefCode || searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code') || '';
       if (!detectedRef && typeof window !== 'undefined') {
         try {
           detectedRef = localStorage.getItem('liah_ref') || '';
@@ -1049,6 +1075,28 @@ function StudentPortalContent() {
                   ? 'Thank you for your application. We regret to inform you that our admissions committee was unable to offer admission for this intake.'
                   : 'Your academic documents and application credentials have been received. Our Admissions Board is currently reviewing your file. You can log into this portal at any time to monitor the progress of your application.'}
               </p>
+              <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAdmissionLetterModal(true)}
+                  style={{
+                    background: '#081F3E',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 12px rgba(8, 31, 62, 0.15)'
+                  }}
+                >
+                  <Download size={16} /> Official Admission Form &amp; Offer of Enrolment (Download / Print)
+                </button>
+              </div>
             </div>
 
             {/* Status Metrics */}
@@ -2054,6 +2102,30 @@ function StudentPortalContent() {
                   </h2>
                 </div>
 
+                {/* Ambassador Referral Active Notice */}
+                {activeRefCode && (
+                  <div style={{
+                    background: '#F0FDF4',
+                    border: '1.5px solid #86EFAC',
+                    borderRadius: '10px',
+                    padding: '12px 18px',
+                    marginBottom: '22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <span style={{ fontSize: '1.4rem' }}>🤝</span>
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#166534' }}>
+                        Ambassador Referral Code Active: <span style={{ fontFamily: 'monospace', background: '#DCFCE7', padding: '2px 8px', borderRadius: '4px', border: '1px solid #BBF7D0', letterSpacing: '0.04em' }}>{activeRefCode}</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#15803D', marginTop: '2px' }}>
+                        You were invited by a verified Liah Academy Ambassador. Complete your registration below to secure your academic placement.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Auto-saved draft notification with Resume Option */}
                 {hasSavedDraft && currentStep === 1 && (
                   <div style={{ background: '#081F3E', color: '#FFFFFF', padding: '14px 18px', borderRadius: '8px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -2955,84 +3027,166 @@ function StudentPortalContent() {
                 </div>
               </div>
 
-              {/* Printable Letter Form */}
-              <div id="admission-letter-card" style={{ border: '2.5px solid #081F3E', borderRadius: '12px', padding: '24px 28px', background: '#FFFFFF' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #081F3E', paddingBottom: '14px', marginBottom: '14px' }}>
-                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.74rem', lineHeight: '1.35', color: '#1E293B' }}>
-                    <p style={{ fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>Republic of Cameroon</p>
-                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Peace - Work - Fatherland</p>
-                    <p style={{ margin: 0 }}>Ministry of Higher Education</p>
+              {/* Printable Letter Form (Official Single-Page Design) */}
+              <div 
+                id="admission-letter-card" 
+                style={{ 
+                  border: '2.5px solid #081F3E', 
+                  borderRadius: '12px', 
+                  padding: '28px 32px', 
+                  background: '#FFFFFF',
+                  color: '#1E293B',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+                }}
+              >
+                {/* 1. Header (Cameroon Seal, Liah Academy Crest & Institutional Coordinates) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #081F3E', paddingBottom: '16px', marginBottom: '18px' }}>
+                  {/* Left: Republic of Cameroon */}
+                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                    <p style={{ fontWeight: 800, margin: 0, textTransform: 'uppercase', color: '#081F3E', fontSize: '0.76rem' }}>REPUBLIC OF CAMEROON</p>
+                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B', fontSize: '0.7rem' }}>Peace - Work - Fatherland</p>
+                    <p style={{ margin: 0, color: '#334155' }}>Ministry of Higher Education</p>
+                    <p style={{ margin: 0, color: '#334155' }}>Ministry of Vocational Training</p>
                   </div>
 
+                  {/* Center: Crest & Motto */}
                   <div style={{ textAlign: 'center', width: '30%' }}>
                     <img 
                       src="/assets/images/logo.png" 
                       alt="Liah Academy Crest" 
-                      width={54}
-                      height={54}
-                      loading="lazy"
-                      decoding="async"
-                      style={{ height: '54px', width: '54px', aspectRatio: '1 / 1', margin: '0 auto', display: 'block' }} 
+                      width={56}
+                      height={56}
+                      style={{ height: '56px', width: '56px', aspectRatio: '1 / 1', margin: '0 auto', display: 'block' }} 
                     />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#F5A623', letterSpacing: '0.08em', display: 'block', marginTop: '3px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#B45309', letterSpacing: '0.08em', display: 'block', marginTop: '4px' }}>
                       INNOVATION &amp; EXCELLENCE
                     </span>
                   </div>
 
-                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.74rem', lineHeight: '1.35', color: '#1E293B' }}>
-                    <p style={{ fontWeight: 800, margin: 0, color: '#081F3E' }}>LIAH ACADEMY</p>
-                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B' }}>Higher Institute of Technology</p>
-                    <p style={{ margin: 0 }}>Bakweri Town Campus, Buea</p>
+                  {/* Right: Liah Academy Coordinates */}
+                  <div style={{ textAlign: 'center', width: '32%', fontSize: '0.72rem', lineHeight: '1.4', color: '#1E293B' }}>
+                    <p style={{ fontWeight: 800, margin: 0, color: '#081F3E', fontSize: '0.82rem' }}>LIAH ACADEMY</p>
+                    <p style={{ fontStyle: 'italic', margin: '2px 0', color: '#64748B', fontSize: '0.7rem' }}>Higher Institute of Technology</p>
+                    <p style={{ margin: 0, color: '#334155' }}>Buea Main Campus, SW Region</p>
+                    <p style={{ margin: 0, color: '#334155' }}>Tel: (+237) 670 265 493 / 652 154 095</p>
+                    <p style={{ margin: 0, color: '#2563EB', fontWeight: 600 }}>info@liahacademy.com</p>
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', background: '#081F3E', color: '#FFFFFF', padding: '10px 16px', borderRadius: '6px', marginBottom: '14px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 800 }}>
-                    Official Admission Form &amp; Offer of Enrolment
-                  </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#F5A623', fontWeight: 600 }}>
-                    2026 / 2027 Session &bull; Ref: {student.matricule || `LA26-${String(student.id).padStart(4, '0')}`}
-                  </span>
+                {/* 2. Official Enrolment Title */}
+                <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.18rem', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 800, color: '#64748B' }}>
+                    OFFICIAL ADMISSION FORM &amp; OFFER OF ENROLMENT
+                  </h2>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#B45309', fontWeight: 700 }}>
+                    2026 / 2027 Academic Session &bull; Ref: {student.matricule || `LA26-${String(student.id).padStart(4, '0')}`}
+                  </p>
                 </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '14px', fontSize: '0.88rem' }}>
+                {/* 3. Applicant Data Table */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '18px', fontSize: '0.88rem' }}>
                   <tbody>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', width: '30%', fontWeight: 700, color: '#64748B' }}>Student Matricule:</td>
-                      <td style={{ padding: '6px 12px', width: '70%', fontWeight: 800, color: '#081F3E', fontFamily: 'var(--font-mono)' }}>
+                      <td style={{ padding: '8px 12px', width: '32%', fontWeight: 700, color: '#081F3E' }}>Student Matricule:</td>
+                      <td style={{ padding: '8px 12px', width: '68%', fontWeight: 800, color: '#081F3E', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
                         {student.matricule || `LA26-${String(student.id).padStart(4, '0')}`}
                       </td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Applicant Full Name:</td>
-                      <td style={{ padding: '6px 12px', fontWeight: 800, color: '#081F3E' }}>{student.full_name}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Applicant Full Name:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#081F3E' }}>{student.full_name}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Academic Program:</td>
-                      <td style={{ padding: '6px 12px', fontWeight: 700, color: '#081F3E' }}>{student.program_type}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Academic Program:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>{student.program_type}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Degree Category:</td>
-                      <td style={{ padding: '6px 12px' }}>{student.degree_type}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Degree Category:</td>
+                      <td style={{ padding: '8px 12px', color: '#334155' }}>{student.degree_type}</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Campus:</td>
-                      <td style={{ padding: '6px 12px' }}>100% On-Campus (Bakweri Town Campus, Buea)</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Study Format &amp; Campus:</td>
+                      <td style={{ padding: '8px 12px', color: '#334155' }}>
+                        {student.study_format === 'online' ? 'Online (Virtual Labs)' : 'On-Campus (Buea Innovation Labs)'}
+                      </td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                      <td style={{ padding: '6px 12px', background: '#F8FAFC', fontWeight: 700, color: '#64748B' }}>Admission Status:</td>
-                      <td style={{ padding: '6px 12px', fontWeight: 800, color: student.admission_status === 'Approved' ? '#059669' : '#D97706' }}>
-                        {student.admission_status === 'Approved' ? '✓ OFFICIALLY ADMITTED' : '⏳ UNDER REVIEW'}
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Contact Details:</td>
+                      <td style={{ padding: '8px 12px', color: '#334155' }}>
+                        {student.email} &bull; Tel: {student.phone || 'N/A'}
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Admission Status:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 800, color: '#059669' }}>
+                        ✓ OFFICIALLY ACCEPTED &amp; ADMITTED
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: '#081F3E' }}>Registration Fee:</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 800, color: student.payment_status === 'Paid' ? '#059669' : '#2563EB' }}>
+                        {student.payment_status === 'Paid' ? '✓ 10,000 XAF REGISTRATION FEE PAID' : '⌛ 10,000 XAF REGISTRATION FEE PENDING'}
                       </td>
                     </tr>
                   </tbody>
                 </table>
 
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '12px 16px', borderRadius: '8px', fontSize: '0.78rem', color: '#334155' }}>
-                  <strong style={{ color: '#081F3E', display: 'block', marginBottom: '4px' }}>
-                    🏢 Institutional Next Steps:
+                {/* 4. Secretary Desk & Institutional Instructions Box */}
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '14px 18px', marginBottom: '22px', fontSize: '0.8rem', color: '#334155', lineHeight: 1.55 }}>
+                  <strong style={{ color: '#081F3E', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '0.82rem' }}>
+                    🏛 Institutional Next Steps &amp; Secretary Desk Instructions:
                   </strong>
-                  Present this admission confirmation at the <strong>Liah Academy Secretary&apos;s Office in Bakweri Town, Buea</strong> to finalize registration and collect student ID and workstation credentials.
+                  <ol style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <li>Present this printed single-page Admission Form to the <strong>Liah Academy Secretary&apos;s Office in Buea</strong>.</li>
+                    <li>Submit certified hard copies of academic qualifications and birth certificate for registry validation.</li>
+                    <li>Collect official Student Orientation Pack, Student ID Badge, and Laboratory Access Keycard.</li>
+                  </ol>
+                </div>
+
+                {/* 5. Horizontal Dashed Divider */}
+                <div style={{ borderTop: '1px dashed #CBD5E1', marginBottom: '18px' }} />
+
+                {/* 6. Stamp and Signatures Section */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '8px' }}>
+                  {/* Left: Green Official Stamp */}
+                  <div style={{ textAlign: 'center', width: '42%' }}>
+                    <div style={{
+                      display: 'inline-block',
+                      border: '2px solid #059669',
+                      borderRadius: '8px',
+                      padding: '6px 14px',
+                      color: '#059669',
+                      fontWeight: 800,
+                      fontSize: '0.72rem',
+                      letterSpacing: '0.04em',
+                      transform: 'rotate(-2deg)',
+                      marginBottom: '10px',
+                      lineHeight: 1.3
+                    }}>
+                      LIAH ACADEMY<br />VERIFIED &amp; STAMPED
+                    </div>
+                    <div style={{ borderTop: '1.5px solid #081F3E', paddingTop: '6px', fontSize: '0.76rem', fontWeight: 700, color: '#081F3E' }}>
+                      Office of the Registrar &amp; Admissions
+                    </div>
+                  </div>
+
+                  {/* Right: Signature */}
+                  <div style={{ textAlign: 'center', width: '42%' }}>
+                    <div style={{
+                      fontFamily: 'cursive, "Brush Script MT", Georgia, serif',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: '#081F3E',
+                      fontStyle: 'italic',
+                      marginBottom: '8px',
+                      letterSpacing: '0.04em'
+                    }}>
+                      Mr. NSAH ESLI
+                    </div>
+                    <div style={{ borderTop: '1.5px solid #081F3E', paddingTop: '6px', fontSize: '0.76rem', fontWeight: 700, color: '#081F3E' }}>
+                      Owner &amp; Managing Director
+                    </div>
+                  </div>
                 </div>
               </div>
 
