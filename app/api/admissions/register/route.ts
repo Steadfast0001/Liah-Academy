@@ -127,6 +127,8 @@ export async function POST(request: Request) {
              VALUES (?, ?, ?, 'XAF', 'MTN Mobile Money', ?, 'PENDING_VERIFICATION', ?, ?, ?, NOW())`,
             [payRef, studentId, effectiveFee, phone, `Enrolment Application Fee for #${studentId}`, cleanProofUrl, cleanTxId]
           ).catch(payErr => console.warn('Payment record insert notice:', payErr));
+        }
+
         // Link to referral agent's downline immediately upon registration
         if (refCode) {
           try {
